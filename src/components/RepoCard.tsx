@@ -11,11 +11,17 @@ private: boolean;
 };
 
 
-type Props = { repo: Repo };
+type Props = { 
+    repo: Repo;
+    onClick: () => void;
+ };
 
 
-const RepoCard: React.FC<Props> = ({ repo }) => {
+const RepoCard: React.FC<Props> = ({ repo, onClick }) => {
 return (
+<div
+    onClick={onClick}
+    className="w-full bg-white border rounded-xl p-5 flex flex-col gap-2 cursor-pointer hover:shadow-md transition">
 <div className="w-full bg-white border rounded-xl p-5 flex flex-col gap-2">
 <div className="flex items-center justify-between">
 <div className="flex items-center gap-2 text-blue-600 font-medium text-sm">
@@ -27,6 +33,7 @@ return (
 <span className="text-xs bg-gray-100 border rounded-full px-2 py-0.5">
 {repo.private ? "Private" : "Public"}
 </span>
+</div>
 </div>
 
 
