@@ -1,3 +1,5 @@
+// 
+
 export const fakeRepos = [
   {
     id: 1,
@@ -7,6 +9,14 @@ export const fakeRepos = [
     forks_count: 32,
     updated_at: "2025-02-15",
     private: false,
+//     code_snippet: `
+// function greetUser(name) {
+//   return "Hello, " + name;
+// }
+
+// // Main execution
+// console.log(greetUser("Naveen"));
+// `,
   },
   {
     id: 2,
@@ -16,6 +26,13 @@ export const fakeRepos = [
     forks_count: 4,
     updated_at: "2025-02-10",
     private: true,
+//     code_snippet: `
+// import React from "react";
+
+// export default function PortfolioHeader() {
+//   return <h1 className="title">Welcome to my Portfolio</h1>;
+// }
+// `,
   },
   {
     id: 3,
@@ -25,69 +42,27 @@ export const fakeRepos = [
     forks_count: 1,
     updated_at: "2025-02-08",
     private: false,
+//     code_snippet: `
+// alias gs="git status"
+// alias gc="git commit"
+// alias gl="git log --oneline"
+// `,
   },
   {
     id: 4,
-    name: "dotfiles",
-    description: "Dev environment configs.",
-    stargazers_count: 7,
-    forks_count: 1,
-    updated_at: "2025-02-08",
+    name: "next-gen-ai",
+    description: "AI research project.",
+    stargazers_count: 92,
+    forks_count: 18,
+    updated_at: "2025-02-20",
     private: false,
-  },
-  {
-    id: 5,
-    name: "dotfiles",
-    description: "Dev environment configs.",
-    stargazers_count: 7,
-    forks_count: 1,
-    updated_at: "2025-02-08",
-    private: false,
-  },
-  {
-    id: 6,
-    name: "dotfiles",
-    description: "Dev environment configs.",
-    stargazers_count: 7,
-    forks_count: 1,
-    updated_at: "2025-02-08",
-    private: false,
-  },
-  {
-    id: 7,
-    name: "dotfiles",
-    description: "Dev environment configs.",
-    stargazers_count: 7,
-    forks_count: 1,
-    updated_at: "2025-02-08",
-    private: false,
-  },
+//     code_snippet: `
+// async function predict(input) {
+//   const response = await model.runInference(input);
+//   return response.output;
+// }
 
-  {
-    id: 8,
-    name: "dotfiles",
-    description: "Dev environment configs.",
-    stargazers_count: 7,
-    forks_count: 1,
-    updated_at: "2025-02-08",
-    private: false,
-  },
-  {
-    id: 9,
-    name: "dotfiles",
-    description: "Dev environment configs.",
-    stargazers_count: 7,
-    forks_count: 1,
-    updated_at: "2025-02-08",
-    private: false,
-  },
-  {
-    id: 10,
-    name: "dotfiles",
-    description: "Dev environment configs.",
-    stargazers_count: 7,
-    forks_count: 1,
-    updated_at: "2025-02-08",
-    private: false,
+// predict("Hello World").then(console.log);
+// `,
   },
 ];
