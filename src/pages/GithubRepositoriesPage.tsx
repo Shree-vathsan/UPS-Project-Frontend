@@ -32,8 +32,8 @@ const GithubRepositoriesPage: React.FC = () => {
         <button className="text-sm text-gray-700">Logout</button>
       </nav>
 
-      <main className="max-w-5xl mx-auto pt-10 px-4">
-        <h1 className="text-xl font-semibold mb-6">Your Repositories</h1>
+      <main className="max-w-7xl mx-auto pt-10 px-4">
+        <h1 className="text-2xl font-semibold mb-6">Your Repositories</h1>
 
         {loading && <div className="text-gray-600">Loading...</div>}
         {error && <div className="text-red-600">{error}</div>}
