@@ -21,7 +21,8 @@
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import Login from "./pages/Login";
 import GithubRepositoriesPage from "./pages/GithubRepositoriesPage";
-import RepositoryDetailsPage from "./pages/RepositoryDetailsPage";
+import RepoDetailPage from "./pages/RepoDetailPage";
+
 
 function App() {
   return (
@@ -29,7 +30,8 @@ function App() {
       <Routes>
         <Route path="/" element={<Login />} />
         <Route path="/repos" element={<GithubRepositoriesPage />} />
-        <Route path="/repo/:name" element={<RepositoryDetailsPage/>} />
+        <Route path="/repo/:repoName" element={<RepoDetailPage />} />
+
       </Routes>
     </BrowserRouter>
   );
