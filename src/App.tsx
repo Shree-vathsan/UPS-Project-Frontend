@@ -21,7 +21,9 @@
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import Login from "./pages/Login";
 import GithubRepositoriesPage from "./pages/GithubRepositoriesPage";
-import RepoDetailPage from "./pages/RepoDetailPage";
+import RepoDetailPage from "./pages/RepositoryDetailsPage";
+import FileViewerPage from "./pages/FileViewerPage";
+
 
 
 function App() {
@@ -31,7 +33,7 @@ function App() {
         <Route path="/" element={<Login />} />
         <Route path="/repos" element={<GithubRepositoriesPage />} />
         <Route path="/repo/:repoName" element={<RepoDetailPage />} />
-
+        <Route path="/repo/:repoName/file/:fileName" element={<FileViewerPage/>}/>
       </Routes>
     </BrowserRouter>
   );

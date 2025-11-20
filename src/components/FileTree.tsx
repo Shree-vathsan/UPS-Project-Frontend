@@ -10,7 +10,7 @@ const FileTree: React.FC<Props> = ({ nodes }) => {
   return (
     <ul className="space-y-1">
       {nodes.map((n) => (
-        <FileTreeItem key={n.path ?? n.name} node={n} level={0} />
+        <FileTreeItem key={n.path ?? n.name} node={n} level={0}  />
       ))}
     </ul>
   );
