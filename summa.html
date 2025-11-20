@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Simple Honest Calculator</title>
+<style>
+  body { font-family: Arial, sans-serif; background: #111; color: #fff; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; }
+  .calc { background: #222; padding: 20px; border-radius: 10px; width: 260px; box-shadow: 0 0 20px rgba(0,0,0,0.5); }
+  .screen { background: #000; padding: 15px; border-radius: 6px; margin-bottom: 10px; text-align: right; }
+  .expr { font-size: 16px; color: #aaa; min-height: 19px; }
+  .res { font-size: 32px; font-weight: bold; margin-top: 5px; overflow-x: auto; }
+  .keys { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; }
+  button { padding: 15px; font-size: 16px; border: none; border-radius: 6px; cursor: pointer; background: #333; color: #fff; transition: background 0.2s; }
+  button:hover { background: #3a3a3a; }
+  button:active { transform: scale(0.95); }
+  button.op { background: #444; }
+  button.eq { background: #0af; color: #000; }
+  /* When class 'pressed' is added via JS, it turns green */
+  button.eq.pressed { background: #0f0 !important; color: #000; }
+</style>
+</head>
+<body>
+
+<div class="calc">
+  <div class="screen">
+    <div class="expr" id="expr">0</div>
+    <div class="res" id="res">0</div>
+  </div>
+  <div class="keys">
+    <button data-k="AC">AC</button>
+    <button data-k="±">±</button>
+    <button data-k="%">%</button>
+    <button class="op" data-k="/">/</button>
+    <button data-k="7">7</button>
+    <button data-k="8">8</button>
+    <button data-k="9">9</button>
+    <button class="op" data-k="*">*</button>
+    <button data-k="4">4</button>
+    <button data-k="5">5</button>
+    <button data-k="6">6</button>
+    <button class="op" data-k="-">-</button>
+    <button data-k="1">1</button>
+    <button data-k="2">2</button>
+    <button data-k="3">3</button>
+    <button class="op" data-k="+">+</button>
+    <button data-k="0" style="grid-column: span 2;">0</button>
+    <button data-k=".">.</button>
+    <button class="eq" id="eq" data-k="=">=</button>
+  </div>
+</div>
+
+<script>
+  let expr = document.getElementById('expr');
+  let res = document.getElementById('res');
+  let eqBtn = document.getElementById('eq');
+  let input = "";
+
+  // Safer evaluation function
+  function safeEval(exp) {
+    try { 
+      // Note: This treats '%' as Modulo (remainder), not percentage
+      return Function('return ' + exp)(); 
+    } catch { 
+      return 'Error'; 
+    }
+  }
+
+  document.querySelectorAll('button').forEach(btn => {
+    btn.onclick = () => {
+      let v = btn.dataset.k;
+
+      // Reset the '=' button color if any other key is pressed
+      if (v !== '=') { 
+        eqBtn.classList.remove('pressed'); 
+      }
+
+      // 1. Handle All Clear (AC)
+      if (v === 'AC') { 
+        input = ""; 
+        expr.textContent = "0"; 
+        res.textContent = "0"; 
+        eqBtn.classList.remove('pressed'); 
+        return; 
+      }
+
+      // 2. Handle Sign Change (±)
+      if (v === '±') { 
+        if (input.startsWith('-')) {
+           input = input.slice(1); 
+        } else {
+           input = '-' + input; 
+        }
+        expr.textContent = input; 
+        return; 
+      }
+
+      // 3. Handle Calculation (=)
+      if (v === '=') {
+        eqBtn.classList.add('pressed');
+        let out = safeEval(input);
+        res.textContent = out;
+        // Optional: Allow calculation to continue on the result
+        // input = String(out); 
+        return;
+      }
+
+      // 4. Handle Numbers and Operators
+      // Prevent multiple operators in a row if necessary, or just let user type
+      input += v;
+      expr.textContent = input;
+    };
+  });
+</script>
+
+</body>
+</html>
