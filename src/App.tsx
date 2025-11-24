@@ -23,6 +23,8 @@ import Login from "./pages/Login";
 import GithubRepositoriesPage from "./pages/GithubRepositoriesPage";
 import RepoDetailPage from "./pages/RepositoryDetailsPage";
 import FileViewerPage from "./pages/FileViewerPage";
+import AnalyzedRepositoriesPage from "./pages/AnalyzedRepositoriesPage";
+
 
 
 
@@ -34,6 +36,7 @@ function App() {
         <Route path="/repos" element={<GithubRepositoriesPage />} />
         <Route path="/repo/:repoName" element={<RepoDetailPage />} />
         <Route path="/repo/:repoName/file/:fileName" element={<FileViewerPage/>}/>
+        <Route path="/analyzed" element={<AnalyzedRepositoriesPage/>}/>
       </Routes>
     </BrowserRouter>
   );
