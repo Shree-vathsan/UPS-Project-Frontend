@@ -46,7 +46,7 @@ const FileViewerPage: React.FC = () => {
           <div className="w-7 h-7 bg-indigo-500 rounded-md flex items-center justify-center text-white text-sm">F</div>
           Foresite
         </div>
-        <button className="text-sm text-gray-700">Logout</button>
+        <button className="text-sm text-gray-700" onClick={() => navigate("/")}>Logout</button>
       </nav>
 
       {/* MAIN */}

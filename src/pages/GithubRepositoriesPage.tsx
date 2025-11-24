@@ -57,6 +57,9 @@
 import RepoList from "../components/RepoList";
 import React, { useEffect, useState } from "react";
 import { fakeRepos } from "../data/fakeRepos";
+import { useNavigate } from "react-router-dom";
+
+// import AnalyzedRepositoriesPage from "./AnalyzedRepositoriesPage";
 // import { fileTreeData } from "../data/fileTree";
 
 
@@ -72,6 +75,7 @@ export interface Repo {
 }
 
 const GithubRepositoriesPage: React.FC = () => {
+  const navigate = useNavigate();
   const [repos, setRepos] = useState<Repo[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string>("");
@@ -103,11 +107,25 @@ const GithubRepositoriesPage: React.FC = () => {
           </div>
           Foresite
         </div>
-        <button className="text-sm text-gray-700">Logout</button>
+        <button className="text-sm text-gray-700" onClick={() => navigate("/")}>Logout</button>
       </nav>
 
       <main className="max-w-7xl mx-auto pt-10 px-4">
-        <h1 className="text-2xl font-semibold mb-6">Your Repositories</h1>
+        <h1 className="text-2xl font-semibold mb-6">Repository Management</h1>
+          <div className="flex items-center gap-4 border-b pb-3 mb-6 text-sm font-medium">
+            <button className="px-3 py-1 rounded-md bg-indigo-50 text-indigo-600 border border-indigo-200">
+              Your Repository
+            </button>
+            <button className="px-3 py-1 rounded-md text-gray-600 hover:bg-gray-100" onClick={() => navigate("/analyzed")}>
+              Analyzed Repository
+            </button>
+            <button className="px-3 py-1 rounded-md text-gray-600 hover:bg-gray-100"
+                onClick={() => navigate("/add-repository")}>
+              + Add Repository
+            </button>
+
+
+          </div>
 
         {loading && <div className="text-gray-600">Loading...</div>}
         {error && <div className="text-red-600">{error}</div>}
