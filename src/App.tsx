@@ -24,7 +24,7 @@ import GithubRepositoriesPage from "./pages/GithubRepositoriesPage";
 import RepoDetailPage from "./pages/RepositoryDetailsPage";
 import FileViewerPage from "./pages/FileViewerPage";
 import AnalyzedRepositoriesPage from "./pages/AnalyzedRepositoriesPage";
-
+import AddRepositoryPage from "./pages/AddRepositoryPage";
 
 
 
@@ -37,6 +37,8 @@ function App() {
         <Route path="/repo/:repoName" element={<RepoDetailPage />} />
         <Route path="/repo/:repoName/file/:fileName" element={<FileViewerPage/>}/>
         <Route path="/analyzed" element={<AnalyzedRepositoriesPage/>}/>
+        <Route path="/add-repository" element={<AddRepositoryPage />} />
+
       </Routes>
     </BrowserRouter>
   );

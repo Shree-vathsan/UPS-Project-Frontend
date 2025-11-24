@@ -107,7 +107,7 @@ const GithubRepositoriesPage: React.FC = () => {
           </div>
           Foresite
         </div>
-        <button className="text-sm text-gray-700">Logout</button>
+        <button className="text-sm text-gray-700" onClick={() => navigate("/")}>Logout</button>
       </nav>
 
       <main className="max-w-7xl mx-auto pt-10 px-4">
@@ -119,9 +119,11 @@ const GithubRepositoriesPage: React.FC = () => {
             <button className="px-3 py-1 rounded-md text-gray-600 hover:bg-gray-100" onClick={() => navigate("/analyzed")}>
               Analyzed Repository
             </button>
-            <button className="px-3 py-1 rounded-md text-gray-600 hover:bg-gray-100">
+            <button className="px-3 py-1 rounded-md text-gray-600 hover:bg-gray-100"
+                onClick={() => navigate("/add-repository")}>
               + Add Repository
             </button>
+
 
           </div>
 

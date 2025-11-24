@@ -26,7 +26,7 @@ const AnalyzedRepositoriesPage: React.FC = () => {
           </div>
           Foresite
         </div>
-        <button className="text-sm text-gray-700">Logout</button>
+        <button className="text-sm text-gray-700" onClick={() => navigate("/")}>Logout</button>
       </nav>
 
       {/* Page content */}
@@ -45,7 +45,7 @@ const AnalyzedRepositoriesPage: React.FC = () => {
           </button>
 
           <button className="px-3 py-1 rounded-md text-gray-600 hover:bg-gray-100"
-            onClick={() => navigate("/add-repo")}>
+            onClick={() => navigate("/add-repository")}>
             + Add Repository
           </button>
         </div>
