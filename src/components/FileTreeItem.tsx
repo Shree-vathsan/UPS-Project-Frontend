@@ -27,16 +27,15 @@ const FileTreeItem: React.FC<Props> = ({ node, level }) => {
     <li>
       {/* Row */}
       <div
-        className="flex items-center gap-3 py-1.5 px-2 hover:bg-gray-50 rounded-md cursor-pointer select-none"
+        className="flex items-center gap-3 py-1.5 px-2 hover:bg-gray-50 dark:hover:bg-gray-700/50 rounded-md cursor-pointer select-none transition-colors"
         style={{ marginLeft: indent }}
         onClick={handleClick}
       >
         {/* Arrow Only for Folders */}
         {isFolder ? (
           <svg
-            className={`w-3 h-3 text-gray-500 transform transition-transform ${
-              open ? "rotate-90" : ""
-            }`}
+            className={`w-3 h-3 text-gray-500 dark:text-gray-400 transform transition-transform ${open ? "rotate-90" : ""
+              }`}
             viewBox="0 0 20 20"
             fill="currentColor"
           >
@@ -49,7 +48,7 @@ const FileTreeItem: React.FC<Props> = ({ node, level }) => {
         {/* Icon */}
         {isFolder ? (
           <svg
-            className="w-4 h-4 text-gray-500"
+            className="w-4 h-4 text-gray-500 dark:text-gray-400"
             viewBox="0 0 24 24"
             fill="none"
             stroke="currentColor"
@@ -58,7 +57,7 @@ const FileTreeItem: React.FC<Props> = ({ node, level }) => {
           </svg>
         ) : (
           <svg
-            className="w-4 h-4 text-gray-500"
+            className="w-4 h-4 text-gray-500 dark:text-gray-400"
             viewBox="0 0 24 24"
             fill="none"
             stroke="currentColor"
@@ -69,11 +68,10 @@ const FileTreeItem: React.FC<Props> = ({ node, level }) => {
 
         {/* Name */}
         <span
-          className={`text-sm ${
-            isFolder
-              ? "text-gray-700 font-medium"
-              : "text-blue-600 hover:underline"
-          }`}
+          className={`text-sm ${isFolder
+              ? "text-gray-700 dark:text-gray-200 font-medium"
+              : "text-blue-600 dark:text-blue-400 hover:underline"
+            }`}
         >
           {node.name}
         </span>
