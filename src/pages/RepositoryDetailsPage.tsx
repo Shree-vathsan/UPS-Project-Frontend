@@ -3,7 +3,7 @@ import { useLocation, useNavigate } from "react-router-dom";
 import FileTree from "../components/FileTree";
 import PullRequestList from "../components/PullRequestList";
 import CommitList from "../components/CommitList";
-import { Back } from "../components/Back";
+
 import { Avatar } from "../components/Avatar";
 import { TabNavigation } from "../components/TabNavigation";
 import { PageHeader } from "../components/PageHeader";
@@ -90,7 +90,7 @@ const RepositoryDetailsPage: React.FC = () => {
         </div>
 
         <div className="flex items-center gap-4">
-          <Back to="/repos" className="!text-gray-600 dark:!text-gray-300 hover:!text-gray-900 dark:hover:!text-white" />
+
 
           {/* GitHub avatar */}
           <Avatar src={repo.owner?.avatar_url} alt="avatar" />
