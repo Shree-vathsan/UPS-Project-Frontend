@@ -21,7 +21,7 @@ const RepoCard: React.FC<Props> = ({ repo, onClick }) => {
             className="w-full bg-white dark:bg-[#10182b] border border-gray-200 dark:border-gray-800 rounded-xl p-5 flex flex-col gap-3 cursor-pointer hover:shadow-md hover:border-indigo-200 dark:hover:border-indigo-500/50 dark:hover:bg-[#1e3a6f] transition-all duration-200 group"
         >
             <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2 text-indigo-600 dark:text-indigo-400 font-semibold text-base group-hover:text-indigo-700 dark:group-hover:text-indigo-300">
+                <div className="flex items-center gap-2 text-indigo-600 dark:text-indigo-400 font-semibold text-lg group-hover:text-indigo-700 dark:group-hover:text-indigo-300">
                     <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-5 h-5">
                         <path strokeLinecap="round" strokeLinejoin="round" d="M3.75 4.5h16.5m-16.5 0v13.5a2.25 2.25 0 002.25 2.25h12a2.25 2.25 0 002.25-2.25V4.5m-16.5 0l7.5 7.5m0 0l7.5-7.5m-7.5 7.5V21" />
                     </svg>
