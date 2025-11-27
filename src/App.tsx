@@ -38,12 +38,13 @@ function App() {
         <Routes>
           <Route path="/" element={<Login />} />
           <Route path="/repos" element={<GithubRepositoriesPage />} />
+          <Route path="/analyzed" element={<AnalyzedRepositoriesPage />} />
+          <Route path="/add-repository" element={<AddRepositoryPage />} />
           <Route path="/repo/:repoName" element={<RepoDetailPage />} />
           <Route path="/repo/:repoName/file/:fileName" element={<FileViewerPage />} />
           <Route path="/repo/:repoName/pr/:prId" element={<PullRequestDetailsPage />} />
           <Route path="/repo/:repoName/commit/:commitId" element={<CommitDetailsPage />} />
-          <Route path="/analyzed" element={<AnalyzedRepositoriesPage />} />
-          <Route path="/add-repository" element={<AddRepositoryPage />} />
+          
 
         </Routes>
       </BrowserRouter>
