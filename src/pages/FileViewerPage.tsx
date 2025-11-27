@@ -135,14 +135,130 @@ const FileViewerPage: React.FC = () => {
 
       {/* Analysis tab placeholder */}
       {activeTab === "analysis" && (
-        <div className="bg-white dark:bg-gray-800 border dark:border-gray-700 rounded-xl p-8 text-center text-gray-500 dark:text-gray-400">
-          <div className="w-12 h-12 bg-indigo-50 dark:bg-indigo-900/30 rounded-full flex items-center justify-center mx-auto mb-3 text-indigo-600 dark:text-indigo-400">
-            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-6 h-6">
-              <path strokeLinecap="round" strokeLinejoin="round" d="M9.813 15.904L9 18.75l-.813-2.846a4.5 4.5 0 00-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 003.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 003.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 00-3.09 3.09zM18.259 8.715L18 9.75l-.259-1.035a3.375 3.375 0 00-2.455-2.456L14.25 6l1.036-.259a3.375 3.375 0 002.455-2.456L18 2.25l.259 1.035a3.375 3.375 0 002.456 2.456L21.75 6l-1.035.259a3.375 3.375 0 00-2.456 2.456zM16.894 20.567L16.5 21.75l-.394-1.183a2.25 2.25 0 00-1.423-1.423L13.5 18.75l1.183-.394a2.25 2.25 0 001.423-1.423l.394-1.183.394 1.183a2.25 2.25 0 001.423 1.423l1.183.394-1.183.394a2.25 2.25 0 00-1.423 1.423z" />
-            </svg>
+        <div className="space-y-6">
+          {/* File Purpose */}
+          <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-lg p-4 shadow-sm dark:shadow-none">
+            <div className="flex items-center gap-2 mb-2">
+              <span className="text-pink-500 dark:text-pink-400">📄</span>
+              <h3 className="text-sm font-semibold text-gray-900 dark:text-white">File Purpose</h3>
+            </div>
+            <p className="text-xs text-gray-500 dark:text-gray-400">Semantic summary will be generated from embeddings</p>
           </div>
-          <h3 className="text-lg font-medium text-gray-900 dark:text-white">AI Code Analysis</h3>
-          <p className="mt-1">Select a block of code to generate an explanation.</p>
+
+          {/* Code Ownership */}
+          <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-lg p-4 shadow-sm dark:shadow-none">
+            <div className="flex items-center gap-2 mb-2">
+              <span className="text-purple-500 dark:text-purple-400">👥</span>
+              <h3 className="text-sm font-semibold text-gray-900 dark:text-white">Code Ownership</h3>
+            </div>
+            <p className="text-xs text-gray-500 dark:text-gray-400">Ownership data will be populated after multi-author analysis</p>
+          </div>
+
+          {/* Dependency Graph */}
+          <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-lg p-4 shadow-sm dark:shadow-none">
+            <div className="flex items-center gap-2 mb-4">
+              <span className="text-blue-500 dark:text-blue-400">🕸️</span>
+              <h3 className="text-sm font-semibold text-gray-900 dark:text-white">Dependency Graph</h3>
+            </div>
+            <p className="text-xs text-gray-500 dark:text-gray-400 mb-4">Interactive visualization of the dependencies and dependents</p>
+
+            <div className="relative h-64 bg-gray-50 dark:bg-gray-950 rounded-lg border border-gray-200 dark:border-gray-800 overflow-hidden flex items-center justify-center">
+              {/* Simplified Graph Visualization */}
+              <div className="relative w-full h-full p-8 flex items-center justify-center">
+                {/* Center Node */}
+                <div className="absolute z-10 bg-blue-600 text-white text-[10px] px-3 py-1.5 rounded shadow-lg border border-blue-500 dark:border-blue-400">
+                  Table.jsx
+                </div>
+
+                {/* Left Node (Import) */}
+                <div className="absolute left-1/4 top-1/2 -translate-y-1/2 bg-white dark:bg-gray-800 text-gray-600 dark:text-gray-300 text-[10px] px-2 py-1 rounded border border-gray-200 dark:border-gray-700 shadow-sm">
+                  react
+                </div>
+                {/* Line to Left */}
+                <div className="absolute left-1/4 top-1/2 w-1/4 h-[1px] bg-gray-300 dark:bg-gray-700"></div>
+
+                {/* Right Nodes (Dependents) */}
+                <div className="absolute right-1/4 top-1/3 bg-white dark:bg-gray-800 text-gray-600 dark:text-gray-300 text-[10px] px-2 py-1 rounded border border-gray-200 dark:border-gray-700 shadow-sm">
+                  App.tsx
+                </div>
+                <div className="absolute right-1/4 top-1/2 bg-white dark:bg-gray-800 text-gray-600 dark:text-gray-300 text-[10px] px-2 py-1 rounded border border-gray-200 dark:border-gray-700 shadow-sm">
+                  Layout.tsx
+                </div>
+                <div className="absolute right-1/4 top-2/3 bg-white dark:bg-gray-800 text-gray-600 dark:text-gray-300 text-[10px] px-2 py-1 rounded border border-gray-200 dark:border-gray-700 shadow-sm">
+                  RepoCard.tsx
+                </div>
+
+                {/* Lines to Right */}
+                <div className="absolute right-1/4 top-1/2 w-1/4 h-[1px] bg-gray-300 dark:bg-gray-700"></div>
+                <svg className="absolute inset-0 w-full h-full pointer-events-none">
+                  <line x1="50%" y1="50%" x2="75%" y2="33%" stroke="currentColor" className="text-gray-300 dark:text-gray-700" strokeWidth="1" />
+                  <line x1="50%" y1="50%" x2="75%" y2="66%" stroke="currentColor" className="text-gray-300 dark:text-gray-700" strokeWidth="1" />
+                </svg>
+
+                {/* Legend */}
+                <div className="absolute top-4 left-4 bg-white/80 dark:bg-gray-900/80 p-2 rounded border border-gray-200 dark:border-gray-800 text-[10px] backdrop-blur-sm">
+                  <div className="flex items-center gap-2 mb-1">
+                    <div className="w-2 h-2 bg-green-500 rounded-sm"></div>
+                    <span className="text-gray-600 dark:text-gray-400">Dependencies (Imports)</span>
+                  </div>
+                  <div className="flex items-center gap-2 mb-1">
+                    <div className="w-2 h-2 bg-orange-500 rounded-sm"></div>
+                    <span className="text-gray-600 dark:text-gray-400">Dependents (Imported by)</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <div className="w-2 h-2 bg-blue-500 rounded-sm"></div>
+                    <span className="text-gray-600 dark:text-gray-400">Current File</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Semantically Similar Files */}
+          <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-lg p-4 shadow-sm dark:shadow-none">
+            <div className="flex items-center gap-2 mb-4">
+              <span className="text-pink-500 dark:text-pink-400">🧠</span>
+              <h3 className="text-sm font-semibold text-gray-900 dark:text-white">Semantically Similar Files</h3>
+            </div>
+            <p className="text-xs text-gray-500 dark:text-gray-400 mb-3">Files with similar code patterns (based on AI embeddings)</p>
+
+            <div className="space-y-2">
+              {[
+                "src/components/ui/Table.jsx",
+                "src/components/ui/Table.tsx",
+                "src/components/ui/Table.js",
+                "src/components/ui/Table.ts",
+                "src/pages/Notifications.tsx"
+              ].map((file, i) => (
+                <div key={i} className="bg-gray-50 dark:bg-gray-950/50 px-3 py-2 rounded border border-gray-200 dark:border-gray-800 text-xs text-blue-600 dark:text-blue-400 font-mono hover:bg-gray-100 dark:hover:bg-gray-800 cursor-pointer transition-colors">
+                  {file}
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Change History */}
+          <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-lg p-4 shadow-sm dark:shadow-none">
+            <div className="flex items-center gap-2 mb-4">
+              <span className="text-gray-400">📅</span>
+              <h3 className="text-sm font-semibold text-gray-900 dark:text-white">Change History</h3>
+            </div>
+
+            <div className="space-y-3 text-xs">
+              <div className="flex justify-between items-center border-b border-gray-100 dark:border-gray-800 pb-2">
+                <span className="text-gray-500 dark:text-gray-400">Total Changes:</span>
+                <span className="text-gray-900 dark:text-white font-mono">1</span>
+              </div>
+              <div className="flex justify-between items-center border-b border-gray-100 dark:border-gray-800 pb-2">
+                <span className="text-gray-500 dark:text-gray-400">Most Active Author:</span>
+                <span className="text-gray-900 dark:text-white font-mono">N/A</span>
+              </div>
+              <div className="flex justify-between items-center">
+                <span className="text-gray-500 dark:text-gray-400">Last Modified:</span>
+                <span className="text-gray-900 dark:text-white font-mono">6/6/2025</span>
+              </div>
+            </div>
+          </div>
         </div>
       )}
     </Layout>

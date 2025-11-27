@@ -4,7 +4,7 @@ import Layout from '../components/Layout';
 import { mockPullRequests } from '../data/mockData';
 
 const PullRequestDetailsPage: React.FC = () => {
-    const { prId } = useParams();
+    const { repoName, prId } = useParams();
     const navigate = useNavigate();
 
     const pr = useMemo(() => {
@@ -25,12 +25,12 @@ const PullRequestDetailsPage: React.FC = () => {
         <Layout showTabs={false}>
             <div className="max-w-4xl mx-auto">
                 {/* Back button */}
-                <button
-                    onClick={() => navigate(-1)}
+                <button onClick={() => navigate(-1)}
                     className="text-sm text-blue-600 dark:text-blue-400 flex items-center gap-1 mb-4 hover:underline"
                 >
                     ← Back
                 </button>
+
 
                 {/* Header */}
                 <div className="flex items-center gap-3 mb-2">
