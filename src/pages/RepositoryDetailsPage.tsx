@@ -7,6 +7,7 @@ import CommitList from "../components/CommitList";
 import { Avatar } from "../components/Avatar";
 import { TabNavigation } from "../components/TabNavigation";
 import { PageHeader } from "../components/PageHeader";
+import RepoAnalysis from "../components/RepoAnalysis/RepoAnalysis";
 
 // Types used across the page
 export type FileNode = {
@@ -37,8 +38,9 @@ const RepositoryDetailsPage: React.FC = () => {
   const state = location.state as LocationState | null;
 
   const [activeTab, setActiveTab] = useState<
-    "commits" | "pull-requests" | "files"
-  >(() => state?.activeTab ?? 'commits');
+    "commits" | "pull-requests" | "files" | "analysis"
+  >(() => state?.activeTab ?? "commits");
+
 
   // Memoize repo
   const repo = useMemo(() => state?.repo, [state?.repo]);
@@ -116,7 +118,8 @@ const RepositoryDetailsPage: React.FC = () => {
           tabs={[
             { id: 'commits', label: 'Commits' },
             { id: 'pull-requests', label: 'Pull Requests (11)' },
-            { id: 'files', label: 'File Structure' }
+            { id: 'files', label: 'File Structure' },
+            { id: 'analysis', label: 'Analysis' }
           ]}
           activeTab={activeTab}
           onTabChange={handleTabChange}
@@ -152,6 +155,10 @@ const RepositoryDetailsPage: React.FC = () => {
                 )}
               </div>
             </section>
+          )}
+
+          {activeTab === 'analysis' && (
+            <RepoAnalysis />
           )}
         </div>
       </main>
