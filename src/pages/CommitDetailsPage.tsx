@@ -1,11 +1,13 @@
 import React, { useMemo } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams } from 'react-router-dom';
 import Layout from '../components/Layout';
 import { mockCommits } from '../data/mockData';
+import { Back } from "../components/Back";
+import { FileChangeRow } from "../components/FileChangeRow";
+import { InfoCard } from "../components/InfoCard";
 
 const CommitDetailsPage: React.FC = () => {
     const { commitId } = useParams();
-    const navigate = useNavigate();
 
     const commit = useMemo(() => {
         return mockCommits.find(c => c.id === commitId);
@@ -25,12 +27,7 @@ const CommitDetailsPage: React.FC = () => {
         <Layout showTabs={false}>
             <div className="max-w-5xl mx-auto">
                 {/* Back button */}
-                <button
-                    onClick={() => navigate(-1)}
-                    className="bg-gray-800 text-white text-xs px-3 py-1.5 rounded-md mb-4 hover:bg-gray-700 transition-colors"
-                >
-                    ← Back
-                </button>
+                <Back className="mb-4" />
 
                 {/* Commit SHA Badge */}
                 <div className="mb-2">
@@ -41,7 +38,7 @@ const CommitDetailsPage: React.FC = () => {
                 </div>
 
                 {/* Commit Message */}
-                <h1 className="text-xl font-bold text-gray-900 dark:text-white mb-1">
+                <h1 className="text-2xl font-bold text-gray-900 dark:text-white mb-1">
                     {commit.message}
                 </h1>
                 <div className="flex items-center gap-4 text-xs mb-6">
@@ -51,7 +48,7 @@ const CommitDetailsPage: React.FC = () => {
                 </div>
 
                 {/* Commit Info Card */}
-                <div className="bg-gray-900 border border-gray-800 rounded-lg p-6 mb-8">
+                <InfoCard variant="dark" className="p-6 mb-8">
                     <h3 className="text-white font-semibold mb-4">Commit Information</h3>
                     <div className="space-y-3 text-sm">
                         <div className="flex flex-col gap-1">
@@ -71,29 +68,21 @@ const CommitDetailsPage: React.FC = () => {
                             <span className="text-gray-300">{commit.date}</span>
                         </div>
                     </div>
-                </div>
+                </InfoCard>
 
                 {/* Files Changed */}
                 <div>
                     <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Files Changed ({commit.files.length})</h3>
                     <div className="space-y-2">
                         {commit.files.map((file, index) => (
-                            <div key={index} className="bg-gray-900 border border-gray-800 rounded-lg p-3 flex items-center justify-between">
-                                <div className="flex items-center gap-3">
-                                    <span className="text-sm font-mono text-gray-300">{file.name}</span>
-                                    <span className={`text-[10px] px-1.5 py-0.5 rounded font-medium ${file.status === 'modified' ? 'bg-yellow-900/50 text-yellow-500' :
-                                        file.status === 'added' ? 'bg-green-900/50 text-green-500' :
-                                            'bg-red-900/50 text-red-500'
-                                        }`}>
-                                        {file.status}
-                                    </span>
-                                </div>
-                                <div className="flex items-center gap-3 text-xs font-mono">
-                                    <span className="text-green-500">+{file.additions}</span>
-                                    <span className="text-red-500">-{file.deletions}</span>
-                                    <span className="text-gray-600">▶</span>
-                                </div>
-                            </div>
+                            <FileChangeRow
+                                key={index}
+                                name={file.name}
+                                status={file.status}
+                                additions={file.additions}
+                                deletions={file.deletions}
+                                variant="dark"
+                            />
                         ))}
                     </div>
                 </div>

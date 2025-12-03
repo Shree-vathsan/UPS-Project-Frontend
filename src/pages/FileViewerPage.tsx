@@ -1,9 +1,12 @@
 import React, { useState } from "react";
-import { useNavigate, useParams } from "react-router-dom";
+import { useParams } from "react-router-dom";
 import Layout from "../components/Layout";
 import { Btn } from "../components/Button";
 import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
 import { vscDarkPlus, dracula, atomDark, ghcolors, vs, nightOwl } from 'react-syntax-highlighter/dist/esm/styles/prism';
+import { Back } from "../components/Back";
+import { TabNavigation } from "../components/TabNavigation";
+import { PageHeader } from "../components/PageHeader";
 
 // Fake code content (replace later with real API)
 const mockCode = `
@@ -47,47 +50,27 @@ const themes = {
 };
 
 const FileViewerPage: React.FC = () => {
-  const navigate = useNavigate();
   const { fileName } = useParams(); // /repo/:repo/file/:fileName
   const [activeTab, setActiveTab] = useState("code");
   const [selectedTheme, setSelectedTheme] = useState<keyof typeof themes>("VS Code Dark");
 
   return (
     <Layout showTabs={false}>
-      {/* Back button */}
-      <button
-        onClick={() => navigate(-1)}
-        className="text-sm text-indigo-600 dark:text-indigo-400 flex items-center gap-1 mb-4 hover:underline"
-      >
-        ← Back to files
-      </button>
-
-      {/* Filename */}
-      <h1 className="text-3xl font-bold text-gray-900 dark:text-white tracking-tight mb-2">{fileName}</h1>
-      <p className="text-sm text-gray-500 dark:text-gray-400 mb-6">src/components/{fileName}</p>
+      {/* Header */}
+      <PageHeader
+        title={fileName || 'File'}
+        description={`src/components/${fileName}`}
+      />
 
       {/* Tabs */}
-      <div className="flex gap-6 border-b border-gray-200 dark:border-gray-800 mb-6">
-        <button
-          className={`pb-2 text-sm font-medium transition-colors ${activeTab === "code"
-            ? "text-indigo-600 dark:text-indigo-400 border-b-2 border-indigo-600 dark:border-indigo-400"
-            : "text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200"
-            }`}
-          onClick={() => setActiveTab("code")}
-        >
-          Code
-        </button>
-
-        <button
-          className={`pb-2 text-sm font-medium transition-colors ${activeTab === "analysis"
-            ? "text-indigo-600 dark:text-indigo-400 border-b-2 border-indigo-600 dark:border-indigo-400"
-            : "text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200"
-            }`}
-          onClick={() => setActiveTab("analysis")}
-        >
-          Analysis
-        </button>
-      </div>
+      <TabNavigation
+        tabs={[
+          { id: 'code', label: 'Code' },
+          { id: 'analysis', label: 'AI Analysis' }
+        ]}
+        activeTab={activeTab}
+        onTabChange={(id) => setActiveTab(id)}
+      />
 
       {/* Latest commit & Navigation */}
       <div className="flex items-center justify-between bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg px-4 py-3 mb-4">

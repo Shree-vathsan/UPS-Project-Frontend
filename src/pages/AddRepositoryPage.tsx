@@ -20,7 +20,7 @@ const AddRepositoryPage: React.FC = () => {
               <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
             </svg>
           </div>
-          <h2 className="text-xl font-bold text-gray-900 dark:text-white">
+          <h2 className="text-2xl font-bold text-gray-900 dark:text-white">
             Add Repository to Analyze
           </h2>
           <p className="text-center text-gray-500 dark:text-gray-400 mt-2">

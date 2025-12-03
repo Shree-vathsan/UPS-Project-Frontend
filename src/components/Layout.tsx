@@ -40,7 +40,7 @@ const Layout: React.FC<LayoutProps> = ({ children, title, showTabs = true }) => 
 
       {/* Main Content */}
       <main className="max-w-6xl mx-auto pt-8 px-6 pb-12">
-        {title && <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-8 tracking-tight">{title}</h1>}
+        {title && <h1 className="text-2xl font-bold text-gray-900 dark:text-white mb-8 tracking-tight">{title}</h1>}
 
         {showTabs && (
           <div className="flex items-center gap-2 border-b border-gray-200 dark:border-gray-800 pb-0 mb-8">
