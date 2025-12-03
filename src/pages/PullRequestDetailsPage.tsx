@@ -4,7 +4,8 @@ import Layout from '../components/Layout';
 import { mockPullRequests } from '../data/mockData';
 
 const PullRequestDetailsPage: React.FC = () => {
-    const { repoName, prId } = useParams();
+    // const { repoName, prId } = useParams();
+    const{ prId } = useParams();
     const navigate = useNavigate();
 
     const pr = useMemo(() => {
