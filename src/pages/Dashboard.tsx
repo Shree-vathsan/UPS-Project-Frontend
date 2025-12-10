@@ -28,6 +28,11 @@ export default function Dashboard({ user, token }: DashboardProps) {
     const [analyzing, setAnalyzing] = useState<Set<string>>(new Set());
     const [checkingStatus, setCheckingStatus] = useState<Set<string>>(new Set());
 
+    // Pagination state
+    const [currentPage, setCurrentPage] = useState(1);
+    const [perPage] = useState(10);
+    const [totalRepos, setTotalRepos] = useState(0);
+
     // Analyzed repositories tab state
     const [analyzedRepos, setAnalyzedRepos] = useState<any[]>([]);
     const [analyzedFilter, setAnalyzedFilter] = useState<FilterType>('all');
@@ -45,16 +50,30 @@ export default function Dashboard({ user, token }: DashboardProps) {
     }, []);
 
     useEffect(() => {
+        loadRepositories();
+    }, [currentPage]);
+
+    useEffect(() => {
         if (activeTab === 'analyzed') {
             loadAnalyzedRepositories();
         }
     }, [activeTab, analyzedFilter]);
 
     const loadRepositories = async () => {
+        setLoading(true);
         try {
-            const data = await api.getRepositories(token, user.id);
+            const data = await api.getRepositories(token, user.id, currentPage, perPage);
             console.log('Repositories from GitHub:', data);
+
+            // GitHub API returns repos array and total count in headers
+            // For simplicity, we'll just use the returned array
             setRepos(Array.isArray(data) ? data : []);
+
+            // If we got less than perPage items, we know this is the last page
+            if (Array.isArray(data)) {
+                setTotalRepos(data.length < perPage ? (currentPage - 1) * perPage + data.length : currentPage * perPage + 1);
+            }
+
             setError('');
         } catch (err: any) {
             console.error('Failed to load repositories:', err);
@@ -314,6 +333,31 @@ export default function Dashboard({ user, token }: DashboardProps) {
                                     );
                                 })}
                             </div>
+
+                            {/* Pagination Controls */}
+                            {repos.length > 0 && (
+                                <div className="flex items-center justify-center gap-4 mt-6 pt-4 border-t">
+                                    <Button
+                                        onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                                        disabled={currentPage === 1 || loading}
+                                        variant="outline"
+                                        size="sm"
+                                    >
+                                        Previous
+                                    </Button>
+                                    <div className="text-sm text-muted-foreground">
+                                        Page {currentPage}
+                                    </div>
+                                    <Button
+                                        onClick={() => setCurrentPage(p => p + 1)}
+                                        disabled={repos.length < perPage || loading}
+                                        variant="outline"
+                                        size="sm"
+                                    >
+                                        Next
+                                    </Button>
+                                </div>
+                            )}
 
                             <Card className="mt-6">
                                 <CardContent className="py-4">

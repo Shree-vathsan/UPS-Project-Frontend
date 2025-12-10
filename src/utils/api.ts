@@ -38,8 +38,8 @@ export const api = {
     },
 
     // Repositories
-    async getRepositories(token: string, userId: string) {
-        const res = await fetch(`${API_BASE}/repositories?userId=${userId}`, {
+    async getRepositories(token: string, userId: string, page: number = 1, perPage: number = 10) {
+        const res = await fetch(`${API_BASE}/repositories?userId=${userId}&page=${page}&per_page=${perPage}&sort=pushed`, {
             headers: { 'Authorization': `Bearer ${token}` }
         });
         return handleResponse(res);
