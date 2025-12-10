@@ -164,8 +164,8 @@ export default function DependencyGraph({ currentFile, dependencies, dependents 
         return { nodes, edges };
     }, [currentFile, dependencies, dependents]);
 
-    const [nodes, setNodes, onNodesChange] = useNodesState(initialNodes);
-    const [edges, setEdges, onEdgesChange] = useEdgesState(initialEdges);
+    const [nodes, _setNodes, onNodesChange] = useNodesState(initialNodes);
+    const [edges, _setEdges, onEdgesChange] = useEdgesState(initialEdges);
 
     return (
         <div style={{ height: '600px', width: '100%', background: '#0d1117', borderRadius: '8px', border: '1px solid #30363d', position: 'relative' }}>

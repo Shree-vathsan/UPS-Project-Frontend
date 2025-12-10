@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { Folder, FolderOpen, File, FileText, FileJson, FileCode } from 'lucide-react';
 
 interface FileNode {
     name: string;
@@ -15,12 +16,10 @@ interface FileTreeProps {
 }
 
 export default function FileTree({ files, onFileClick }: FileTreeProps) {
-    // Build tree structure from flat file list
     const buildTree = (fileList: any[]): FileNode[] => {
         const root: FileNode[] = [];
         const nodeMap: { [key: string]: FileNode } = {};
 
-        // Sort files by path for better tree construction
         const sortedFiles = [...fileList].sort((a, b) =>
             a.filePath.localeCompare(b.filePath)
         );
@@ -64,7 +63,7 @@ export default function FileTree({ files, onFileClick }: FileTreeProps) {
     const tree = buildTree(files);
 
     return (
-        <div style={{ fontFamily: 'monospace' }}>
+        <div className="font-mono text-sm">
             {tree.map((node, index) => (
                 <TreeNode
                     key={index}
@@ -84,7 +83,7 @@ interface TreeNodeProps {
 }
 
 function TreeNode({ node, onFileClick, level }: TreeNodeProps) {
-    const [isExpanded, setIsExpanded] = useState(level < 2); // Auto-expand first 2 levels
+    const [isExpanded, setIsExpanded] = useState(level < 2);
 
     const handleClick = () => {
         if (node.isDirectory) {
@@ -96,89 +95,50 @@ function TreeNode({ node, onFileClick, level }: TreeNodeProps) {
 
     const getIcon = () => {
         if (node.isDirectory) {
-            return isExpanded ? '📂' : '📁';
+            return isExpanded ?
+                <FolderOpen className="h-4 w-4 text-primary" /> :
+                <Folder className="h-4 w-4 text-primary" />;
         }
-        // File icons based on extension
+
         const ext = node.name.split('.').pop()?.toLowerCase();
-        const iconMap: { [key: string]: string } = {
-            'js': '📜',
-            'jsx': '⚛️',
-            'ts': '📘',
-            'tsx': '⚛️',
-            'json': '📋',
-            'md': '📝',
-            'css': '🎨',
-            'html': '🌐',
-            'py': '🐍',
-            'java': '☕',
-            'go': '🔷',
-            'rs': '🦀',
-            'rb': '💎',
-            'php': '🐘',
-        };
-        return iconMap[ext || ''] || '📄';
+        const iconClass = "h-4 w-4 text-muted-foreground";
+
+        if (['json'].includes(ext || '')) return <FileJson className={iconClass} />;
+        if (['md', 'txt'].includes(ext || '')) return <FileText className={iconClass} />;
+        if (['js', 'jsx', 'ts', 'tsx', 'py', 'java', 'go', 'rs', 'rb', 'php', 'c', 'cpp', 'cs'].includes(ext || '')) {
+            return <FileCode className={iconClass} />;
+        }
+        return <File className={iconClass} />;
     };
 
     return (
         <div>
             <div
                 onClick={handleClick}
-                style={{
-                    padding: '6px 12px',
-                    paddingLeft: `${level * 20 + 12}px`,
-                    cursor: 'pointer',
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '8px',
-                    borderRadius: '4px',
-                    transition: 'background 0.15s',
-                    userSelect: 'none'
-                }}
-                onMouseEnter={(e) => {
-                    e.currentTarget.style.background = '#1c2128';
-                }}
-                onMouseLeave={(e) => {
-                    e.currentTarget.style.background = 'transparent';
-                }}
+                className="flex items-center gap-2 px-3 py-1.5 cursor-pointer hover:bg-muted/50 rounded transition-colors select-none"
+                style={{ paddingLeft: `${level * 1.25 + 0.75}rem` }}
             >
                 {/* Expand/Collapse Arrow */}
                 {node.isDirectory && (
-                    <span style={{
-                        fontSize: '10px',
-                        color: '#8b949e',
-                        width: '12px',
-                        display: 'inline-block',
-                        transition: 'transform 0.2s'
-                    }}>
+                    <span className="text-xs text-muted-foreground w-3">
                         {isExpanded ? '▼' : '▶'}
                     </span>
                 )}
                 {!node.isDirectory && (
-                    <span style={{ width: '12px', display: 'inline-block' }}></span>
+                    <span className="w-3" />
                 )}
 
                 {/* Icon */}
-                <span style={{ fontSize: '14px' }}>
-                    {getIcon()}
-                </span>
+                {getIcon()}
 
                 {/* Name */}
-                <span style={{
-                    color: node.isDirectory ? '#58a6ff' : '#c9d1d9',
-                    fontWeight: node.isDirectory ? 600 : 400,
-                    fontSize: '13px',
-                    flex: 1
-                }}>
+                <span className={`flex-1 ${node.isDirectory ? 'text-primary font-semibold' : 'text-foreground'}`}>
                     {node.name}
                 </span>
 
                 {/* File info */}
                 {!node.isDirectory && node.totalLines && (
-                    <span style={{
-                        fontSize: '11px',
-                        color: '#6e7681',
-                        marginLeft: 'auto'
-                    }}>
+                    <span className="text-xs text-muted-foreground ml-auto">
                         {node.totalLines} lines
                     </span>
                 )}

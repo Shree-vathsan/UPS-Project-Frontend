@@ -1,69 +1,82 @@
-import InfoTooltip from './InfoTooltip';
+import { ReactNode } from 'react';
+import { Card, CardContent } from '@/components/ui/card';
+import {
+    Tooltip,
+    TooltipContent,
+    TooltipTrigger,
+} from '@/components/ui/tooltip';
+import { Info } from 'lucide-react';
 
-// Metric Card Component
-export default function MetricCard({ icon, title, value, subtitle, color = '#58a6ff', trend, tooltip, formula }: any) {
+interface MetricCardProps {
+    icon: ReactNode;
+    title: string;
+    value: string | number;
+    subtitle?: string;
+    color?: string;
+    trend?: number;
+    tooltip?: string;
+    formula?: string;
+}
+
+export default function MetricCard({
+    icon,
+    title,
+    value,
+    subtitle,
+    color = 'hsl(var(--primary))',
+    trend,
+    tooltip,
+    formula
+}: MetricCardProps) {
     return (
-        <div style={{
-            padding: '20px',
-            background: 'linear-gradient(135deg, #161b22 0%, #0d1117 100%)',
-            border: `1px solid ${color}40`,
-            borderRadius: '12px',
-            position: 'relative',
-            // overflow: 'hidden' REMOVED so tooltip can pop out
-        }}>
-            {/* Background Icon Layer - Clipped independently */}
-            <div style={{
-                position: 'absolute',
-                top: 0,
-                left: 0,
-                width: '100%',
-                height: '100%',
-                borderRadius: '12px',
-                overflow: 'hidden',
-                pointerEvents: 'none', // Let clicks pass through
-                zIndex: 0
-            }}>
-                <div style={{
-                    position: 'absolute',
-                    top: '-20px',
-                    right: '-20px',
-                    fontSize: '80px',
-                    opacity: 0.1
-                }}>{icon}</div>
+        <Card className="relative overflow-hidden">
+            {/* Background Icon */}
+            <div className="absolute -top-6 -right-6 text-8xl opacity-5 pointer-events-none">
+                {icon}
             </div>
 
-            <div style={{
-                position: 'absolute',
-                top: '12px',
-                right: '12px',
-                zIndex: 100 // Ensure tooltip sits above everything
-            }}>
-                <InfoTooltip text={tooltip} formula={formula} />
-            </div>
+            <CardContent className="p-6 relative">
+                {/* Tooltip */}
+                {tooltip && (
+                    <div className="absolute top-3 right-3">
+                        <Tooltip>
+                            <TooltipTrigger asChild>
+                                <button className="text-muted-foreground hover:text-foreground transition-colors">
+                                    <Info className="h-4 w-4" />
+                                </button>
+                            </TooltipTrigger>
+                            <TooltipContent side="left" className="max-w-xs">
+                                <p className="text-sm">{tooltip}</p>
+                                {formula && (
+                                    <code className="block mt-2 text-xs bg-muted p-2 rounded">
+                                        {formula}
+                                    </code>
+                                )}
+                            </TooltipContent>
+                        </Tooltip>
+                    </div>
+                )}
 
-            <div style={{ position: 'relative', zIndex: 1 }}>
-                <div style={{ fontSize: '12px', color: '#8b949e', marginBottom: '8px', fontWeight: 500 }}>
-                    {title}
+                {/* Content */}
+                <div className="space-y-2">
+                    <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
+                        {title}
+                    </p>
+                    <p className="text-3xl font-bold" style={{ color }}>
+                        {value}
+                    </p>
+                    {subtitle && (
+                        <p className="text-xs text-muted-foreground">
+                            {subtitle}
+                        </p>
+                    )}
+                    {trend !== undefined && trend !== 0 && (
+                        <div className={`text-xs font-semibold ${trend > 0 ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'}`}>
+                            {trend > 0 ? '↗' : '↘'} {Math.abs(trend)}% from last week
+                        </div>
+                    )}
                 </div>
-                <div style={{ fontSize: '32px', fontWeight: 'bold', color, marginBottom: '4px' }}>
-                    {value}
-                </div>
-                {subtitle && (
-                    <div style={{ fontSize: '11px', color: '#8b949e' }}>
-                        {subtitle}
-                    </div>
-                )}
-                {trend && (
-                    <div style={{
-                        fontSize: '12px',
-                        marginTop: '8px',
-                        color: trend > 0 ? '#3fb950' : '#f85149',
-                        fontWeight: 600
-                    }}>
-                        {trend > 0 ? '↗' : '↘'} {Math.abs(trend)}% from last week
-                    </div>
-                )}
-            </div>
-        </div>
+            </CardContent>
+        </Card>
     );
 }

@@ -4,8 +4,9 @@ import {
     XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
     Area, AreaChart
 } from 'recharts';
+import { BarChart as BarChartIcon, FileText, Users, Zap, Bot, Heart, TrendingUp, Folder, Flame, PieChart as PieChartIcon } from 'lucide-react';
+import { Skeleton } from '@/components/ui/skeleton';
 import MetricCard from './MetricCard';
-import SectionHeader from './SectionHeader';
 
 interface RepositoryAnalyticsProps {
     repositoryId: string;
@@ -116,10 +117,19 @@ export default function RepositoryAnalytics({ repositoryId }: RepositoryAnalytic
 
     if (loading) {
         return (
-            <div style={{ textAlign: 'center', padding: '60px 20px' }}>
-                <div style={{ fontSize: '48px', marginBottom: '20px' }}>📊</div>
-                <h3>Loading Analytics...</h3>
-                <p style={{ color: '#8b949e' }}>Analyzing repository data</p>
+            <div className="space-y-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                    {[1, 2, 3, 4].map((i) => (
+                        <div key={i} className="space-y-3">
+                            <Skeleton className="h-32 w-full" />
+                        </div>
+                    ))}
+                </div>
+                <Skeleton className="h-64 w-full" />
+                <div className="grid grid-cols-2 gap-4">
+                    <Skeleton className="h-80 w-full" />
+                    <Skeleton className="h-80 w-full" />
+                </div>
             </div>
         );
     }
@@ -129,7 +139,7 @@ export default function RepositoryAnalytics({ repositoryId }: RepositoryAnalytic
             {/* Metrics Overview */}
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))', gap: '16px' }}>
                 <MetricCard
-                    icon="📁"
+                    icon={<FileText className="h-5 w-5" />}
                     title="Total Files"
                     value={metrics?.totalFiles || 0}
                     subtitle="Files in repository"
@@ -138,7 +148,7 @@ export default function RepositoryAnalytics({ repositoryId }: RepositoryAnalytic
                     formula="Count(Files)"
                 />
                 <MetricCard
-                    icon="💾"
+                    icon={<BarChartIcon className="h-5 w-5" />}
                     title="Total Commits"
                     value={metrics?.totalCommits || 0}
                     subtitle="History length"
@@ -147,7 +157,7 @@ export default function RepositoryAnalytics({ repositoryId }: RepositoryAnalytic
                     formula="Count(Commits)"
                 />
                 <MetricCard
-                    icon="👥"
+                    icon={<Users className="h-5 w-5" />}
                     title="Contributors"
                     value={metrics?.contributors || 0}
                     subtitle="Active developers"
@@ -156,7 +166,7 @@ export default function RepositoryAnalytics({ repositoryId }: RepositoryAnalytic
                     formula="Count(UniqueAuthors)"
                 />
                 <MetricCard
-                    icon="⚡"
+                    icon={<Zap className="h-5 w-5" />}
                     title="Last 7 Days"
                     value={metrics?.recentCommits || 0}
                     subtitle="Recent activity"
@@ -168,26 +178,23 @@ export default function RepositoryAnalytics({ repositoryId }: RepositoryAnalytic
 
             {/* Repository Summary */}
             {summary && (
-                <div className="card" style={{ background: 'linear-gradient(135deg, #58a6ff10 0%, #161b22 100%)', border: '1px solid #58a6ff40' }}>
-                    <SectionHeader
-                        icon="🤖"
-                        title="Repository Summary"
-                        tooltip="AI-generated summary based on semantic analysis of your codebase. Derived from file purposes and code structure."
-                    />
-                    <p style={{ color: '#c9d1d9', fontSize: '14px', lineHeight: '1.8', margin: '12px 0 0 0' }}>
+                <div className="bg-gradient-to-br from-primary/10 to-background border border-primary/20 rounded-lg p-6">
+                    <div className="flex items-center gap-3 mb-4">
+                        <Bot className="h-6 w-6 text-primary" />
+                        <h3 className="text-xl font-heading font-bold">Repository Summary</h3>
+                    </div>
+                    <p className="text-foreground leading-relaxed">
                         {summary}
                     </p>
                 </div>
             )}
 
             {/* Code Health Score */}
-            <div className="card">
-                <SectionHeader
-                    icon="💚"
-                    title="Code Health Score"
-                    tooltip="Overall health score based on commit frequency, code coverage, and repository activity."
-                    formula="Avg(Commits, Coverage, Activity)"
-                />
+            <div className="bg-card border rounded-lg p-6">
+                <div className="flex items-center gap-3 mb-4">
+                    <Heart className="h-6 w-6 text-primary" />
+                    <h3 className="text-xl font-heading font-bold">Code Health Score</h3>
+                </div>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '24px', marginTop: '16px' }}>
                     <div style={{ position: 'relative', width: '120px', height: '120px' }}>
                         <svg width="120" height="120" style={{ transform: 'rotate(-90deg)' }}>
@@ -223,11 +230,11 @@ export default function RepositoryAnalytics({ repositoryId }: RepositoryAnalytic
                         </div>
                     </div>
                     <div style={{ flex: 1 }}>
-                        <p style={{ color: '#8b949e', fontSize: '14px', lineHeight: '1.6', margin: 0 }}>
+                        <p className="text-muted-foreground">
                             Based on commit frequency, code coverage, and repository activity.
-                            {metrics?.codeHealth > 70 && ' 🎉 Excellent health!'}
-                            {metrics?.codeHealth > 40 && metrics?.codeHealth <= 70 && ' 👍 Good health.'}
-                            {metrics?.codeHealth <= 40 && ' ⚠️ Needs attention.'}
+                            {metrics?.codeHealth > 70 && ' Excellent health!'}
+                            {metrics?.codeHealth > 40 && metrics?.codeHealth <= 70 && ' Good health.'}
+                            {metrics?.codeHealth <= 40 && ' Needs attention.'}
                         </p>
                         <div style={{ marginTop: '12px', display: 'flex', gap: '12px', flexWrap: 'wrap' }}>
                             <div style={{ padding: '4px 12px', background: '#3fb95020', borderRadius: '12px', fontSize: '11px', color: '#3fb950' }}>
@@ -244,13 +251,12 @@ export default function RepositoryAnalytics({ repositoryId }: RepositoryAnalytic
             {/* Activity Timeline and File Distribution */}
             <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: '16px' }}>
                 {/* Activity Timeline */}
-                <div className="card">
-                    <SectionHeader
-                        icon="📈"
-                        title="Commit Activity Timeline"
-                        tooltip="Shows the number of commits per day over the last 30 days. Helps identify development activity patterns and sprint cycles."
-                    />
-                    <p style={{ fontSize: '12px', color: '#8b949e', marginBottom: '16px' }}>
+                <div className="bg-card border rounded-lg p-6">
+                    <div className="flex items-center gap-3 mb-4">
+                        <TrendingUp className="h-6 w-6 text-primary" />
+                        <h3 className="text-xl font-heading font-bold">Commit Activity Timeline</h3>
+                    </div>
+                    <p className="text-sm text-muted-foreground mb-4">
                         Last 30 days of commit activity
                     </p>
                     <ResponsiveContainer width="100%" height={250}>
@@ -285,13 +291,12 @@ export default function RepositoryAnalytics({ repositoryId }: RepositoryAnalytic
                 </div>
 
                 {/* File Type Distribution */}
-                <div className="card">
-                    <SectionHeader
-                        icon="🗂️"
-                        title="File Types"
-                        tooltip="Distribution of files in the repository by extension. Shows the primary languages and file types in your codebase."
-                    />
-                    <p style={{ fontSize: '12px', color: '#8b949e', marginBottom: '16px' }}>
+                <div className="bg-card border rounded-lg p-6">
+                    <div className="flex items-center gap-3 mb-4">
+                        <Folder className="h-6 w-6 text-primary" />
+                        <h3 className="text-xl font-heading font-bold">File Types</h3>
+                    </div>
+                    <p className="text-sm text-muted-foreground mb-4">
                         Codebase composition
                     </p>
                     <ResponsiveContainer width="100%" height={250}>
@@ -317,13 +322,12 @@ export default function RepositoryAnalytics({ repositoryId }: RepositoryAnalytic
             </div>
 
             {/* Hotspot Files */}
-            <div className="card">
-                <SectionHeader
-                    icon="🔥"
-                    title="Change Hotspots"
-                    tooltip="Files that change most frequently. High values may indicate unstable code, frequent bugs, or areas needing refactoring."
-                />
-                <p style={{ fontSize: '12px', color: '#8b949e', marginBottom: '16px' }}>
+            <div className="bg-card border rounded-lg p-6">
+                <div className="flex items-center gap-3 mb-4">
+                    <Flame className="h-6 w-6 text-primary" />
+                    <h3 className="text-xl font-heading font-bold">Change Hotspots</h3>
+                </div>
+                <p className="text-sm text-muted-foreground mb-4">
                     Most frequently modified files
                 </p>
                 <ResponsiveContainer width="100%" height={300}>
@@ -351,54 +355,43 @@ export default function RepositoryAnalytics({ repositoryId }: RepositoryAnalytic
             </div>
 
             {/* File Type Details */}
-            <div className="card">
-                <SectionHeader
-                    icon="📊"
-                    title="Detailed Breakdown"
-                    tooltip="Detailed file type statistics showing exact counts and percentages of each file extension in the repository."
-                />
+            <div className="bg-card border rounded-lg p-6">
+                <div className="flex items-center gap-3 mb-4">
+                    <PieChartIcon className="h-6 w-6 text-primary" />
+                    <h3 className="text-xl font-heading font-bold">Detailed Breakdown</h3>
+                </div>
                 <div style={{ display: 'grid', gap: '8px', marginTop: '16px' }}>
                     {fileTypeData.map((type, index) => {
                         const total = fileTypeData.reduce((sum, t) => sum + t.value, 0);
                         const percentage = ((type.value / total) * 100).toFixed(1);
                         return (
-                            <div key={index} style={{
-                                display: 'flex',
-                                alignItems: 'center',
-                                gap: '12px',
-                                padding: '12px',
-                                background: '#0d1117',
-                                borderRadius: '6px',
-                                border: '1px solid #30363d'
-                            }}>
-                                <div style={{
-                                    width: '12px',
-                                    height: '12px',
-                                    borderRadius: '2px',
-                                    background: COLORS[index % COLORS.length]
-                                }}></div>
-                                <div style={{ flex: 1 }}>
-                                    <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '4px' }}>
-                                        <span style={{ fontSize: '13px', fontWeight: 600 }}>.{type.name}</span>
-                                        <span style={{ fontSize: '12px', color: '#8b949e' }}>{type.value} files</span>
+                            <div key={index} className="flex items-center gap-3 p-3 bg-muted/30 border rounded-lg">
+                                <div
+                                    className="w-3 h-3 rounded-sm"
+                                    style={{ background: COLORS[index % COLORS.length] }}
+                                ></div>
+                                <div className="flex-1">
+                                    <div className="flex justify-between mb-1">
+                                        <span className="text-sm font-semibold">.{type.name}</span>
+                                        <span className="text-xs text-muted-foreground">{type.value} files</span>
                                     </div>
-                                    <div style={{ width: '100%', height: '4px', background: '#30363d', borderRadius: '2px', overflow: 'hidden' }}>
-                                        <div style={{
-                                            width: `${percentage}%`,
-                                            height: '100%',
-                                            background: COLORS[index % COLORS.length],
-                                            transition: 'width 0.3s ease'
-                                        }}></div>
+                                    <div className="w-full h-1 bg-border rounded-full overflow-hidden">
+                                        <div
+                                            className="h-full transition-all duration-300"
+                                            style={{
+                                                width: `${percentage}%`,
+                                                background: COLORS[index % COLORS.length]
+                                            }}
+                                        ></div>
                                     </div>
                                 </div>
-                                <div style={{
-                                    padding: '4px 8px',
-                                    background: COLORS[index % COLORS.length] + '20',
-                                    borderRadius: '12px',
-                                    fontSize: '11px',
-                                    fontWeight: 'bold',
-                                    color: COLORS[index % COLORS.length]
-                                }}>
+                                <div
+                                    className="px-2 py-1 rounded-full text-xs font-bold"
+                                    style={{
+                                        background: COLORS[index % COLORS.length] + '20',
+                                        color: COLORS[index % COLORS.length]
+                                    }}
+                                >
                                     {percentage}%
                                 </div>
                             </div>

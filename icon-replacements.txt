@@ -1,0 +1,40 @@
+// Simple icon mapping - just remove Lu prefix for lucide-react
+export const iconReplacements = {
+  // Import statement
+  "from 'react-icons/lu'": "from 'lucide-react'",
+  
+  // Icon component names - remove Lu prefix
+  "LuGithub": "Github",
+  "LuCode": "Code",
+  "LuTriangle": "AlertTriangle",
+  "LuCircle": "CheckCircle",
+  "LuPackage": "Package",
+  "LuActivity": "Activity",
+  "LuPlus": "Plus",
+  "LuLoader": "Loader",
+  "LuRefreshCw": "RefreshCw",
+  "LuGitCommit": "GitCommit",
+  "LuGitPullRequest": "GitPullRequest",
+  "LuFolderTree": "FolderTree",
+  "LuBarChart": "BarChart",
+  "LuGitBranch": "GitBranch",
+  "LuClock": "Clock",
+  "LuArrowRight": "ArrowRight",
+  "LuUser": "User",
+  "LuFileText": "FileText",
+  "LuAlertTriangle": "AlertTriangle",
+  "LuCheckCircle": "CheckCircle",
+  "LuChevronDown": "ChevronDown",
+  "LuChevronRight": "ChevronRight",
+  "LuTarget": "Target",
+  "LuShield": "Shield",
+ "LuChevronLeft": "ChevronLeft",
+  "LuFolder": "Folder",
+  "LuFolderOpen": "FolderOpen",
+  "LuFile": "File",
+  "LuFileJson": "FileJson",
+  "LuFileCode": "FileCode",
+  "LuInfo": "Info",
+  "LuArrowLeft": "ArrowLeft",
+  "LuAlertCircle": "AlertCircle"
+};

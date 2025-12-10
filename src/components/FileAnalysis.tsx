@@ -5,6 +5,7 @@ import MetricCard from './MetricCard';
 import CircularProgress from './CircularProgress';
 import BarProgress from './BarProgress';
 import SectionHeader from './SectionHeader';
+import { Skeleton } from '@/components/ui/skeleton';
 
 interface FileAnalysisProps {
     file: any;
@@ -13,6 +14,7 @@ interface FileAnalysisProps {
 
 export default function FileAnalysis({ file, analysis }: FileAnalysisProps) {
     const [enhancedData, setEnhancedData] = useState<any>(null);
+    const [enhancedDataLoading, setEnhancedDataLoading] = useState(true);
     const [summary, setSummary] = useState<string | null>(null);
     const [summaryLoading, setSummaryLoading] = useState(false);
     const [summaryError, setSummaryError] = useState<string | null>(null);
@@ -24,6 +26,7 @@ export default function FileAnalysis({ file, analysis }: FileAnalysisProps) {
     }, [file.id]);
 
     const loadEnhancedData = async () => {
+        setEnhancedDataLoading(true);
         try {
             const response = await fetch(`http://localhost:5000/repositories/files/${file.id}/enhanced-analysis`);
             if (response.ok) {
@@ -32,6 +35,8 @@ export default function FileAnalysis({ file, analysis }: FileAnalysisProps) {
             }
         } catch (error) {
             console.error('Failed to load enhanced data:', error);
+        } finally {
+            setEnhancedDataLoading(false);
         }
     };
 
@@ -75,39 +80,15 @@ export default function FileAnalysis({ file, analysis }: FileAnalysisProps) {
             `}</style>
 
             {/* File Summary Section */}
-            <div style={{
-                background: '#0d1117',
-                border: '1px solid #30363d',
-                borderRadius: '6px',
-                padding: '16px',
-                marginBottom: '24px'
-            }}>
-                <div style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'space-between',
-                    marginBottom: '12px'
-                }}>
-                    <h3 style={{
-                        margin: 0,
-                        fontSize: '14px',
-                        fontWeight: 600,
-                        color: '#c9d1d9'
-                    }}>
+            <div className="bg-card border rounded-lg p-4 mb-6">
+                <div className="flex items-center justify-between mb-3">
+                    <h3 className="text-sm font-semibold text-foreground m-0">
                         File Summary
                     </h3>
                     {!summaryLoading && (
                         <button
                             onClick={fetchSummary}
-                            style={{
-                                background: '#21262d',
-                                border: '1px solid #30363d',
-                                color: '#8b949e',
-                                padding: '4px 12px',
-                                borderRadius: '6px',
-                                fontSize: '12px',
-                                cursor: 'pointer'
-                            }}
+                            className="bg-muted border text-muted-foreground px-3 py-1 rounded text-xs cursor-pointer hover:bg-muted/80 transition-colors"
                         >
                             Refresh
                         </button>
@@ -115,336 +96,320 @@ export default function FileAnalysis({ file, analysis }: FileAnalysisProps) {
                 </div>
 
                 {summaryLoading && (
-                    <div style={{ color: '#8b949e', fontSize: '13px' }}>
-                        Generating summary...
+                    <div className="space-y-2">
+                        <Skeleton className="h-4 w-full" />
+                        <Skeleton className="h-4 w-5/6" />
+                        <Skeleton className="h-4 w-4/6" />
                     </div>
                 )}
 
                 {!summaryLoading && summary && (
                     <div>
-                        <p style={{
-                            color: '#c9d1d9',
-                            fontSize: '13px',
-                            lineHeight: '1.6',
-                            margin: 0,
-                            marginBottom: '8px'
-                        }}>
+                        <p className="text-foreground text-sm leading-relaxed m-0 mb-2">
                             {summary}
                         </p>
-                        <div style={{
-                            fontSize: '11px',
-                            color: '#6e7681',
-                            fontStyle: 'italic'
-                        }}>
+                        <div className="text-xs text-muted-foreground italic">
                             Generated from {chunkCount} code chunk{chunkCount !== 1 ? 's' : ''}
                         </div>
                     </div>
                 )}
 
                 {!summaryLoading && summaryError && (
-                    <div style={{
-                        color: '#f85149',
-                        fontSize: '13px',
-                        background: '#da363320',
-                        padding: '8px',
-                        borderRadius: '4px',
-                        border: '1px solid #da3633'
-                    }}>
+                    <div className="text-destructive text-sm bg-destructive/10 p-2 rounded border border-destructive">
                         {summaryError}
                     </div>
                 )}
             </div>
 
             {/* Header Stats - Key Metrics */}
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '16px' }}>
-                <MetricCard
-                    icon="💚"
-                    title="Code Health"
-                    value={codeHealth.toFixed(0)}
-                    subtitle="Based on complexity & dependencies"
-                    color="#3fb950"
-                    tooltip="Measures file maintainability based on dependency count and change frequency. Higher scores indicate cleaner, more maintainable code."
-                    formula="100 - (dependencies × 2) - (changes ÷ 10)"
-                />
-                <MetricCard
-                    icon="⚡"
-                    title="Impact Score"
-                    value={impactScore.toFixed(0)}
-                    subtitle={`${dptCount} files depend on this`}
-                    color="#d29922"
-                    tooltip="Shows how many files will be affected if you change this file. Higher scores mean more critical files. Changes here have wider blast radius."
-                    formula="(dependents × 10) + (dependencies × 5)"
-                />
-                <MetricCard
-                    icon="🔥"
-                    title="Activity Level"
-                    value={activityScore.toFixed(0)}
-                    subtitle={`${changeCount} total changes`}
-                    color="#f85149"
-                    trend={5}
-                    tooltip="Indicates how frequently this file is modified. High activity might suggest core functionality or technical debt. Useful for identifying hotspots."
-                    formula="changes × 2 (capped at 100)"
-                />
-                <MetricCard
-                    icon="🎯"
-                    title="Connections"
-                    value={depCount + dptCount}
-                    subtitle={`${depCount} deps, ${dptCount} dependents`}
-                    color="#bc8cff"
-                    tooltip="Total number of file relationships. Includes both files this imports (dependencies) and files that import this (dependents). Shows coupling level."
-                    formula="dependencies + dependents"
-                />
-            </div>
+            {enhancedDataLoading ? (
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '16px' }}>
+                    {[1, 2, 3, 4].map(i => (
+                        <div key={i} className="bg-card border rounded-lg p-4">
+                            <Skeleton className="h-4 w-24 mb-2" />
+                            <Skeleton className="h-8 w-16 mb-2" />
+                            <Skeleton className="h-3 w-32" />
+                        </div>
+                    ))}
+                </div>
+            ) : (
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '16px' }}>
+                    <MetricCard
+                        icon="💚"
+                        title="Code Health"
+                        value={codeHealth.toFixed(0)}
+                        subtitle="Based on complexity & dependencies"
+                        color="#3fb950"
+                        tooltip="Measures file maintainability based on dependency count and change frequency. Higher scores indicate cleaner, more maintainable code."
+                        formula="100 - (dependencies × 2) - (changes ÷ 10)"
+                    />
+                    <MetricCard
+                        icon="⚡"
+                        title="Impact Score"
+                        value={impactScore.toFixed(0)}
+                        subtitle={`${dptCount} files depend on this`}
+                        color="#d29922"
+                        tooltip="Shows how many files will be affected if you change this file. Higher scores mean more critical files. Changes here have wider blast radius."
+                        formula="(dependents × 10) + (dependencies × 5)"
+                    />
+                    <MetricCard
+                        icon="🔥"
+                        title="Activity Level"
+                        value={activityScore.toFixed(0)}
+                        subtitle={`${changeCount} total changes`}
+                        color="#f85149"
+                        trend={5}
+                        tooltip="Indicates how frequently this file is modified. High activity might suggest core functionality or technical debt. Useful for identifying hotspots."
+                        formula="changes × 2 (capped at 100)"
+                    />
+                    <MetricCard
+                        icon="🎯"
+                        title="Connections"
+                        value={depCount + dptCount}
+                        subtitle={`${depCount} deps, ${dptCount} dependents`}
+                        color="#bc8cff"
+                        tooltip="Total number of file relationships. Includes both files this imports (dependencies) and files that import this (dependents). Shows coupling level."
+                        formula="dependencies + dependents"
+                    />
+                </div>
+            )}
 
             {/* File Overview with Progress Rings */}
-            <div className="card">
-                <SectionHeader
-                    icon="📊"
-                    title="File Metrics Overview"
-                    tooltip="Visual dashboard showing key file health indicators at a glance. Each circular gauge represents a different quality metric calculated from code analysis and git history."
-                    formula="Visual representation of the metrics above"
-                />
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))', gap: '24px', justifyItems: 'center' }}>
-                    <div style={{ textAlign: 'center' }}>
-                        <CircularProgress value={Math.min(100, codeHealth)} color="#3fb950" />
-                        <div style={{ marginTop: '12px', fontSize: '13px', fontWeight: 600, color: '#c9d1d9' }}>
-                            Code Health
-                        </div>
-                        <div style={{ fontSize: '11px', color: '#8b949e' }}>Excellent</div>
-                    </div>
-                    <div style={{ textAlign: 'center' }}>
-                        <CircularProgress value={Math.min(100, impactScore)} color="#d29922" />
-                        <div style={{ marginTop: '12px', fontSize: '13px', fontWeight: 600, color: '#c9d1d9' }}>
-                            Impact
-                        </div>
-                        <div style={{ fontSize: '11px', color: '#8b949e' }}>
-                            {impactScore > 70 ? 'Critical' : impactScore > 40 ? 'High' : 'Moderate'}
-                        </div>
-                    </div>
-                    <div style={{ textAlign: 'center' }}>
-                        <CircularProgress value={Math.min(100, activityScore)} color="#f85149" />
-                        <div style={{ marginTop: '12px', fontSize: '13px', fontWeight: 600, color: '#c9d1d9' }}>
-                            Activity
-                        </div>
-                        <div style={{ fontSize: '11px', color: '#8b949e' }}>
-                            {activityScore > 70 ? 'Very Active' : activityScore > 40 ? 'Active' : 'Stable'}
-                        </div>
-                    </div>
-                    <div style={{ textAlign: 'center' }}>
-                        <CircularProgress
-                            value={analysis.ownership?.[0]?.semanticScore ? (analysis.ownership[0].semanticScore * 100).toFixed(0) : 0}
-                            color="#bc8cff"
-                        />
-                        <div style={{ marginTop: '12px', fontSize: '13px', fontWeight: 600, color: '#c9d1d9' }}>
-                            Main Owner
-                        </div>
-                        <div style={{ fontSize: '11px', color: '#8b949e' }}>Contribution</div>
+            {enhancedDataLoading ? (
+                <div className="bg-card border rounded-lg p-6">
+                    <Skeleton className="h-6 w-1/2 mb-6" />
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))', gap: '24px', justifyItems: 'center' }}>
+                        {[1, 2, 3, 4].map(i => (
+                            <div key={i} className="text-center">
+                                <Skeleton className="h-24 w-24 rounded-full mx-auto mb-3" />
+                                <Skeleton className="h-4 w-20 mx-auto mb-1" />
+                                <Skeleton className="h-3 w-16 mx-auto" />
+                            </div>
+                        ))}
                     </div>
                 </div>
-            </div>
+            ) : (
+                <div className="bg-card border rounded-lg p-6">
+                    <SectionHeader
+                        icon="📊"
+                        title="File Metrics Overview"
+                        tooltip="Visual dashboard showing key file health indicators at a glance. Each circular gauge represents a different quality metric calculated from code analysis and git history."
+                        formula="Visual representation of the metrics above"
+                    />
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))', gap: '24px', justifyItems: 'center' }}>
+                        <div style={{ textAlign: 'center' }}>
+                            <CircularProgress value={Math.min(100, codeHealth)} color="#3fb950" />
+                            <div style={{ marginTop: '12px', fontSize: '13px', fontWeight: 600, color: '#c9d1d9' }}>
+                                Code Health
+                            </div>
+                            <div style={{ fontSize: '11px', color: '#8b949e' }}>Excellent</div>
+                        </div>
+                        <div style={{ textAlign: 'center' }}>
+                            <CircularProgress value={Math.min(100, impactScore)} color="#d29922" />
+                            <div style={{ marginTop: '12px', fontSize: '13px', fontWeight: 600, color: '#c9d1d9' }}>
+                                Impact
+                            </div>
+                            <div style={{ fontSize: '11px', color: '#8b949e' }}>
+                                {impactScore > 70 ? 'Critical' : impactScore > 40 ? 'High' : 'Moderate'}
+                            </div>
+                        </div>
+                        <div style={{ textAlign: 'center' }}>
+                            <CircularProgress value={Math.min(100, activityScore)} color="#f85149" />
+                            <div style={{ marginTop: '12px', fontSize: '13px', fontWeight: 600, color: '#c9d1d9' }}>
+                                Activity
+                            </div>
+                            <div style={{ fontSize: '11px', color: '#8b949e' }}>
+                                {activityScore > 70 ? 'Very Active' : activityScore > 40 ? 'Active' : 'Stable'}
+                            </div>
+                        </div>
+                        <div style={{ textAlign: 'center' }}>
+                            <CircularProgress
+                                value={analysis.ownership?.[0]?.semanticScore ? parseFloat((analysis.ownership[0].semanticScore * 100).toFixed(0)) : 0}
+                                color="#bc8cff"
+                            />
+                            <div style={{ marginTop: '12px', fontSize: '13px', fontWeight: 600, color: '#c9d1d9' }}>
+                                Main Owner
+                            </div>
+                            <div style={{ fontSize: '11px', color: '#8b949e' }}>Contribution</div>
+                        </div>
+                    </div>
+                </div>
+            )}
+
 
             {/* Detailed Dependency Analysis */}
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
-                <div className="card">
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '16px' }}>
-                        <h3 style={{ margin: 0, fontSize: '16px', color: '#3fb950', display: 'flex', alignItems: 'center', gap: '8px' }}>
-                            📦 Dependencies Analysis
-                        </h3>
-                        <InfoTooltip
-                            text="Shows files that this file imports. Lower dependency count means better separation of concerns. Direct imports are explicit, indirect are transitive dependencies."
-                            formula="Count of unique import statements"
-                        />
+            {enhancedDataLoading ? (
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
+                    {/* Dependencies Skeleton */}
+                    <div className="bg-card border rounded-lg p-6">
+                        <Skeleton className="h-6 w-1/2 mb-4" />
+                        <Skeleton className="h-12 w-24 mb-4" />
+                        <Skeleton className="h-4 w-full mb-2" />
+                        <Skeleton className="h-4 w-5/6" />
                     </div>
-                    <div style={{ fontSize: '48px', fontWeight: 'bold', color: '#3fb950', marginBottom: '16px' }}>
-                        {depCount}
+                    {/* Dependents Skeleton */}
+                    <div className="bg-card border rounded-lg p-6">
+                        <Skeleton className="h-6 w-1/2 mb-4" />
+                        <Skeleton className="h-12 w-24 mb-4" />
+                        <Skeleton className="h-4 w-full mb-2" />
+                        <Skeleton className="h-4 w-5/6" />
                     </div>
-                    <BarProgress label="Direct imports" value={depCount} maxValue={20} color="#3fb950" />
-                    <BarProgress label="Indirect dependencies" value={enhancedData?.indirectDependencies?.length || 0} maxValue={30} color="#56d364" />
+                </div>
+            ) : (
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
+                    <div className="card">
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '16px' }}>
+                            <h3 style={{ margin: 0, fontSize: '16px', color: '#3fb950', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                📦 Dependencies Analysis
+                            </h3>
+                            <InfoTooltip
+                                text="Shows files that this file imports. Lower dependency count means better separation of concerns. Direct imports are explicit, indirect are transitive dependencies."
+                                formula="Count of unique import statements"
+                            />
+                        </div>
+                        <div style={{ fontSize: '48px', fontWeight: 'bold', color: '#3fb950', marginBottom: '16px' }}>
+                            {depCount}
+                        </div>
+                        <BarProgress label="Direct imports" value={depCount} maxValue={20} color="#3fb950" />
+                        <BarProgress label="Indirect dependencies" value={enhancedData?.indirectDependencies?.length || 0} maxValue={30} color="#56d364" />
 
-                    {enhancedData?.dependencies && enhancedData.dependencies.length > 0 && (
-                        <div style={{ marginTop: '16px', borderTop: '1px solid #30363d', paddingTop: '12px' }}>
-                            <div style={{ fontSize: '12px', color: '#8b949e', marginBottom: '8px', fontWeight: 600 }}>Direct Dependencies Files:</div>
-                            <div style={{ maxHeight: '150px', overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '4px' }}>
-                                {enhancedData.dependencies.map((dep: any, i: number) => (
-                                    <div key={i} style={{
-                                        padding: '6px 8px',
-                                        background: '#0d1117',
-                                        borderRadius: '4px',
-                                        fontSize: '11px',
-                                        fontFamily: 'monospace',
-                                        color: '#c9d1d9',
-                                        border: '1px solid #30363d',
-                                        display: 'flex',
-                                        justifyContent: 'space-between'
-                                    }}>
-                                        <span title={dep.targetPath}>{dep.targetPath.split('/').pop()}</span>
-                                        <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
-                                            <span style={{ color: '#3fb950', fontSize: '10px' }}>{dep.dependencyType || 'import'}</span>
-                                            <span style={{ color: '#8b949e', fontSize: '10px', background: '#30363d', padding: '0 4px', borderRadius: '4px' }}>{dep.score || 1}</span>
+                        {enhancedData?.dependencies && enhancedData.dependencies.length > 0 && (
+                            <div className="mt-4 border-t pt-3">
+                                <div className="text-xs text-muted-foreground mb-2 font-semibold">Direct Dependencies Files:</div>
+                                <div className="max-h-[150px] overflow-y-auto flex flex-col gap-1">
+                                    {enhancedData.dependencies.map((dep: any, i: number) => (
+                                        <div key={i} className="px-2 py-1.5 bg-card/50 border rounded text-xs font-mono text-foreground flex justify-between items-center">
+                                            <span title={dep.targetPath}>{dep.targetPath.split('/').pop()}</span>
+                                            <div className="flex gap-2 items-center">
+                                                <span className="text-primary text-[10px]">{dep.dependencyType || 'import'}</span>
+                                                <span className="text-muted-foreground text-[10px] bg-muted px-1 rounded">{dep.score || 1}</span>
+                                            </div>
                                         </div>
-                                    </div>
-                                ))}
+                                    ))}
+                                </div>
+                            </div>
+                        )}
+
+                        {enhancedData?.indirectDependencies && enhancedData.indirectDependencies.length > 0 && (
+                            <div className="mt-4 border-t pt-3">
+                                <div className="text-xs text-muted-foreground mb-2 font-semibold">Indirect Dependencies Files:</div>
+                                <div className="max-h-[150px] overflow-y-auto flex flex-col gap-1">
+                                    {enhancedData.indirectDependencies.map((dep: any, i: number) => (
+                                        <div key={i} className="px-2 py-1.5 bg-card/50 border rounded text-xs font-mono text-foreground flex justify-between items-center">
+                                            <span title={dep.targetPath}>{dep.targetPath.split('/').pop()}</span>
+                                            <div className="flex gap-2 items-center">
+                                                <span className="text-primary/80 text-[10px]">indirect</span>
+                                                <span className="text-muted-foreground text-[10px] bg-muted px-1 rounded">{dep.score || 0.5}</span>
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+                        )}
+
+                        <div style={{ marginTop: '16px', padding: '12px', background: '#3fb95010', border: '1px solid #3fb95030', borderRadius: '8px' }}>
+                            <div style={{ fontSize: '12px', color: '#3fb950', fontWeight: 600, marginBottom: '4px' }}>
+                                Dependency Health: Good
+                            </div>
+                            <div style={{ fontSize: '11px', color: '#8b949e' }}>
+                                Low coupling, well-structured imports
                             </div>
                         </div>
-                    )}
+                    </div>
 
-                    {enhancedData?.indirectDependencies && enhancedData.indirectDependencies.length > 0 && (
-                        <div style={{ marginTop: '16px', borderTop: '1px solid #30363d', paddingTop: '12px' }}>
-                            <div style={{ fontSize: '12px', color: '#8b949e', marginBottom: '8px', fontWeight: 600 }}>Indirect Dependencies Files:</div>
-                            <div style={{ maxHeight: '150px', overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '4px' }}>
-                                {enhancedData.indirectDependencies.map((dep: any, i: number) => (
-                                    <div key={i} style={{
-                                        padding: '6px 8px',
-                                        background: '#0d1117',
-                                        borderRadius: '4px',
-                                        fontSize: '11px',
-                                        fontFamily: 'monospace',
-                                        color: '#c9d1d9',
-                                        border: '1px solid #30363d',
-                                        display: 'flex',
-                                        justifyContent: 'space-between'
-                                    }}>
-                                        <span title={dep.targetPath}>{dep.targetPath.split('/').pop()}</span>
-                                        <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
-                                            <span style={{ color: '#56d364', fontSize: '10px' }}>indirect</span>
-                                            <span style={{ color: '#8b949e', fontSize: '10px', background: '#30363d', padding: '0 4px', borderRadius: '4px' }}>{dep.score || 0.5}</span>
+                    <div className="card">
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '16px' }}>
+                            <h3 style={{ margin: 0, fontSize: '16px', color: '#d29922', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                🔗 Dependents Impact
+                            </h3>
+                            <InfoTooltip
+                                text="Files that import this file. Higher numbers mean more files affected by changes. Blast radius shows total files potentially impacted including indirect dependents."
+                                formula="Count of files importing this file"
+                            />
+                        </div>
+                        <div style={{ fontSize: '48px', fontWeight: 'bold', color: '#d29922', marginBottom: '16px' }}>
+                            {dptCount}
+                        </div>
+                        <BarProgress label="Direct dependents" value={dptCount} maxValue={20} color="#d29922" />
+                        <BarProgress label="Blast radius" value={enhancedData?.blastRadius?.length || 0} maxValue={50} color="#f0883e" />
+
+                        {enhancedData?.dependents && enhancedData.dependents.length > 0 && (
+                            <div className="mt-4 border-t pt-3">
+                                <div className="text-xs text-muted-foreground mb-2 font-semibold">Direct Dependent Files:</div>
+                                <div className="max-h-[150px] overflow-y-auto flex flex-col gap-1">
+                                    {enhancedData.dependents.map((dep: any, i: number) => (
+                                        <div key={i} className="px-2 py-1.5 bg-card/50 border rounded text-xs font-mono text-foreground flex justify-between items-center">
+                                            <span title={dep.sourcePath}>{dep.sourcePath?.split('/').pop() || 'Unknown'}</span>
+                                            <div className="flex gap-2 items-center">
+                                                <span className="text-accent text-[10px]">{dep.dependencyType || 'import'}</span>
+                                                <span className="text-muted-foreground text-[10px] bg-muted px-1 rounded">{dep.score || 1}</span>
+                                            </div>
                                         </div>
-                                    </div>
-                                ))}
+                                    ))}
+                                </div>
                             </div>
-                        </div>
-                    )}
+                        )}
 
-                    <div style={{ marginTop: '16px', padding: '12px', background: '#3fb95010', border: '1px solid #3fb95030', borderRadius: '8px' }}>
-                        <div style={{ fontSize: '12px', color: '#3fb950', fontWeight: 600, marginBottom: '4px' }}>
-                            Dependency Health: Good
-                        </div>
-                        <div style={{ fontSize: '11px', color: '#8b949e' }}>
-                            Low coupling, well-structured imports
+                        {enhancedData?.blastRadius && enhancedData.blastRadius.length > 0 && (
+                            <div className="mt-4 border-t pt-3">
+                                <div className="text-xs text-muted-foreground mb-2 font-semibold">Blast Radius Files:</div>
+                                <div className="max-h-[150px] overflow-y-auto flex flex-col gap-1">
+                                    {enhancedData.blastRadius.map((dep: any, i: number) => (
+                                        <div key={i} className=" px-2 py-1.5 bg-card/50 border rounded text-xs font-mono text-foreground flex justify-between items-center">
+                                            <span title={dep.sourcePath}>{dep.sourcePath?.split('/').pop() || 'Unknown'}</span>
+                                            <div className="flex gap-2 items-center">
+                                                <span className="text-accent/80 text-[10px]">indirect</span>
+                                                <span className="text-muted-foreground text-[10px] bg-muted px-1 rounded">{dep.score || 0.5}</span>
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+                        )}
+
+                        <div className={`mt-4 p-3 rounded-lg border ${impactScore > 70 ? 'bg-destructive/10 border-destructive' : 'bg-accent/10 border-accent'}`}>
+                            <div className={`text-xs font-semibold mb-1 ${impactScore > 70 ? 'text-destructive' : 'text-accent'}`}>
+                                Impact Level: {impactScore > 70 ? 'Critical ⚠️' : 'Moderate'}
+                            </div>
+                            <div className="text-xs text-muted-foreground">
+                                Changes affect {dptCount} direct consumers
+                            </div>
                         </div>
                     </div>
                 </div>
+            )}
 
-                <div className="card">
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '16px' }}>
-                        <h3 style={{ margin: 0, fontSize: '16px', color: '#d29922', display: 'flex', alignItems: 'center', gap: '8px' }}>
-                            🔗 Dependents Impact
-                        </h3>
-                        <InfoTooltip
-                            text="Files that import this file. Higher numbers mean more files affected by changes. Blast radius shows total files potentially impacted including indirect dependents."
-                            formula="Count of files importing this file"
-                        />
-                    </div>
-                    <div style={{ fontSize: '48px', fontWeight: 'bold', color: '#d29922', marginBottom: '16px' }}>
-                        {dptCount}
-                    </div>
-                    <BarProgress label="Direct dependents" value={dptCount} maxValue={20} color="#d29922" />
-                    <BarProgress label="Blast radius" value={enhancedData?.blastRadius?.length || 0} maxValue={50} color="#f0883e" />
-
-                    {enhancedData?.dependents && enhancedData.dependents.length > 0 && (
-                        <div style={{ marginTop: '16px', borderTop: '1px solid #30363d', paddingTop: '12px' }}>
-                            <div style={{ fontSize: '12px', color: '#8b949e', marginBottom: '8px', fontWeight: 600 }}>Direct Dependent Files:</div>
-                            <div style={{ maxHeight: '150px', overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '4px' }}>
-                                {enhancedData.dependents.map((dep: any, i: number) => (
-                                    <div key={i} style={{
-                                        padding: '6px 8px',
-                                        background: '#0d1117',
-                                        borderRadius: '4px',
-                                        fontSize: '11px',
-                                        fontFamily: 'monospace',
-                                        color: '#c9d1d9',
-                                        border: '1px solid #30363d',
-                                        display: 'flex',
-                                        justifyContent: 'space-between'
-                                    }}>
-                                        <span title={dep.sourcePath}>{dep.sourcePath?.split('/').pop() || 'Unknown'}</span>
-                                        <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
-                                            <span style={{ color: '#d29922', fontSize: '10px' }}>{dep.dependencyType || 'import'}</span>
-                                            <span style={{ color: '#8b949e', fontSize: '10px', background: '#30363d', padding: '0 4px', borderRadius: '4px' }}>{dep.score || 1}</span>
-                                        </div>
-                                    </div>
-                                ))}
-                            </div>
-                        </div>
-                    )}
-
-                    {enhancedData?.blastRadius && enhancedData.blastRadius.length > 0 && (
-                        <div style={{ marginTop: '16px', borderTop: '1px solid #30363d', paddingTop: '12px' }}>
-                            <div style={{ fontSize: '12px', color: '#8b949e', marginBottom: '8px', fontWeight: 600 }}>Blast Radius Files:</div>
-                            <div style={{ maxHeight: '150px', overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '4px' }}>
-                                {enhancedData.blastRadius.map((dep: any, i: number) => (
-                                    <div key={i} style={{
-                                        padding: '6px 8px',
-                                        background: '#0d1117',
-                                        borderRadius: '4px',
-                                        fontSize: '11px',
-                                        fontFamily: 'monospace',
-                                        color: '#c9d1d9',
-                                        border: '1px solid #30363d',
-                                        display: 'flex',
-                                        justifyContent: 'space-between'
-                                    }}>
-                                        <span title={dep.sourcePath}>{dep.sourcePath?.split('/').pop() || 'Unknown'}</span>
-                                        <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
-                                            <span style={{ color: '#f0883e', fontSize: '10px' }}>indirect</span>
-                                            <span style={{ color: '#8b949e', fontSize: '10px', background: '#30363d', padding: '0 4px', borderRadius: '4px' }}>{dep.score || 0.5}</span>
-                                        </div>
-                                    </div>
-                                ))}
-                            </div>
-                        </div>
-                    )}
-
-                    <div style={{ marginTop: '16px', padding: '12px', background: `${impactScore > 70 ? '#f8514910' : '#d2992210'}`, border: `1px solid ${impactScore > 70 ? '#f8514930' : '#d2992230'}`, borderRadius: '8px' }}>
-                        <div style={{ fontSize: '12px', color: impactScore > 70 ? '#f85149' : '#d29922', fontWeight: 600, marginBottom: '4px' }}>
-                            Impact Level: {impactScore > 70 ? 'Critical ⚠️' : 'Moderate'}
-                        </div>
-                        <div style={{ fontSize: '11px', color: '#8b949e' }}>
-                            Changes affect {dptCount} direct consumers
-                        </div>
-                    </div>
-                </div>
-            </div>
 
             {/* Semantic Purpose */}
-            <div className="card" style={{
-                background: 'linear-gradient(135deg, #0d1117 0%, #161b22 100%)',
-                border: '1px solid #58a6ff40'
-            }}>
+            <div className="bg-card/50 border border-primary/20 rounded-lg p-6">
                 <SectionHeader
                     icon="🤖"
                     title="AI-Powered Insights"
                     tooltip="Machine learning analysis of your code using embeddings and semantic patterns. Provides intelligent categorization and quality assessment beyond simple metrics."
                     formula="Vector Similarity(File, Categories)"
                 />
-                <div style={{
-                    padding: '16px',
-                    background: '#58a6ff10',
-                    borderRadius: '8px',
-                    border: '1px solid #58a6ff20',
-                    marginBottom: '16px'
-                }}>
-                    <div style={{ fontSize: '14px', color: '#c9d1d9', lineHeight: '1.6', marginBottom: '8px' }}>
-                        📝 <strong style={{ color: '#58a6ff' }}>File Purpose:</strong> This file appears to handle{' '}
+                <div className="p-4 bg-primary/10 rounded-lg border border-primary/20 mb-4">
+                    <div className="text-sm text-foreground leading-relaxed mb-2">
+                        📝 <strong className="text-primary">File Purpose:</strong> This file appears to handle{' '}
                         {file.filePath.includes('auth') ? 'authentication logic' :
                             file.filePath.includes('api') ? 'API communication' :
                                 file.filePath.includes('component') ? 'UI component rendering' : 'business logic'}.
                     </div>
-                    <div style={{ fontSize: '12px', color: '#8b949e' }}>
+                    <div className="text-xs text-muted-foreground">
                         Generated from code embeddings and semantic analysis
                     </div>
                 </div>
 
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
-                    <div style={{ padding: '12px', background: '#0d1117', borderRadius: '6px', border: '1px solid #30363d' }}>
-                        <div style={{ fontSize: '11px', color: '#8b949e', marginBottom: '4px' }}>Complexity</div>
-                        <div style={{ fontSize: '18px', fontWeight: 'bold', color: depCount > 10 ? '#f85149' : '#3fb950' }}>
+                <div className="grid grid-cols-2 gap-3">
+                    <div className="p-3 bg-muted/30 rounded-lg border">
+                        <div className="text-xs text-muted-foreground mb-1">Complexity</div>
+                        <div className="text-lg font-bold" style={{ color: depCount > 10 ? '#f85149' : 'hsl(var(--primary))' }}>
                             {depCount > 10 ? 'High' : depCount > 5 ? 'Medium' : 'Low'}
                         </div>
                     </div>
-                    <div style={{ padding: '12px', background: '#0d1117', borderRadius: '6px', border: '1px solid #30363d' }}>
-                        <div style={{ fontSize: '11px', color: '#8b949e', marginBottom: '4px' }}>Maintainability</div>
-                        <div style={{ fontSize: '18px', fontWeight: 'bold', color: '#58a6ff' }}>
+                    <div className="p-3 bg-muted/30 rounded-lg border">
+                        <div className="text-xs text-muted-foreground mb-1">Maintainability</div>
+                        <div className="text-lg font-bold text-primary">
                             {codeHealth > 70 ? 'Good' : codeHealth > 40 ? 'Fair' : 'Needs Work'}
                         </div>
                     </div>
@@ -469,78 +434,34 @@ export default function FileAnalysis({ file, analysis }: FileAnalysisProps) {
                             const score = owner.semanticScore || 0;
                             const percentage = (score * 100).toFixed(1);
                             return (
-                                <div key={index} style={{
-                                    display: 'flex',
-                                    alignItems: 'center',
-                                    gap: '16px',
-                                    padding: '16px',
-                                    background: 'linear-gradient(90deg, #0d111720 0%, #0d1117 100%)',
-                                    borderRadius: '8px',
-                                    border: '1px solid #30363d'
-                                }}>
+                                <div key={index} className="flex items-center gap-4 p-4 bg-card/30 rounded-lg border">
                                     {owner.avatarUrl && (
                                         <img
                                             src={owner.avatarUrl}
                                             alt={owner.authorName}
-                                            style={{
-                                                width: '48px',
-                                                height: '48px',
-                                                borderRadius: '50%',
-                                                border: '2px solid #3fb950',
-                                                objectFit: 'cover'
-                                            }}
+                                            className="w-12 h-12 rounded-full border-2 border-primary object-cover"
                                         />
                                     )}
-                                    <div style={{ flex: 1 }}>
-                                        <div style={{ fontWeight: 600, marginBottom: '8px', fontSize: '14px', color: '#c9d1d9' }}>
+                                    <div className="flex-1">
+                                        <div className="font-semibold mb-2 text-sm text-foreground">
                                             {owner.authorName || 'Unknown'}
                                         </div>
-                                        <div style={{
-                                            width: '100%',
-                                            height: '10px',
-                                            background: '#30363d',
-                                            borderRadius: '5px',
-                                            overflow: 'hidden',
-                                            marginBottom: '6px'
-                                        }}>
-                                            <div style={{
-                                                width: `${percentage}%`,
-                                                height: '100%',
-                                                background: `linear-gradient(90deg, #3fb950, #56d364)`,
-                                                borderRadius: '5px',
-                                                transition: 'width 0.5s ease'
-                                            }} />
+                                        <div className="w-full h-2.5 bg-border rounded-full overflow-hidden mb-1.5">
+                                            <div
+                                                className="h-full bg-gradient-to-r from-primary to-primary/80 rounded-full transition-all duration-500"
+                                                style={{ width: `${percentage}%` }}
+                                            />
                                         </div>
-                                        <div style={{ fontSize: '11px', color: '#8b949e' }}>
+                                        <div className="text-xs text-muted-foreground">
                                             Semantic contribution: {percentage}%
                                         </div>
                                     </div>
-                                    <div style={{
-                                        minWidth: '80px',
-                                        textAlign: 'center'
-                                    }}>
-                                        <div style={{
-                                            width: '70px',
-                                            height: '70px',
-                                            borderRadius: '50%',
-                                            background: `conic-gradient(#3fb950 ${score * 360}deg, #30363d 0deg)`,
-                                            display: 'flex',
-                                            alignItems: 'center',
-                                            justifyContent: 'center',
-                                            margin: '0 auto'
-                                        }}>
-                                            <div style={{
-                                                width: '56px',
-                                                height: '56px',
-                                                borderRadius: '50%',
-                                                background: '#161b22',
-                                                display: 'flex',
-                                                alignItems: 'center',
-                                                justifyContent: 'center',
-                                                fontSize: '16px',
-                                                fontWeight: 'bold',
-                                                color: '#3fb950'
-                                            }}>
+                                    <div className="min-w-20 text-center">
+                                        <div
+                                            className="w-[70px] h-[70px] rounded-full flex items-center justify-center mx-auto"
+                                            style={{ background: `conic-gradient(hsl(var(--primary)) ${score * 360}deg, hsl(var(--border)) 0deg)` }}
+                                        >
+                                            <div className="w-14 h-14 rounded-full bg-background flex items-center justify-center text-base font-bold text-primary">
                                                 {percentage.split('.')[0]}%
                                             </div>
                                         </div>
@@ -550,15 +471,21 @@ export default function FileAnalysis({ file, analysis }: FileAnalysisProps) {
                         })}
                     </div>
                 ) : (
-                    <div style={{ textAlign: 'center', padding: '40px', color: '#8b949e' }}>
-                        <div style={{ fontSize: '48px', marginBottom: '12px', opacity: 0.3 }}>👥</div>
-                        <div style={{ fontSize: '14px' }}>No ownership data available yet</div>
+                    <div className="text-center py-10 text-muted-foreground">
+                        <div className="text-5xl mb-3 opacity-30">👥</div>
+                        <div className="text-sm">No ownership data available yet</div>
                     </div>
                 )}
             </div>
 
             {/* Network Graph Visualization */}
-            {enhancedData && (enhancedData.dependencies?.length > 0 || enhancedData.dependents?.length > 0 || enhancedData.semanticNeighbors?.length > 0) && (
+            {enhancedDataLoading ? (
+                <div className="bg-card border rounded-lg p-6">
+                    <Skeleton className="h-6 w-2/3 mb-4" />
+                    <Skeleton className="h-4 w-full mb-6" />
+                    <Skeleton className="h-96 w-full" />
+                </div>
+            ) : enhancedData && (enhancedData.dependencies?.length > 0 || enhancedData.dependents?.length > 0 || enhancedData.semanticNeighbors?.length > 0) && (
                 <div className="card">
                     <SectionHeader
                         icon="🕸️"
@@ -587,41 +514,23 @@ export default function FileAnalysis({ file, analysis }: FileAnalysisProps) {
                     formula="Count(GitCommits)"
                 />
                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '16px' }}>
-                    <div style={{
-                        padding: '16px',
-                        background: '#0d1117',
-                        borderRadius: '8px',
-                        border: '1px solid #30363d',
-                        textAlign: 'center'
-                    }}>
-                        <div style={{ fontSize: '28px', fontWeight: 'bold', color: '#3fb950', marginBottom: '4px' }}>
+                    <div className="p-4 bg-card border rounded-lg text-center">
+                        <div className="text-2xl font-bold text-primary mb-1">
                             {changeCount}
                         </div>
-                        <div style={{ fontSize: '12px', color: '#8b949e' }}>Total Changes</div>
+                        <div className="text-xs text-muted-foreground">Total Changes</div>
                     </div>
-                    <div style={{
-                        padding: '16px',
-                        background: '#0d1117',
-                        borderRadius: '8px',
-                        border: '1px solid #30363d',
-                        textAlign: 'center'
-                    }}>
-                        <div style={{ fontSize: '16px', fontWeight: 'bold', color: '#d29922', marginBottom: '4px' }}>
+                    <div className="p-4 bg-card border rounded-lg text-center">
+                        <div className="text-base font-bold text-accent mb-1">
                             {analysis.mostFrequentAuthor && analysis.mostFrequentAuthor !== 'N/A' ? analysis.mostFrequentAuthor : 'N/A'}
                         </div>
-                        <div style={{ fontSize: '12px', color: '#8b949e' }}>Most Active Author</div>
+                        <div className="text-xs text-muted-foreground">Most Active Author</div>
                     </div>
-                    <div style={{
-                        padding: '16px',
-                        background: analysis.isInOpenPr ? '#3fb95010' : '#0d1117',
-                        borderRadius: '8px',
-                        border: `1px solid ${analysis.isInOpenPr ? '#3fb950' : '#30363d'}`,
-                        textAlign: 'center'
-                    }}>
-                        <div style={{ fontSize: '28px', marginBottom: '4px' }}>
+                    <div className={`p-4 rounded-lg text-center border ${analysis.isInOpenPr ? 'bg-primary/10 border-primary' : 'bg-card'}`}>
+                        <div className="text-2xl mb-1">
                             {analysis.isInOpenPr ? '✅' : '⚪'}
                         </div>
-                        <div style={{ fontSize: '12px', color: '#8b949e' }}>Open PR</div>
+                        <div className="text-xs text-muted-foreground">Open PR</div>
                     </div>
                 </div>
             </div>
@@ -636,51 +545,28 @@ export default function FileAnalysis({ file, analysis }: FileAnalysisProps) {
                 />
                 <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap' }}>
                     {analysis.ownership && analysis.ownership.slice(0, 3).map((owner: any, i: number) => (
-                        <div key={i} style={{
-                            display: 'flex',
-                            alignItems: 'center',
-                            gap: '8px',
-                            padding: '8px 12px',
-                            background: '#0d1117',
-                            borderRadius: '20px',
-                            border: '1px solid #30363d',
-                            position: 'relative'
-                        }} title={owner.email || owner.authorName}>
+                        <div key={i} className="flex items-center gap-2 px-3 py-2 bg-card rounded-full border relative" title={owner.email || owner.authorName}>
                             {owner.avatarUrl ? (
                                 <img
                                     src={owner.avatarUrl}
                                     alt={owner.authorName}
-                                    style={{
-                                        width: '28px',
-                                        height: '28px',
-                                        borderRadius: '50%',
-                                        border: '2px solid #3fb950',
-                                        objectFit: 'cover'
-                                    }}
+                                    className="w-7 h-7 rounded-full border-2 border-primary object-cover"
                                 />
                             ) : (
-                                <div style={{
-                                    width: '28px',
-                                    height: '28px',
-                                    borderRadius: '50%',
-                                    background: `conic-gradient(#3fb950 ${owner.semanticScore * 360}deg, #30363d 0deg)`,
-                                    display: 'flex',
-                                    alignItems: 'center',
-                                    justifyContent: 'center',
-                                    fontSize: '12px',
-                                    fontWeight: 'bold',
-                                    color: '#3fb950'
-                                }}>
+                                <div
+                                    className="w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold text-primary"
+                                    style={{ background: `conic-gradient(hsl(var(--primary)) ${owner.semanticScore * 360}deg, hsl(var(--border)) 0deg)` }}
+                                >
                                     {owner.authorName?.charAt(0).toUpperCase() || '?'}
                                 </div>
                             )}
-                            <span style={{ fontSize: '13px', color: '#c9d1d9', fontWeight: 500 }}>
+                            <span className="text-sm text-foreground font-medium">
                                 {owner.authorName || 'Unknown'}
                             </span>
                         </div>
                     ))}
                     {(!analysis.ownership || analysis.ownership.length === 0) && (
-                        <div style={{ fontSize: '13px', color: '#8b949e' }}>No reviewers recommended yet</div>
+                        <div className="text-sm text-muted-foreground">No reviewers recommended yet</div>
                     )}
                 </div>
             </div>

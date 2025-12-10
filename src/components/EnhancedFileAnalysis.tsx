@@ -9,7 +9,7 @@ interface EnhancedFileAnalysisProps {
     repositoryId: string;
 }
 
-export default function EnhancedFileAnalysis({ file, repositoryId }: EnhancedFileAnalysisProps) {
+export default function EnhancedFileAnalysis({ file, repositoryId: _repositoryId }: EnhancedFileAnalysisProps) {
     const [loading, setLoading] = useState(true);
     const [analysisData, setAnalysisData] = useState<any>(null);
 

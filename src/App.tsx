@@ -1,5 +1,6 @@
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import { useState, useEffect } from 'react';
+import { Github, Code, AlertTriangle, CheckCircle } from 'lucide-react';
 import Dashboard from './pages/Dashboard.tsx';
 import RepoView from './pages/RepoView.tsx';
 import CommitView from './pages/CommitView.tsx';
@@ -8,6 +9,10 @@ import PullRequestView from './pages/PullRequestView.tsx';
 import FileTreeView from './pages/FileTreeView.tsx';
 import FileView from './pages/FileView.tsx';
 import ThemeSelector from './components/ThemeSelector.tsx';
+import { ThemeProvider } from './components/theme-provider.tsx';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { api } from './utils/api';
 
 function App() {
@@ -72,202 +77,138 @@ function App() {
 
     if (!user) {
         return (
-            <div style={{
-                minHeight: '100vh',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                background: 'var(--color-bg-primary)'
-            }}>
-                {/* Theme Selector - Top Right */}
-                <div style={{
-                    position: 'absolute',
-                    top: 'var(--spacing-lg)',
-                    right: 'var(--spacing-lg)',
-                    zIndex: 10
-                }}>
-                    <ThemeSelector />
-                </div>
-
-                <div className="container" style={{
-                    maxWidth: '450px',
-                    textAlign: 'center'
-                }}>
-                    {/* Logo/Title */}
-                    <div style={{ marginBottom: 'var(--spacing-2xl)' }}>
-                        <h1 style={{ marginBottom: 'var(--spacing-sm)', color: 'var(--color-primary)' }}>
-                            CodeFamily
-                        </h1>
-                        <p style={{
-                            fontSize: 'var(--font-size-md)',
-                            color: 'var(--color-text-secondary)'
-                        }}>
-                            AI-Powered Engineering Intelligence Platform
-                        </p>
+            <ThemeProvider defaultTheme="black-beige">
+                <div className="min-h-screen flex items-center justify-center bg-background">
+                    {/* Theme Selector - Top Right */}
+                    <div className="absolute top-4 right-4 z-10">
+                        <ThemeSelector />
                     </div>
 
-                    {/* Login Card */}
-                    <div className="card" style={{ padding: 'var(--spacing-xl)' }}>
-                        {error && (
-                            <div style={{
-                                padding: 'var(--spacing-lg)',
-                                marginBottom: 'var(--spacing-lg)',
-                                background: 'rgba(248, 81, 73, 0.1)',
-                                border: '1px solid var(--color-error)',
-                                borderRadius: 'var(--radius-md)',
-                                color: 'var(--color-error)'
-                            }}>
-                                <div style={{
-                                    fontWeight: 'var(--font-weight-semibold)',
-                                    marginBottom: 'var(--spacing-sm)'
-                                }}>
-                                    Error
-                                </div>
-                                <p style={{ marginBottom: 'var(--spacing-md)', fontSize: 'var(--font-size-sm)' }}>
-                                    {error}
-                                </p>
-                                <div style={{
-                                    fontSize: 'var(--font-size-xs)',
-                                    color: 'var(--color-text-secondary)',
-                                    textAlign: 'left',
-                                    background: 'var(--color-bg-primary)',
-                                    padding: 'var(--spacing-sm)',
-                                    borderRadius: 'var(--radius-sm)'
-                                }}>
-                                    <strong style={{ display: 'block', marginBottom: 'var(--spacing-xs)' }}>Troubleshooting:</strong>
-                                    <ul style={{ marginLeft: 'var(--spacing-lg)', lineHeight: 1.6 }}>
-                                        <li>Make sure backend is running: <code>dotnet run</code></li>
-                                        <li>Backend should be at: http://localhost:5000</li>
-                                        <li>Supabase database must be configured</li>
-                                    </ul>
-                                </div>
+                    <div className="w-full max-w-md px-4 animate-fade-in">
+                        {/* Logo/Title */}
+                        <div className="text-center mb-8">
+                            <div className="flex items-center justify-center gap-3 mb-3">
+                                <Code className="h-10 w-10 text-primary" />
+                                <h1 className="font-heading text-4xl font-bold text-foreground">
+                                    CodeFamily
+                                </h1>
                             </div>
-                        )}
-
-                        <button
-                            className="btn btn-primary"
-                            onClick={handleLogin}
-                            style={{
-                                width: '100%',
-                                padding: 'var(--spacing-md) var(--spacing-lg)'
-                            }}
-                        >
-                            Login with GitHub
-                        </button>
-
-                        <div style={{
-                            marginTop: 'var(--spacing-lg)',
-                            padding: 'var(--spacing-md)',
-                            background: 'var(--color-bg-primary)',
-                            borderRadius: 'var(--radius-md)',
-                            fontSize: 'var(--font-size-xs)'
-                        }}>
-                            <div style={{
-                                fontWeight: 'var(--font-weight-medium)',
-                                color: 'var(--color-text-secondary)',
-                                marginBottom: 'var(--spacing-sm)'
-                            }}>
-                                System Status
-                            </div>
-                            <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--spacing-xs)', textAlign: 'left' }}>
-                                <div style={{ color: 'var(--color-success)' }}>
-                                    ✓ Frontend: Running
-                                </div>
-                                <div style={{ color: error ? 'var(--color-error)' : 'var(--color-warning)' }}>
-                                    {error ? '✗' : '...'} Backend: {error ? 'Not responding' : 'Checking...'}
-                                </div>
-                            </div>
+                            <p className="text-muted-foreground text-base">
+                                AI-Powered Engineering Intelligence Platform
+                            </p>
                         </div>
+
+                        {/* Login Card */}
+                        <Card>
+                            <CardHeader>
+                                <CardTitle>Welcome Back</CardTitle>
+                                <CardDescription>
+                                    Sign in with your GitHub account to continue
+                                </CardDescription>
+                            </CardHeader>
+                            <CardContent className="space-y-4">
+                                {error && (
+                                    <Alert variant="destructive">
+                                        <AlertTriangle className="h-4 w-4" />
+                                        <AlertTitle>Authentication Error</AlertTitle>
+                                        <AlertDescription>
+                                            {error}
+                                            <div className="mt-3 text-xs bg-background/50 p-3 rounded-md border border-border">
+                                                <strong className="block mb-2">Troubleshooting:</strong>
+                                                <ul className="list-disc list-inside space-y-1">
+                                                    <li>Make sure backend is running: <code>dotnet run</code></li>
+                                                    <li>Backend should be at: http://localhost:5000</li>
+                                                    <li>Supabase database must be configured</li>
+                                                </ul>
+                                            </div>
+                                        </AlertDescription>
+                                    </Alert>
+                                )}
+
+                                <Button
+                                    onClick={handleLogin}
+                                    className="w-full gap-2"
+                                    size="lg"
+                                >
+                                    <Github className="h-5 w-5" />
+                                    Login with GitHub
+                                </Button>
+
+                                <div className="bg-muted/50 p-4 rounded-md border border-border">
+                                    <div className="text-sm font-medium text-foreground mb-2">
+                                        System Status
+                                    </div>
+                                    <div className="space-y-1 text-sm">
+                                        <div className="flex items-center gap-2 text-green-600 dark:text-green-400">
+                                            <CheckCircle className="h-4 w-4" />
+                                            <span>Frontend: Running</span>
+                                        </div>
+                                        <div className={`flex items-center gap-2 ${error ? 'text-destructive' : 'text-muted-foreground'}`}>
+                                            {error ? <AlertTriangle className="h-4 w-4" /> : <span className="h-4 w-4">...</span>}
+                                            <span>Backend: {error ? 'Not responding' : 'Checking...'}</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </CardContent>
+                        </Card>
                     </div>
                 </div>
-            </div>
+            </ThemeProvider>
         );
     }
 
     return (
-        <BrowserRouter>
-            {/* Modern Header */}
-            <div className="header">
-                <div className="container" style={{
-                    display: 'flex',
-                    justifyContent: 'space-between',
-                    alignItems: 'center',
-                    padding: 'var(--spacing-md) var(--spacing-xl)'
-                }}>
-                    {/* Logo */}
-                    <h2
-                        style={{
-                            cursor: 'pointer',
-                            margin: 0,
-                            fontSize: 'var(--font-size-2xl)',
-                            fontWeight: 'var(--font-weight-black)',
-                            display: 'flex',
-                            alignItems: 'center',
-                            gap: 'var(--spacing-md)',
-                            transition: 'transform var(--transition-base)'
-                        }}
-                        onClick={() => window.location.href = '/'}
-                        onMouseEnter={(e) => e.currentTarget.style.transform = 'scale(1.05)'}
-                        onMouseLeave={(e) => e.currentTarget.style.transform = 'scale(1)'}
-                    >
-                        <span>👨‍👩‍👧‍👦</span>
-                        <span className="gradient-text">CodeFamily</span>
-                    </h2>
-
-                    {/* User Info + Theme Selector */}
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--spacing-lg)' }}>
-                        <ThemeSelector />
-
-                        <div style={{
-                            display: 'flex',
-                            alignItems: 'center',
-                            gap: 'var(--spacing-md)',
-                            padding: 'var(--spacing-sm) var(--spacing-md)',
-                            background: 'var(--color-bg-elevated)',
-                            borderRadius: 'var(--radius-full)',
-                            border: '1px solid var(--color-border-primary)',
-                            transition: 'all var(--transition-base)'
-                        }}>
-                            {user.avatarUrl && (
-                                <img
-                                    src={user.avatarUrl}
-                                    alt={user.username}
-                                    style={{
-                                        width: '40px',
-                                        height: '40px',
-                                        borderRadius: '50%',
-                                        border: '2px solid var(--color-primary)',
-                                        boxShadow: '0 0 12px rgba(124, 58, 237, 0.4)'
-                                    }}
-                                />
-                            )}
-                            <span style={{
-                                fontWeight: 'var(--font-weight-semibold)',
-                                fontSize: 'var(--font-size-base)',
-                                color: 'var(--color-text-primary)'
-                            }}>
-                                {user.username}
+        <ThemeProvider defaultTheme="black-beige">
+            <BrowserRouter>
+                {/* Modern Header */}
+                <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+                    <div className="container-custom flex h-16 items-center justify-between">
+                        {/* Logo */}
+                        <button
+                            onClick={() => window.location.href = '/'}
+                            className="flex items-center gap-2 transition-transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 rounded-md"
+                        >
+                            <Code className="h-6 w-6 text-primary" />
+                            <span className="font-heading text-xl font-bold text-foreground">
+                                ForeSite
                             </span>
+                        </button>
+
+                        {/* User Info + Theme Selector */}
+                        <div className="flex items-center gap-4">
+                            <ThemeSelector />
+
+                            <div className="flex items-center gap-3 px-3 py-2 bg-card border border-border rounded-full transition-all hover:shadow-md">
+                                {user.avatarUrl && (
+                                    <img
+                                        src={user.avatarUrl}
+                                        alt={user.username}
+                                        className="w-8 h-8 rounded-full border-2 border-primary"
+                                    />
+                                )}
+                                <span className="font-medium text-sm text-foreground">
+                                    {user.username}
+                                </span>
+                            </div>
                         </div>
                     </div>
-                </div>
-            </div>
+                </header>
 
-            {/* Routes with fade-in animation */}
-            <div className="animate-fadeIn">
-                <Routes>
-                    <Route path="/" element={<Dashboard user={user} token={token} />} />
-                    <Route path="/repo/:repositoryId" element={<RepoView user={user} />} />
-                    <Route path="/commit/:commitId" element={<CommitView />} />
-                    <Route path="/pr/:prId" element={<PRView />} />
-                    <Route path="/pr/:owner/:repo/:prNumber" element={<PullRequestView user={user} />} />
-                    <Route path="/file/:fileId" element={<FileView />} />
-                    <Route path="/filetree/:fileId" element={<FileTreeView />} />
-                </Routes>
-            </div>
-        </BrowserRouter>
+                {/* Routes with fade-in animation */}
+                <main className="animate-fade-in">
+                    <Routes>
+                        <Route path="/" element={<Dashboard user={user} token={token} />} />
+                        <Route path="/repo/:repositoryId" element={<RepoView user={user} />} />
+                        <Route path="/commit/:commitId" element={<CommitView />} />
+                        <Route path="/pr/:prId" element={<PRView />} />
+                        <Route path="/pr/:owner/:repo/:prNumber" element={<PullRequestView user={user} />} />
+                        <Route path="/file/:fileId" element={<FileView />} />
+                        <Route path="/filetree/:fileId" element={<FileTreeView />} />
+                    </Routes>
+                </main>
+            </BrowserRouter>
+        </ThemeProvider>
     );
 }
 
 export default App;
-

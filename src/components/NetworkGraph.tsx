@@ -119,16 +119,7 @@ export default function NetworkGraph({ centerFile, dependencies = [], dependents
     };
 
     return (
-        <div style={{
-            width: '100%',
-            height: '800px',
-            background: 'linear-gradient(135deg, #0d1117 0%, #161b22 50%, #0d1117 100%)',
-            borderRadius: '12px',
-            border: '1px solid #30363d',
-            overflow: 'hidden',
-            position: 'relative',
-            boxShadow: '0 8px 32px rgba(0, 0, 0, 0.4)'
-        }}>
+        <div className="w-full h-[800px] bg-card/50 rounded-xl border overflow-hidden relative shadow-lg">
             <svg
                 ref={svgRef}
                 width="100%"
@@ -215,61 +206,26 @@ export default function NetworkGraph({ centerFile, dependencies = [], dependents
             </svg>
 
             {/* Legend */}
-            <div style={{
-                position: 'absolute',
-                top: '20px',
-                right: '20px',
-                background: 'rgba(22, 27, 34, 0.85)',
-                backdropFilter: 'blur(10px)',
-                border: '1px solid rgba(48, 54, 61, 0.8)',
-                borderRadius: '12px',
-                padding: '16px',
-                fontSize: '12px',
-                boxShadow: '0 8px 24px rgba(0, 0, 0, 0.4)'
-            }}>
-                <div style={{ marginBottom: '12px', fontWeight: 700, color: '#58a6ff', fontSize: '13px' }}>
+            <div className="absolute top-5 right-5 bg-card/90 backdrop-blur-lg border rounded-xl p-4 text-xs shadow-lg">
+                <div className="mb-3 font-bold text-primary text-sm">
                     📌 Legend
                 </div>
-                <div style={{ display: 'grid', gap: '10px' }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                        <div style={{
-                            width: '20px',
-                            height: '20px',
-                            borderRadius: '50%',
-                            background: 'linear-gradient(135deg, #58a6ff, #1f6feb)',
-                            boxShadow: '0 2px 8px rgba(88, 166, 255, 0.4)'
-                        }}></div>
-                        <span style={{ color: '#c9d1d9', fontWeight: 500 }}>Current File</span>
+                <div className="grid gap-2.5">
+                    <div className="flex items-center gap-2.5">
+                        <div className="w-5 h-5 rounded-full bg-gradient-to-br from-[#58a6ff] to-[#1f6feb] shadow-lg"></div>
+                        <span className="text-foreground font-medium">Current File</span>
                     </div>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                        <div style={{
-                            width: '20px',
-                            height: '20px',
-                            borderRadius: '50%',
-                            background: 'linear-gradient(135deg, #56d364, #2ea043)',
-                            boxShadow: '0 2px 8px rgba(56, 211, 100, 0.4)'
-                        }}></div>
-                        <span style={{ color: '#c9d1d9', fontWeight: 500 }}>Dependencies (Left)</span>
+                    <div className="flex items-center gap-2.5">
+                        <div className="w-5 h-5 rounded-full bg-gradient-to-br from-[#56d364] to-[#2ea043] shadow-lg"></div>
+                        <span className="text-foreground font-medium">Dependencies (Left)</span>
                     </div>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                        <div style={{
-                            width: '20px',
-                            height: '20px',
-                            borderRadius: '50%',
-                            background: 'linear-gradient(135deg, #f0883e, #d15704)',
-                            boxShadow: '0 2px 8px rgba(240, 136, 62, 0.4)'
-                        }}></div>
-                        <span style={{ color: '#c9d1d9', fontWeight: 500 }}>Dependents (Right)</span>
+                    <div className="flex items-center gap-2.5">
+                        <div className="w-5 h-5 rounded-full bg-gradient-to-br from-[#f0883e] to-[#d15704] shadow-lg"></div>
+                        <span className="text-foreground font-medium">Dependents (Right)</span>
                     </div>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                        <div style={{
-                            width: '20px',
-                            height: '20px',
-                            borderRadius: '50%',
-                            background: 'linear-gradient(135deg, #e5b9ff, #bc8cff)',
-                            boxShadow: '0 2px 8px rgba(188, 140, 255, 0.4)'
-                        }}></div>
-                        <span style={{ color: '#c9d1d9', fontWeight: 500 }}>Similar Files (Top)</span>
+                    <div className="flex items-center gap-2.5">
+                        <div className="w-5 h-5 rounded-full bg-gradient-to-br from-[#e5b9ff] to-[#bc8cff] shadow-lg"></div>
+                        <span className="text-foreground font-medium">Similar Files (Top)</span>
                     </div>
                 </div>
             </div>

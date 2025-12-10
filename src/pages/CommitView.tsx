@@ -1,6 +1,12 @@
 import { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
+import { GitCommit, User, Clock, FileText, ChevronDown, ChevronRight } from 'lucide-react';
 import BackButton from '../components/BackButton';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
+import { Skeleton } from '@/components/ui/skeleton';
+import { Alert, AlertDescription } from '@/components/ui/alert';
+import { Separator } from '@/components/ui/separator';
 
 export default function CommitView() {
     const { commitId } = useParams<{ commitId: string }>();
@@ -18,14 +24,12 @@ export default function CommitView() {
             setLoading(true);
             setError('');
 
-            // Get commit from database
             const response = await fetch(`http://localhost:5000/commits/${commitId}`);
             if (!response.ok) throw new Error('Commit not found');
 
             const dbCommit = await response.json();
             setCommit(dbCommit);
 
-            // Try to get GitHub details with user token
             try {
                 const token = localStorage.getItem('token');
                 const headers: any = {};
@@ -59,176 +63,178 @@ export default function CommitView() {
         setExpandedFiles(newExpanded);
     };
 
+    const getStatusColor = (status: string): 'success' | 'destructive' | 'warning' | 'secondary' => {
+        switch (status) {
+            case 'added': return 'success';
+            case 'removed': return 'destructive';
+            case 'modified': return 'warning';
+            default: return 'secondary';
+        }
+    };
+
     if (loading) {
         return (
-            <div className="container" style={{ textAlign: 'center', paddingTop: '60px' }}>
-                <div style={{ fontSize: '48px', marginBottom: '20px' }}>⏳</div>
-                <h2>Loading commit details...</h2>
+            <div className="container-custom py-8 space-y-4">
+                <Skeleton className="h-8 w-48" />
+                <Skeleton className="h-32 w-full" />
+                <Skeleton className="h-64 w-full" />
             </div>
         );
     }
 
     if (error) {
         return (
-            <div className="container">
-                <div style={{
-                    padding: '20px',
-                    background: '#da363320',
-                    border: '1px solid #da3633',
-                    borderRadius: '6px',
-                    color: '#f85149'
-                }}>
-                    <strong>Error:</strong> {error}
-                </div>
+            <div className="container-custom py-8">
+                <BackButton />
+                <Alert variant="destructive">
+                    <AlertDescription>{error}</AlertDescription>
+                </Alert>
             </div>
         );
     }
 
     if (!commit) {
-        return <div className="container">Commit not found</div>;
+        return (
+            <div className="container-custom py-8">
+                <BackButton />
+                <Card>
+                    <CardContent className="py-12 text-center">
+                        <h3 className="font-heading text-lg font-semibold">Commit not found</h3>
+                    </CardContent>
+                </Card>
+            </div>
+        );
     }
 
     return (
-        <div className="container">
+        <div className="container-custom py-8 animate-fade-in">
             <BackButton />
 
             {/* Header */}
-            <div style={{ marginBottom: '32px' }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '16px' }}>
-                    <code style={{
-                        fontSize: '20px',
-                        color: '#58a6ff',
-                        background: '#0d1117',
-                        padding: '8px 16px',
-                        borderRadius: '6px',
-                        border: '1px solid #30363d'
-                    }}>
+            <div className="mb-8">
+                <div className="flex items-center gap-3 mb-4">
+                    <GitCommit className="h-8 w-8 text-primary" />
+                    <code className="text-2xl font-mono text-primary bg-primary/10 px-4 py-2 rounded">
                         {commit.sha ? commit.sha.substring(0, 7) : 'Unknown'}
                     </code>
-                    <span style={{ color: '#8b949e', fontSize: '14px' }}>
+                    <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                        <Clock className="h-4 w-4" />
                         {commit.committedAt && new Date(commit.committedAt).toLocaleString()}
-                    </span>
+                    </div>
                 </div>
 
-                <h1 style={{ fontSize: '24px', marginBottom: '8px' }}>
+                <h1 className="text-2xl font-heading font-bold mb-4">
                     {commit.message || 'No message'}
                 </h1>
 
                 {commit.github && (
-                    <div style={{ display: 'flex', gap: '16px', marginTop: '12px', fontSize: '14px' }}>
-                        <span style={{ color: '#3fb950' }}>+{commit.github.stats?.additions || 0} additions</span>
-                        <span style={{ color: '#f85149' }}>-{commit.github.stats?.deletions || 0} deletions</span>
-                        <span style={{ color: '#8b949e' }}>{commit.github.files?.length || 0} files changed</span>
+                    <div className="flex gap-4 text-sm">
+                        <span className="text-green-600 dark:text-green-400">
+                            +{commit.github.stats?.additions || 0} additions
+                        </span>
+                        <span className="text-red-600 dark:text-red-400">
+                            -{commit.github.stats?.deletions || 0} deletions
+                        </span>
+                        <span className="text-muted-foreground">
+                            {commit.github.files?.length || 0} files changed
+                        </span>
                     </div>
                 )}
             </div>
 
-            <div className="card">
-                <h2>Commit Information</h2>
-                <div style={{ marginTop: '16px' }}>
-                    <div style={{ padding: '8px 0', borderBottom: '1px solid #30363d' }}>
-                        <span style={{ color: '#8b949e' }}>SHA:</span> <code style={{ color: '#58a6ff', marginLeft: '8px' }}>{commit.sha}</code>
+            {/* Commit Information */}
+            <Card className="mb-6">
+                <CardHeader>
+                    <CardTitle className="text-base flex items-center gap-2">
+                        <FileText className="h-4 w-4" />
+                        Commit Information
+                    </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-3 text-sm">
+                    <div className="flex justify-between items-center">
+                        <span className="text-muted-foreground">SHA:</span>
+                        <code className="text-primary font-mono">{commit.sha}</code>
                     </div>
-                    <div style={{ padding: '8px 0', borderBottom: '1px solid #30363d' }}>
-                        <span style={{ color: '#8b949e' }}>Message:</span> <span style={{ marginLeft: '8px' }}>{commit.message}</span>
+                    <Separator />
+                    <div className="flex justify-between items-start">
+                        <span className="text-muted-foreground">Message:</span>
+                        <span className="text-right flex-1 ml-4">{commit.message}</span>
                     </div>
-                    <div style={{ padding: '8px 0', borderBottom: '1px solid #30363d' }}>
-                        <span style={{ color: '#8b949e' }}>Author:</span> <span style={{ marginLeft: '8px' }}>{commit.github?.commit?.author?.name || 'Unknown'}</span>
+                    <Separator />
+                    <div className="flex justify-between items-center">
+                        <span className="text-muted-foreground flex items-center gap-2">
+                            <User className="h-4 w-4" />
+                            Author:
+                        </span>
+                        <span>{commit.github?.commit?.author?.name || 'Unknown'}</span>
                     </div>
-                    <div style={{ padding: '8px 0' }}>
-                        <span style={{ color: '#8b949e' }}>Date:</span> <span style={{ marginLeft: '8px' }}>{commit.committedAt && new Date(commit.committedAt).toLocaleString()}</span>
+                    <Separator />
+                    <div className="flex justify-between items-center">
+                        <span className="text-muted-foreground flex items-center gap-2">
+                            <Clock className="h-4 w-4" />
+                            Date:
+                        </span>
+                        <span>{commit.committedAt && new Date(commit.committedAt).toLocaleString()}</span>
                     </div>
-                </div>
-            </div>
+                </CardContent>
+            </Card>
 
+            {/* Files Changed */}
             {commit.github?.files && (
-                <div style={{ marginTop: '24px' }}>
-                    <h2 style={{ marginBottom: '16px' }}>Files Changed ({commit.github.files.length})</h2>
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                <div>
+                    <h2 className="font-heading text-2xl font-semibold mb-4">
+                        Files Changed ({commit.github.files.length})
+                    </h2>
+                    <div className="space-y-3">
                         {commit.github.files.map((file: any, idx: number) => (
-                            <div key={idx} className="card" style={{ padding: '16px' }}>
-                                <div
-                                    style={{
-                                        display: 'flex',
-                                        justifyContent: 'space-between',
-                                        alignItems: 'center',
-                                        cursor: 'pointer'
-                                    }}
+                            <Card key={idx}>
+                                <CardHeader
+                                    className="cursor-pointer hover:bg-muted/50 transition-colors"
                                     onClick={() => toggleFile(file.filename)}
                                 >
-                                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                                        <code style={{ color: '#c9d1d9', fontSize: '14px' }}>{file.filename}</code>
-                                        <span style={{
-                                            padding: '2px 6px',
-                                            borderRadius: '6px',
-                                            fontSize: '11px',
-                                            background: file.status === 'added' ? '#238636' : file.status === 'removed' ? '#da3633' : '#d29922',
-                                            color: 'white'
-                                        }}>
-                                            {file.status}
-                                        </span>
+                                    <div className="flex items-center justify-between">
+                                        <div className="flex items-center gap-2 min-w-0 flex-1">
+                                            {expandedFiles.has(file.filename) ?
+                                                <ChevronDown className="h-4 w-4 flex-shrink-0" /> :
+                                                <ChevronRight className="h-4 w-4 flex-shrink-0" />
+                                            }
+                                            <code className="text-sm font-mono truncate">{file.filename}</code>
+                                            <Badge variant={getStatusColor(file.status)} className="flex-shrink-0">
+                                                {file.status}
+                                            </Badge>
+                                        </div>
+                                        <div className="flex items-center gap-3 flex-shrink-0 ml-4">
+                                            <span className="text-xs text-green-600 dark:text-green-400">+{file.additions}</span>
+                                            <span className="text-xs text-red-600 dark:text-red-400">-{file.deletions}</span>
+                                        </div>
                                     </div>
-                                    <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
-                                        <span style={{ color: '#238636', fontSize: '12px' }}>+{file.additions}</span>
-                                        <span style={{ color: '#da3633', fontSize: '12px' }}>-{file.deletions}</span>
-                                        <span style={{ fontSize: '12px', color: '#8b949e' }}>
-                                            {expandedFiles.has(file.filename) ? '▼' : '▶'}
-                                        </span>
-                                    </div>
-                                </div>
+                                </CardHeader>
 
                                 {expandedFiles.has(file.filename) && file.patch && (
-                                    <div style={{
-                                        marginTop: '12px',
-                                        background: '#0d1117',
-                                        borderRadius: '6px',
-                                        overflow: 'hidden',
-                                        border: '1px solid #30363d'
-                                    }}>
-                                        {file.patch.split('\n').map((line: string, lineIdx: number) => {
-                                            // Determine line type and styling
-                                            let bgColor = 'transparent';
-                                            let textColor = '#c9d1d9';
-                                            let borderLeft = 'none';
+                                    <CardContent className="pt-0">
+                                        <div className="bg-muted/30 rounded-md overflow-hidden border">
+                                            {file.patch.split('\n').map((line: string, lineIdx: number) => {
+                                                let className = 'px-4 py-0.5 font-mono text-xs';
+                                                if (line.startsWith('+') && !line.startsWith('+++')) {
+                                                    className += ' bg-green-500/10 text-green-600 dark:text-green-400 border-l-2 border-green-500';
+                                                } else if (line.startsWith('-') && !line.startsWith('---')) {
+                                                    className += ' bg-red-500/10 text-red-600 dark:text-red-400 border-l-2 border-red-500';
+                                                } else if (line.startsWith('@@')) {
+                                                    className += ' bg-blue-500/10 text-primary border-l-2 border-primary';
+                                                } else if (line.startsWith('+++') || line.startsWith('---')) {
+                                                    className += ' text-muted-foreground';
+                                                }
 
-                                            if (line.startsWith('+') && !line.startsWith('+++')) {
-                                                bgColor = '#23863620';
-                                                textColor = '#3fb950';
-                                                borderLeft = '3px solid #3fb950';
-                                            } else if (line.startsWith('-') && !line.startsWith('---')) {
-                                                bgColor = '#da363320';
-                                                textColor = '#f85149';
-                                                borderLeft = '3px solid #f85149';
-                                            } else if (line.startsWith('@@')) {
-                                                bgColor = '#388bfd20';
-                                                textColor = '#58a6ff';
-                                                borderLeft = '3px solid #58a6ff';
-                                            } else if (line.startsWith('+++') || line.startsWith('---')) {
-                                                textColor = '#8b949e';
-                                            }
-
-                                            return (
-                                                <div
-                                                    key={lineIdx}
-                                                    style={{
-                                                        padding: '2px 12px',
-                                                        background: bgColor,
-                                                        color: textColor,
-                                                        fontFamily: 'monospace',
-                                                        fontSize: '12px',
-                                                        lineHeight: '20px',
-                                                        borderLeft: borderLeft,
-                                                        whiteSpace: 'pre',
-                                                        overflowX: 'auto'
-                                                    }}
-                                                >
-                                                    {line || ' '}
-                                                </div>
-                                            );
-                                        })}
-                                    </div>
+                                                return (
+                                                    <div key={lineIdx} className={className}>
+                                                        {line || ' '}
+                                                    </div>
+                                                );
+                                            })}
+                                        </div>
+                                    </CardContent>
                                 )}
-                            </div>
+                            </Card>
                         ))}
                     </div>
                 </div>

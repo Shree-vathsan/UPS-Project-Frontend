@@ -1,16 +1,28 @@
 import { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
+import { GitCommit, GitPullRequest, FolderTree, BarChart, RefreshCw, GitBranch, Clock, ArrowRight } from 'lucide-react';
 import { api } from '../utils/api';
 import FileTree from '../components/FileTree';
 import BackButton from '../components/BackButton';
 import RepositoryAnalytics from '../components/RepositoryAnalytics';
 import TeamInsights from '../components/TeamInsights';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
+import { Skeleton } from '@/components/ui/skeleton';
+import {
+    DropdownMenu,
+    DropdownMenuContent,
+    DropdownMenuItem,
+    DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 
 interface RepoViewProps {
     user: any;
 }
 
-export default function RepoView({ user }: RepoViewProps) {
+export default function RepoView({ user: _user }: RepoViewProps) {
     const { repositoryId } = useParams<{ repositoryId: string }>();
     const [activeTab, setActiveTab] = useState<'commits' | 'prs' | 'files' | 'analytics'>('commits');
     const [repository, setRepository] = useState<any>(null);
@@ -84,7 +96,6 @@ export default function RepoView({ user }: RepoViewProps) {
 
     const loadCommits = async () => {
         try {
-            // Load commits filtered by selected branch
             const data = await fetch(`http://localhost:5000/api/repositories/${repositoryId}/branches/${selectedBranch}/commits`);
             const commits = await data.json();
             setCommits(commits);
@@ -105,7 +116,6 @@ export default function RepoView({ user }: RepoViewProps) {
 
     const loadFiles = async () => {
         try {
-            // Load files filtered by selected branch
             const data = await fetch(`http://localhost:5000/api/repositories/${repositoryId}/branches/${selectedBranch}/files`);
             const files = await data.json();
             setFiles(files);
@@ -174,425 +184,277 @@ export default function RepoView({ user }: RepoViewProps) {
     };
 
     if (loading) {
-        return <div className="container">Loading repository...</div>;
+        return (
+            <div className="container-custom py-8">
+                <Skeleton className="h-8 w-48 mb-6" />
+                <Skeleton className="h-12 w-full mb-4" />
+                <Skeleton className="h-64 w-full" />
+            </div>
+        );
     }
 
     if (!repository) {
-        return <div className="container">Repository not found</div>;
+        return (
+            <div className="container-custom py-8">
+                <Card>
+                    <CardContent className="py-12 text-center">
+                        <h3 className="font-heading text-lg font-semibold">Repository not found</h3>
+                    </CardContent>
+                </Card>
+            </div>
+        );
     }
 
     return (
-        <div className="container">
+        <div className="container-custom py-8 animate-fade-in">
             <BackButton to="/" label="Back to Dashboard" />
 
-            <div style={{ marginBottom: '24px' }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'start' }}>
-                    <div>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                            <h1>{repository.ownerUsername}/{repository.name}</h1>
-                            <button
+            {/* Repository Header */}
+            <div className="mb-8">
+                <div className="flex items-start justify-between mb-4">
+                    <div className="flex-1">
+                        <div className="flex items-center gap-3 mb-3">
+                            <h1 className="font-heading text-3xl font-bold">
+                                {repository.ownerUsername}/{repository.name}
+                            </h1>
+                            <Button
                                 onClick={refreshRepository}
                                 disabled={isRefreshing}
-                                style={{
-                                    background: isRefreshing ? '#30363d' : '#21262d',
-                                    border: '1px solid #30363d',
-                                    color: isRefreshing ? '#8b949e' : '#c9d1d9',
-                                    padding: '6px 12px',
-                                    borderRadius: '6px',
-                                    cursor: isRefreshing ? 'default' : 'pointer',
-                                    fontSize: '12px',
-                                    display: 'flex',
-                                    alignItems: 'center',
-                                    gap: '6px',
-                                    transition: 'all 0.2s'
-                                }}
+                                variant="outline"
+                                size="sm"
+                                className="gap-2"
                             >
-                                {isRefreshing ? (
-                                    <>
-                                        <span className="animate-spin">↻</span> Refreshing...
-                                    </>
-                                ) : (
-                                    <>
-                                        <span>↻</span> Refresh
-                                    </>
-                                )}
-                            </button>
+                                <RefreshCw className={`h-4 w-4 ${isRefreshing ? 'animate-spin' : ''}`} />
+                                {isRefreshing ? 'Refreshing...' : 'Refresh'}
+                            </Button>
                         </div>
-                        <div style={{ display: 'flex', gap: '8px', alignItems: 'center', marginTop: '8px' }}>
-                            <span style={{
-                                padding: '4px 12px',
-                                borderRadius: '12px',
-                                fontSize: '12px',
-                                background: repository.status === 'ready' ? '#238636' : '#f0883e',
-                                color: 'white'
-                            }}>
+
+                        <div className="flex items-center gap-3">
+                            <Badge variant={repository.status === 'ready' ? 'success' : 'warning'}>
                                 {repository.status || 'unknown'}
-                            </span>
+                            </Badge>
                             {repository.lastRefreshAt && (
-                                <span style={{ fontSize: '12px', color: '#8b949e' }}>
-                                    Last updated: {new Date(repository.lastRefreshAt).toLocaleString()}
-                                </span>
+                                <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                                    <Clock className="h-4 w-4" />
+                                    <span>Updated {new Date(repository.lastRefreshAt).toLocaleString()}</span>
+                                </div>
                             )}
                         </div>
                     </div>
 
                     {/* Branch Selector */}
                     {branches.length > 0 && (
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                            <span style={{ color: '#8b949e', fontSize: '14px' }}>Branch:</span>
-                            <select
-                                value={selectedBranch}
-                                onChange={(e) => setSelectedBranch(e.target.value)}
-                                style={{
-                                    background: '#21262d',
-                                    color: '#c9d1d9',
-                                    border: '1px solid #30363d',
-                                    padding: '8px 32px 8px 12px',
-                                    borderRadius: '6px',
-                                    fontSize: '14px',
-                                    cursor: 'pointer',
-                                    outline: 'none',
-                                    transition: 'all 0.2s',
-                                }}
-                            >
+                        <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                                <Button variant="outline" className="gap-2">
+                                    <GitBranch className="h-4 w-4" />
+                                    {selectedBranch}
+                                </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end">
                                 {branches.map((branch: any) => (
-                                    <option key={branch.id} value={branch.name}>
+                                    <DropdownMenuItem
+                                        key={branch.id}
+                                        onClick={() => setSelectedBranch(branch.name)}
+                                    >
                                         {branch.name} {branch.isDefault && '(default)'}
-                                    </option>
+                                        {branch.name === selectedBranch && <span className="ml-auto">✓</span>}
+                                    </DropdownMenuItem>
                                 ))}
-                            </select>
-
-                            <button
-                                onClick={refreshRepository}
-                                disabled={isRefreshing}
-                                style={{
-                                    background: '#21262d',
-                                    color: '#c9d1d9',
-                                    border: '1px solid #30363d',
-                                    padding: '8px 12px',
-                                    borderRadius: '6px',
-                                    fontSize: '14px',
-                                    cursor: isRefreshing ? 'not-allowed' : 'pointer',
-                                    display: 'flex',
-                                    alignItems: 'center',
-                                    gap: '6px',
-                                    marginLeft: '8px'
-                                }}
-                                onMouseEnter={(e) => {
-                                    if (!isRefreshing) e.currentTarget.style.background = '#30363d';
-                                }}
-                                onMouseLeave={(e) => {
-                                    if (!isRefreshing) e.currentTarget.style.background = '#21262d';
-                                }}
-                            >
-                                <span style={{
-                                    display: 'inline-block',
-                                    animation: isRefreshing ? 'spin 1s linear infinite' : 'none'
-                                }}>↻</span>
-                                {isRefreshing ? 'Refreshing...' : 'Refresh'}
-                            </button>
-                            <style>{`
-                                @keyframes spin {
-                                    from { transform: rotate(0deg); }
-                                    to { transform: rotate(360deg); }
-                                }
-                            `}</style>
-                        </div>
+                            </DropdownMenuContent>
+                        </DropdownMenu>
                     )}
                 </div>
             </div>
 
             {/* Tabs */}
-            <div style={{
-                borderBottom: '1px solid #30363d',
-                marginBottom: '24px',
-                display: 'flex',
-                gap: '24px'
-            }}>
-                <button
-                    onClick={() => setActiveTab('commits')}
-                    style={{
-                        background: 'none',
-                        border: 'none',
-                        color: activeTab === 'commits' ? '#58a6ff' : '#8b949e',
-                        padding: '8px 0',
-                        borderBottom: activeTab === 'commits' ? '2px solid #58a6ff' : 'none',
-                        cursor: 'pointer',
-                        fontSize: '14px',
-                        fontWeight: 600
-                    }}
-                >
-                    Commits
-                </button>
-                <button
-                    onClick={() => setActiveTab('prs')}
-                    style={{
-                        background: 'none',
-                        border: 'none',
-                        color: activeTab === 'prs' ? '#58a6ff' : '#8b949e',
-                        padding: '8px 0',
-                        borderBottom: activeTab === 'prs' ? '2px solid #58a6ff' : 'none',
-                        cursor: 'pointer',
-                        fontSize: '14px',
-                        fontWeight: 600
-                    }}
-                >
-                    Pull Requests ({allPrs.length})
-                </button>
-                <button
-                    onClick={() => setActiveTab('files')}
-                    style={{
-                        background: 'none',
-                        border: 'none',
-                        color: activeTab === 'files' ? '#58a6ff' : '#8b949e',
-                        padding: '8px 0',
-                        borderBottom: activeTab === 'files' ? '2px solid #58a6ff' : 'none',
-                        cursor: 'pointer',
-                        fontSize: '14px',
-                        fontWeight: 600
-                    }}
-                >
-                    File Structure
-                </button>
-                <button
-                    onClick={() => setActiveTab('analytics')}
-                    style={{
-                        background: 'none',
-                        border: 'none',
-                        color: activeTab === 'analytics' ? '#58a6ff' : '#8b949e',
-                        padding: '8px 0',
-                        borderBottom: activeTab === 'analytics' ? '2px solid #58a6ff' : 'none',
-                        cursor: 'pointer',
-                        fontSize: '14px',
-                        fontWeight: 600
-                    }}
-                >
-                    📊 Analytics
-                </button>
-            </div>
+            <Tabs value={activeTab} onValueChange={(value) => setActiveTab(value as any)}>
+                <TabsList className="grid w-full max-w-2xl grid-cols-4">
+                    <TabsTrigger value="commits" className="gap-2">
+                        <GitCommit className="h-4 w-4" />
+                        <span className="hidden sm:inline">Commits</span>
+                    </TabsTrigger>
+                    <TabsTrigger value="prs" className="gap-2">
+                        <GitPullRequest className="h-4 w-4" />
+                        <span className="hidden sm:inline">PRs ({allPrs.length})</span>
+                        <span className="sm:hidden">{allPrs.length}</span>
+                    </TabsTrigger>
+                    <TabsTrigger value="files" className="gap-2">
+                        <FolderTree className="h-4 w-4" />
+                        <span className="hidden sm:inline">Files</span>
+                    </TabsTrigger>
+                    <TabsTrigger value="analytics" className="gap-2">
+                        <BarChart className="h-4 w-4" />
+                        <span className="hidden sm:inline">Analytics</span>
+                    </TabsTrigger>
+                </TabsList>
 
-            {/* Tab Content */}
-            {activeTab === 'commits' && (
-                <div>
-                    <h2>Commits from branch: {selectedBranch}</h2>
+                {/* Commits Tab */}
+                <TabsContent value="commits" className="mt-6 space-y-4">
+                    <h2 className="font-heading text-xl font-semibold">
+                        Commits from {selectedBranch}
+                    </h2>
                     {commits.length === 0 ? (
-                        <p>No commits found</p>
+                        <Card>
+                            <CardContent className="py-12 text-center">
+                                <GitCommit className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
+                                <h3 className="font-heading text-lg font-semibold mb-2">No commits found</h3>
+                                <p className="text-muted-foreground text-sm">
+                                    This branch doesn't have any commits yet.
+                                </p>
+                            </CardContent>
+                        </Card>
                     ) : (
-                        <div className="repo-list">
+                        <div className="grid gap-4">
                             {commits.map((commit: any) => (
-                                <div key={commit.id} className="card">
-                                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'start' }}>
-                                        <div>
-                                            <code style={{ color: '#58a6ff', fontSize: '12px' }}>
-                                                {commit.sha.substring(0, 7)}
-                                            </code>
-                                            <p style={{ margin: '8px 0', color: '#c9d1d9' }}>
-                                                {commit.message}
-                                            </p>
-                                            <span style={{ fontSize: '12px', color: '#8b949e' }}>
-                                                {new Date(commit.committedAt).toLocaleString()}
-                                            </span>
+                                <Card key={commit.id} className="hover-lift">
+                                    <CardHeader>
+                                        <div className="flex items-start justify-between">
+                                            <div className="flex-1 space-y-2">
+                                                <code className="text-xs text-primary bg-primary/10 px-2 py-1 rounded">
+                                                    {commit.sha.substring(0, 7)}
+                                                </code>
+                                                <CardTitle className="text-base font-normal">
+                                                    {commit.message}
+                                                </CardTitle>
+                                                <CardDescription>
+                                                    {new Date(commit.committedAt).toLocaleString()}
+                                                </CardDescription>
+                                            </div>
+                                            <Button
+                                                onClick={() => window.location.href = `/commit/${commit.id}`}
+                                                size="sm"
+                                                className="gap-2 ml-4"
+                                            >
+                                                View Details
+                                                <ArrowRight className="h-4 w-4" />
+                                            </Button>
                                         </div>
-                                        <button
-                                            className="btn btn-primary"
-                                            style={{
-                                                background: '#58a6ff',
-                                                color: '#0d1117',
-                                                border: 'none',
-                                                padding: '8px 16px',
-                                                borderRadius: '6px',
-                                                fontSize: '14px',
-                                                fontWeight: 600,
-                                                cursor: 'pointer',
-                                                transition: 'all 0.2s',
-                                                display: 'flex',
-                                                alignItems: 'center',
-                                                gap: '6px'
-                                            }}
-                                            onClick={() => window.location.href = `/commit/${commit.id}`}
-                                            onMouseEnter={(e) => {
-                                                e.currentTarget.style.background = '#388bfd';
-                                                e.currentTarget.style.transform = 'translateY(-1px)';
-                                                e.currentTarget.style.boxShadow = '0 4px 8px rgba(88, 166, 255, 0.3)';
-                                            }}
-                                            onMouseLeave={(e) => {
-                                                e.currentTarget.style.background = '#58a6ff';
-                                                e.currentTarget.style.transform = 'translateY(0)';
-                                                e.currentTarget.style.boxShadow = 'none';
-                                            }}
-                                        >
-                                            <span>View Details</span>
-                                            <span>→</span>
-                                        </button>
-                                    </div>
-                                </div>
+                                    </CardHeader>
+                                </Card>
                             ))}
                         </div>
                     )}
-                </div>
-            )}
+                </TabsContent>
 
-            {activeTab === 'prs' && (
-                <div>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
-                        <h2>Pull Requests ({prs.length})</h2>
-                        <div style={{ display: 'flex', gap: '8px' }}>
-                            <button
+                {/* Pull Requests Tab */}
+                <TabsContent value="prs" className="mt-6 space-y-4">
+                    <div className="flex items-center justify-between">
+                        <h2 className="font-heading text-xl font-semibold">
+                            Pull Requests ({prs.length})
+                        </h2>
+                        <div className="flex gap-2">
+                            <Button
                                 onClick={() => setPrFilter('all')}
-                                style={{
-                                    background: prFilter === 'all' ? '#58a6ff' : '#21262d',
-                                    color: prFilter === 'all' ? '#0d1117' : '#c9d1d9',
-                                    fontSize: '14px',
-                                    padding: '6px 12px',
-                                    border: 'none',
-                                    borderRadius: '6px',
-                                    cursor: 'pointer'
-                                }}
+                                variant={prFilter === 'all' ? 'default' : 'outline'}
+                                size="sm"
                             >
                                 All
-                            </button>
-                            <button
+                            </Button>
+                            <Button
                                 onClick={() => setPrFilter('open')}
-                                style={{
-                                    background: prFilter === 'open' ? '#58a6ff' : '#21262d',
-                                    color: prFilter === 'open' ? '#0d1117' : '#c9d1d9',
-                                    fontSize: '14px',
-                                    padding: '6px 12px',
-                                    border: 'none',
-                                    borderRadius: '6px',
-                                    cursor: 'pointer'
-                                }}
+                                variant={prFilter === 'open' ? 'default' : 'outline'}
+                                size="sm"
                             >
                                 Open
-                            </button>
-                            <button
+                            </Button>
+                            <Button
                                 onClick={() => setPrFilter('closed')}
-                                style={{
-                                    background: prFilter === 'closed' ? '#58a6ff' : '#21262d',
-                                    color: prFilter === 'closed' ? '#0d1117' : '#c9d1d9',
-                                    fontSize: '14px',
-                                    padding: '6px 12px',
-                                    border: 'none',
-                                    borderRadius: '6px',
-                                    cursor: 'pointer'
-                                }}
+                                variant={prFilter === 'closed' ? 'default' : 'outline'}
+                                size="sm"
                             >
                                 Closed
-                            </button>
+                            </Button>
                         </div>
                     </div>
+
                     {prs.length === 0 ? (
-                        <div style={{ textAlign: 'center', paddingTop: '60px' }}>
-                            <div style={{ fontSize: '64px', marginBottom: '20px' }}>🔀</div>
-                            <h3>No Pull Requests Found</h3>
-                            <p style={{ color: '#8b949e', marginTop: '12px' }}>
-                                {prFilter === 'all'
-                                    ? 'No pull requests have been created for this repository yet.'
-                                    : `No ${prFilter} pull requests found.`}
-                            </p>
-                        </div>
+                        <Card>
+                            <CardContent className="py-12 text-center">
+                                <GitPullRequest className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
+                                <h3 className="font-heading text-lg font-semibold mb-2">No Pull Requests Found</h3>
+                                <p className="text-muted-foreground text-sm">
+                                    {prFilter === 'all'
+                                        ? 'No pull requests have been created for this repository yet.'
+                                        : `No ${prFilter} pull requests found.`}
+                                </p>
+                            </CardContent>
+                        </Card>
                     ) : (
-                        <div className="repo-list">
+                        <div className="grid gap-4">
                             {prs.map((pr: any) => (
-                                <div key={pr.id} className="card repo-card">
-                                    <div className="repo-info" style={{ flex: 1 }}>
-                                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '4px' }}>
-                                            <span style={{
-                                                background: '#6e7681',
-                                                color: 'white',
-                                                padding: '2px 6px',
-                                                borderRadius: '4px',
-                                                fontSize: '10px',
-                                                fontWeight: 600
-                                            }}>PR</span>
-                                            <h3>{pr.title || `Pull Request #${pr.prNumber}`}</h3>
+                                <Card key={pr.id} className="hover-lift">
+                                    <CardHeader>
+                                        <div className="flex items-start justify-between">
+                                            <div className="flex-1 space-y-2">
+                                                <div className="flex items-center gap-2">
+                                                    <Badge variant="secondary" className="text-xs">PR</Badge>
+                                                    <CardTitle className="text-base">
+                                                        {pr.title || `Pull Request #${pr.prNumber}`}
+                                                    </CardTitle>
+                                                </div>
+                                                <div className="flex items-center gap-2">
+                                                    <code className="text-xs text-muted-foreground">
+                                                        #{pr.prNumber}
+                                                    </code>
+                                                    <Badge variant={pr.state === 'open' ? 'success' : 'secondary'}>
+                                                        {pr.state === 'open' ? 'Open' : 'Merged'}
+                                                    </Badge>
+                                                </div>
+                                            </div>
+                                            <Button
+                                                onClick={() => window.location.href = `/pr/${repository.ownerUsername}/${repository.name}/${pr.prNumber}`}
+                                                size="sm"
+                                                className="gap-2 ml-4"
+                                            >
+                                                View PR
+                                                <ArrowRight className="h-4 w-4" />
+                                            </Button>
                                         </div>
-                                        <div style={{ display: 'flex', gap: '8px', alignItems: 'center', marginTop: '8px' }}>
-                                            <span style={{ color: '#8b949e', fontSize: '14px', fontFamily: 'monospace' }}>#{pr.prNumber}</span>
-                                            <span style={{
-                                                padding: '2px 8px',
-                                                borderRadius: '12px',
-                                                fontSize: '11px',
-                                                background: pr.state === 'open' ? '#238636' : '#8250df',
-                                                color: 'white',
-                                                fontWeight: 600
-                                            }}>
-                                                {pr.state === 'open' ? 'Open' : 'Merged'}
-                                            </span>
-                                        </div>
-                                    </div>
-                                    <button
-                                        className="btn btn-primary"
-                                        style={{
-                                            background: '#58a6ff',
-                                            color: '#0d1117',
-                                            border: 'none',
-                                            padding: '8px 16px',
-                                            borderRadius: '6px',
-                                            fontSize: '14px',
-                                            fontWeight: 600,
-                                            cursor: 'pointer',
-                                            transition: 'all 0.2s',
-                                            display: 'flex',
-                                            alignItems: 'center',
-                                            gap: '6px',
-                                            marginLeft: '16px'
-                                        }}
-                                        onClick={() => window.location.href = `/pr/${repository.ownerUsername}/${repository.name}/${pr.prNumber}`}
-                                        onMouseEnter={(e) => {
-                                            e.currentTarget.style.background = '#388bfd';
-                                            e.currentTarget.style.transform = 'translateY(-1px)';
-                                            e.currentTarget.style.boxShadow = '0 4px 8px rgba(88, 166, 255, 0.3)';
-                                        }}
-                                        onMouseLeave={(e) => {
-                                            e.currentTarget.style.background = '#58a6ff';
-                                            e.currentTarget.style.transform = 'translateY(0)';
-                                            e.currentTarget.style.boxShadow = 'none';
-                                        }}
-                                    >
-                                        <span>View PR</span>
-                                        <span>→</span>
-                                    </button>
-                                </div>
+                                    </CardHeader>
+                                </Card>
                             ))}
                         </div>
                     )}
-                </div >
-            )}
+                </TabsContent>
 
-            {
-                activeTab === 'files' && (
-                    <div>
-                        <h2>File Structure ({selectedBranch} branch)</h2>
-                        {files.length === 0 ? (
-                            <p>No files found</p>
-                        ) : (
-                            <div className="card" style={{
-                                padding: '16px',
-                                background: '#161b22',
-                                border: '1px solid #30363d',
-                                borderRadius: '8px'
-                            }}>
+                {/* Files Tab */}
+                <TabsContent value="files" className="mt-6 space-y-4">
+                    <h2 className="font-heading text-xl font-semibold">
+                        File Structure ({selectedBranch} branch)
+                    </h2>
+                    {files.length === 0 ? (
+                        <Card>
+                            <CardContent className="py-12 text-center">
+                                <FolderTree className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
+                                <h3 className="font-heading text-lg font-semibold mb-2">No files found</h3>
+                            </CardContent>
+                        </Card>
+                    ) : (
+                        <Card>
+                            <CardContent className="pt-6">
                                 <FileTree
                                     files={files}
                                     onFileClick={(fileId) => window.location.href = `/file/${fileId}?branch=${encodeURIComponent(selectedBranch)}`}
                                 />
-                            </div>
-                        )}
+                            </CardContent>
+                        </Card>
+                    )}
+                </TabsContent>
+
+                {/* Analytics Tab */}
+                <TabsContent value="analytics" className="mt-6 space-y-8">
+                    <div>
+                        <h2 className="font-heading text-2xl font-semibold mb-6">Repository Analytics</h2>
+                        <RepositoryAnalytics repositoryId={repositoryId!} />
                     </div>
-                )
-            }
 
-            {/* Analytics Tab */}
-            {activeTab === 'analytics' && (
-                <div>
-                    <h2>Repository Analytics</h2>
-                    <RepositoryAnalytics repositoryId={repositoryId!} />
-
-                    <h2 style={{ marginTop: '48px' }}>Team Insights</h2>
-                    <TeamInsights repositoryId={repositoryId!} />
-                </div>
-            )}
-        </div >
+                    <div>
+                        <h2 className="font-heading text-2xl font-semibold mb-6">Team Insights</h2>
+                        <TeamInsights repositoryId={repositoryId!} />
+                    </div>
+                </TabsContent>
+            </Tabs>
+        </div>
     );
 }

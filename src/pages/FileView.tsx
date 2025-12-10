@@ -1,12 +1,17 @@
 import { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
+import { Code, BarChart, FileText, ChevronLeft, ChevronRight, Clock } from 'lucide-react';
 import { api } from '../utils/api';
-import DependencyGraph from '../components/DependencyGraph';
 import BackButton from '../components/BackButton';
 import FileAnalysis from '../components/FileAnalysis';
 import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
 import { vscDarkPlus } from 'react-syntax-highlighter/dist/esm/styles/prism';
-
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Card, CardContent } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
+import { Skeleton } from '@/components/ui/skeleton';
+import { Alert, AlertDescription } from '@/components/ui/alert';
 
 export default function FileView() {
     const { fileId } = useParams<{ fileId: string }>();
@@ -16,41 +21,18 @@ export default function FileView() {
     const [activeTab, setActiveTab] = useState<'code' | 'analysis'>('code');
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string>('');
-
     const [commitHistory, setCommitHistory] = useState<any[]>([]);
     const [currentCommitSha, setCurrentCommitSha] = useState<string | null>(null);
 
-    // Helper function to get language from file path
     const getLanguageFromPath = (filePath: string): string => {
         const extension = filePath.split('.').pop()?.toLowerCase();
         const languageMap: { [key: string]: string } = {
-            'js': 'javascript',
-            'jsx': 'jsx',
-            'ts': 'typescript',
-            'tsx': 'tsx',
-            'py': 'python',
-            'java': 'java',
-            'c': 'c',
-            'cpp': 'cpp',
-            'cs': 'csharp',
-            'go': 'go',
-            'rs': 'rust',
-            'rb': 'ruby',
-            'php': 'php',
-            'swift': 'swift',
-            'kt': 'kotlin',
-            'dart': 'dart',
-            'html': 'html',
-            'css': 'css',
-            'scss': 'scss',
-            'json': 'json',
-            'xml': 'xml',
-            'yaml': 'yaml',
-            'yml': 'yaml',
-            'md': 'markdown',
-            'sql': 'sql',
-            'sh': 'bash',
-            'bash': 'bash',
+            'js': 'javascript', 'jsx': 'jsx', 'ts': 'typescript', 'tsx': 'tsx',
+            'py': 'python', 'java': 'java', 'c': 'c', 'cpp': 'cpp', 'cs': 'csharp',
+            'go': 'go', 'rs': 'rust', 'rb': 'ruby', 'php': 'php', 'swift': 'swift',
+            'kt': 'kotlin', 'dart': 'dart', 'html': 'html', 'css': 'css',
+            'scss': 'scss', 'json': 'json', 'xml': 'xml', 'yaml': 'yaml',
+            'yml': 'yaml', 'md': 'markdown', 'sql': 'sql', 'sh': 'bash', 'bash': 'bash',
         };
         return languageMap[extension || ''] || 'javascript';
     };
@@ -64,24 +46,20 @@ export default function FileView() {
             setLoading(true);
             setError('');
 
-            // Get file metadata
             const fileData = await fetch(`http://localhost:5000/files/${fileId}`);
             if (!fileData.ok) throw new Error('File not found');
 
             const file = await fileData.json();
             setFile(file);
 
-            // Get file analysis
             const analysisData = await api.getFileAnalysis(fileId!);
             setAnalysis(analysisData);
 
-            // Load commit history
             try {
                 const historyRes = await fetch(`http://localhost:5000/files/${fileId}/commits`);
                 if (historyRes.ok) {
                     const history = await historyRes.json();
                     setCommitHistory(history);
-                    // Default to latest commit (first in list) if no specific SHA requested
                     if (history.length > 0 && !currentCommitSha) {
                         setCurrentCommitSha(history[0].sha);
                     }
@@ -90,9 +68,7 @@ export default function FileView() {
                 console.error('Failed to load history:', e);
             }
 
-            // Get file content - include branch parameter if present in URL
             await fetchContent();
-
         } catch (err: any) {
             console.error('Failed to load file:', err);
             setError(err.message || 'Failed to load file');
@@ -138,10 +114,9 @@ export default function FileView() {
         const currentIndex = currentCommitSha ? commitHistory.findIndex(c => c.sha === currentCommitSha) : -1;
 
         if (currentIndex === -1) {
-            // If current commit is not in history (likely newer), go to the latest known commit (index 0)
             fetchContent(commitHistory[0].sha);
         } else if (currentIndex < commitHistory.length - 1) {
-            const prevCommit = commitHistory[currentIndex + 1]; // Older commit
+            const prevCommit = commitHistory[currentIndex + 1];
             fetchContent(prevCommit.sha);
         }
     };
@@ -150,180 +125,180 @@ export default function FileView() {
         if (!commitHistory.length || !currentCommitSha) return;
         const currentIndex = commitHistory.findIndex(c => c.sha === currentCommitSha);
         if (currentIndex > 0) {
-            const nextCommit = commitHistory[currentIndex - 1]; // Newer commit
+            const nextCommit = commitHistory[currentIndex - 1];
             fetchContent(nextCommit.sha);
         }
     };
 
     if (loading) {
         return (
-            <div className="container" style={{ textAlign: 'center', paddingTop: '60px' }}>
-                <div style={{ fontSize: '48px', marginBottom: '20px' }}>⏳</div>
-                <h2>Loading file...</h2>
+            <div className="container-custom py-8 space-y-4">
+                <Skeleton className="h-8 w-48" />
+                <Skeleton className="h-32 w-full" />
+                <Skeleton className="h-96 w-full" />
             </div>
         );
     }
 
     if (error) {
         return (
-            <div className="container">
-                <div style={{
-                    padding: '20px',
-                    background: '#da363320',
-                    border: '1px solid #da3633',
-                    borderRadius: '6px',
-                    color: '#f85149'
-                }}>
-                    <strong>Error:</strong> {error}
-                </div>
+            <div className="container-custom py-8">
+                <BackButton />
+                <Alert variant="destructive">
+                    <AlertDescription>{error}</AlertDescription>
+                </Alert>
             </div>
         );
     }
 
     if (!file) {
-        return <div className="container">File not found</div>;
+        return (
+            <div className="container-custom py-8">
+                <BackButton />
+                <Card>
+                    <CardContent className="py-12 text-center">
+                        <h3 className="font-heading text-lg font-semibold">File not found</h3>
+                    </CardContent>
+                </Card>
+            </div>
+        );
     }
 
     const currentIndex = currentCommitSha ? commitHistory.findIndex(c => c.sha === currentCommitSha) : -1;
-    // Allow previous if we are at a known index < length-1 OR if we are at an unknown index (assuming it's newer)
     const canGoPrevious = (currentIndex !== -1 && currentIndex < commitHistory.length - 1) || (currentIndex === -1 && commitHistory.length > 0);
     const canGoNext = currentIndex !== -1 && currentIndex > 0;
 
     return (
-        <div className="container">
+        <div className="container-custom py-8 animate-fade-in">
             <BackButton />
 
             {/* Header */}
-            <div style={{ marginBottom: '24px' }}>
-                <h1>{file?.filePath || 'Unknown file'}</h1>
-                {file?.totalLines && (
-                    <span style={{ color: '#8b949e', fontSize: '14px' }}>
-                        {file.totalLines} lines
-                    </span>
-                )}
-                {currentCommitSha && (
-                    <div style={{ marginTop: '8px', fontSize: '12px', color: '#8b949e', fontFamily: 'monospace' }}>
-                        <span style={{ color: '#fff' }}>{currentCommitSha.substring(0, 7)}</span>
-                        {commitHistory.find(c => c.sha === currentCommitSha) && (
-                            <span style={{ marginLeft: '12px' }}>
-                                {commitHistory.find(c => c.sha === currentCommitSha)?.message}
-                                <span style={{ color: '#8b949e', marginLeft: '8px' }}>
-                                    • {new Date(commitHistory.find(c => c.sha === currentCommitSha)?.committedAt || '').toLocaleDateString()}
-                                </span>
-                            </span>
+            <div className="mb-8">
+                <div className="flex items-start justify-between mb-3">
+                    <div className="flex-1">
+                        <h1 className="font-heading text-3xl font-bold mb-2 font-mono">
+                            {file?.filePath || 'Unknown file'}
+                        </h1>
+                        {file?.totalLines && (
+                            <p className="text-muted-foreground text-sm">
+                                {file.totalLines} lines
+                            </p>
                         )}
                     </div>
+                </div>
+
+                {currentCommitSha && (
+                    <Card>
+                        <CardContent className="py-3">
+                            <div className="flex items-center gap-3 text-sm">
+                                <Clock className="h-4 w-4 text-muted-foreground" />
+                                <code className="text-primary font-mono">{currentCommitSha.substring(0, 7)}</code>
+                                {commitHistory.find(c => c.sha === currentCommitSha) && (
+                                    <>
+                                        <span className="text-muted-foreground">•</span>
+                                        <span>{commitHistory.find(c => c.sha === currentCommitSha)?.message}</span>
+                                        <span className="text-muted-foreground">•</span>
+                                        <span className="text-muted-foreground">
+                                            {new Date(commitHistory.find(c => c.sha === currentCommitSha)?.committedAt || '').toLocaleDateString()}
+                                        </span>
+                                    </>
+                                )}
+                            </div>
+                        </CardContent>
+                    </Card>
                 )}
             </div>
 
             {/* Tabs */}
-            <div style={{
-                borderBottom: '1px solid #30363d',
-                marginBottom: '24px',
-                display: 'flex',
-                gap: '24px'
-            }}>
-                <button
-                    onClick={() => setActiveTab('code')}
-                    style={{
-                        background: 'none',
-                        border: 'none',
-                        color: activeTab === 'code' ? '#58a6ff' : '#8b949e',
-                        padding: '8px 0',
-                        borderBottom: activeTab === 'code' ? '2px solid #58a6ff' : 'none',
-                        cursor: 'pointer',
-                        fontSize: '14px',
-                        fontWeight: 600
-                    }}
-                >
-                    💻 Code View
-                </button>
-                <button
-                    onClick={() => setActiveTab('analysis')}
-                    style={{
-                        background: 'none',
-                        border: 'none',
-                        color: activeTab === 'analysis' ? '#58a6ff' : '#8b949e',
-                        padding: '8px 0',
-                        borderBottom: activeTab === 'analysis' ? '2px solid #58a6ff' : 'none',
-                        cursor: 'pointer',
-                        fontSize: '14px',
-                        fontWeight: 600
-                    }}
-                >
-                    📊 File Analysis
-                </button>
-            </div>
+            <Tabs value={activeTab} onValueChange={(value) => setActiveTab(value as any)}>
+                <TabsList className="grid w-full max-w-md grid-cols-2">
+                    <TabsTrigger value="code" className="gap-2">
+                        <Code className="h-4 w-4" />
+                        Code View
+                    </TabsTrigger>
+                    <TabsTrigger value="analysis" className="gap-2">
+                        <BarChart className="h-4 w-4" />
+                        File Analysis
+                    </TabsTrigger>
+                </TabsList>
 
-            {/* Code View Tab */}
-            {activeTab === 'code' && (
-                <div>
-                    <SyntaxHighlighter
-                        language={getLanguageFromPath(file?.filePath || '')}
-                        style={vscDarkPlus}
-                        showLineNumbers={true}
-                        wrapLines={true}
-                        customStyle={{
-                            background: '#0d1117',
-                            border: '1px solid #30363d',
-                            borderRadius: '6px',
-                            padding: '16px',
-                            fontSize: '13px',
-                            lineHeight: '1.6',
-                            margin: 0,
-                        }}
-                        lineNumberStyle={{
-                            minWidth: '3em',
-                            paddingRight: '1em',
-                            color: '#6e7681',
-                            userSelect: 'none',
-                        }}
-                    >
-                        {content}
-                    </SyntaxHighlighter>
+                {/* Code View Tab */}
+                <TabsContent value="code" className="mt-6 space-y-4">
+                    <Card>
+                        <CardContent className="p-0">
+                            <SyntaxHighlighter
+                                language={getLanguageFromPath(file?.filePath || '')}
+                                style={vscDarkPlus}
+                                showLineNumbers={true}
+                                wrapLines={true}
+                                customStyle={{
+                                    background: 'transparent',
+                                    margin: 0,
+                                    padding: '1rem',
+                                    fontSize: '13px',
+                                    lineHeight: '1.6',
+                                }}
+                                lineNumberStyle={{
+                                    minWidth: '3em',
+                                    paddingRight: '1em',
+                                    color: '#6e7681',
+                                    userSelect: 'none',
+                                }}
+                            >
+                                {content}
+                            </SyntaxHighlighter>
+                        </CardContent>
+                    </Card>
 
-                    <div style={{ marginTop: '16px', display: 'flex', gap: '8px', alignItems: 'center' }}>
-                        <button
-                            className="btn"
-                            style={{
-                                background: canGoPrevious ? '#21262d' : '#161b22',
-                                color: canGoPrevious ? '#c9d1d9' : '#484f58',
-                                cursor: canGoPrevious ? 'pointer' : 'not-allowed',
-                                border: '1px solid #30363d'
-                            }}
+                    {/* Commit Navigation */}
+                    <div className="flex items-center gap-3">
+                        <Button
                             onClick={handlePreviousCommit}
                             disabled={!canGoPrevious}
+                            variant="outline"
+                            size="sm"
+                            className="gap-2"
                         >
-                            ← Previous Commit
-                        </button>
-                        <button
-                            className="btn"
-                            style={{
-                                background: canGoNext ? '#21262d' : '#161b22',
-                                color: canGoNext ? '#c9d1d9' : '#484f58',
-                                cursor: canGoNext ? 'pointer' : 'not-allowed',
-                                border: '1px solid #30363d'
-                            }}
+                            <ChevronLeft className="h-4 w-4" />
+                            Previous Commit
+                        </Button>
+                        <Button
                             onClick={handleNextCommit}
                             disabled={!canGoNext}
+                            variant="outline"
+                            size="sm"
+                            className="gap-2"
                         >
-                            Next Commit →
-                        </button>
+                            Next Commit
+                            <ChevronRight className="h-4 w-4" />
+                        </Button>
                         {commitHistory.length > 0 && (
-                            <span style={{ fontSize: '12px', color: '#8b949e', marginLeft: '8px' }}>
+                            <Badge variant="secondary">
                                 {currentIndex !== -1
-                                    ? `(Commit ${commitHistory.length - currentIndex} of ${commitHistory.length})`
-                                    : '(Latest Unindexed Commit)'}
-                            </span>
+                                    ? `Commit ${commitHistory.length - currentIndex} of ${commitHistory.length}`
+                                    : 'Latest Unindexed Commit'}
+                            </Badge>
                         )}
                     </div>
-                </div>
-            )}
+                </TabsContent>
 
-            {/* File Analysis Tab */}
-            {activeTab === 'analysis' && analysis && (
-                <FileAnalysis file={file} analysis={analysis} />
-            )}
+                {/* File Analysis Tab */}
+                <TabsContent value="analysis" className="mt-6">
+                    {analysis ? (
+                        <FileAnalysis file={file} analysis={analysis} />
+                    ) : (
+                        <Card>
+                            <CardContent className="py-12 text-center">
+                                <FileText className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
+                                <h3 className="font-heading text-lg font-semibold mb-2">No Analysis Available</h3>
+                                <p className="text-muted-foreground text-sm">
+                                    Analysis data is not available for this file.
+                                </p>
+                            </CardContent>
+                        </Card>
+                    )}
+                </TabsContent>
+            </Tabs>
         </div>
     );
 }

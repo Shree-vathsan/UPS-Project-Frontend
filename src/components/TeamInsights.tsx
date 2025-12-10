@@ -3,6 +3,8 @@ import {
     BarChart, Bar, ScatterChart, Scatter,
     XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, Cell
 } from 'recharts';
+import { Users, CheckCircle, BarChart as BarChartIcon, Calendar, Handshake, Trophy, Sparkles, Folder, User } from 'lucide-react';
+import { Skeleton } from '@/components/ui/skeleton';
 import InfoTooltip from './InfoTooltip';
 
 interface TeamInsightsProps {
@@ -21,7 +23,6 @@ export default function TeamInsights({ repositoryId }: TeamInsightsProps) {
 
     const loadTeamData = async () => {
         try {
-            // Fetch team insights from backend API
             const response = await fetch(`http://localhost:5000/repositories/${repositoryId}/team-insights`);
             if (!response.ok) {
                 throw new Error('Failed to fetch team insights');
@@ -46,64 +47,81 @@ export default function TeamInsights({ repositoryId }: TeamInsightsProps) {
         }
     };
 
-    const COLORS = ['#58a6ff', '#3fb950', '#d29922', '#f85149', '#bc8cff', '#f0883e', '#56d4dd', '#db6d28'];
+    // Theme-aware colors (will work with all themes)
+    const COLORS = [
+        'hsl(var(--primary))',
+        'hsl(var(--accent))',
+        'hsl(var(--secondary))',
+        'hsl(154 14 50)', // muted-teal
+        'hsl(27 62 50)', // sandy-clay
+        'hsl(27 57 50)', // desert-sand
+        'hsl(262 83 58)', // purple
+        'hsl(0 70 50)', // red accent
+    ];
 
     if (loading) {
         return (
-            <div style={{ textAlign: 'center', padding: '60px 20px' }}>
-                <div style={{ fontSize: '48px', marginBottom: '20px' }}>👥</div>
-                <h3>Loading Team Insights...</h3>
-                <p style={{ color: '#8b949e' }}>Analyzing collaboration patterns</p>
+            <div className="space-y-6">
+                {/* Metrics Skeleton */}
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                    {[1, 2, 3, 4].map((i) => (
+                        <Skeleton key={i} className="h-24 w-full" />
+                    ))}
+                </div>
+                {/* Charts Skeleton */}
+                <Skeleton className="h-48 w-full" />
+                <Skeleton className="h-96 w-full" />
+                <Skeleton className="h-96 w-full" />
             </div>
         );
     }
 
     return (
-        <div style={{ display: 'grid', gap: '24px' }}>
+        <div className="space-y-6">
             {/* Team Metrics Overview */}
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '16px' }}>
-                <div className="card" style={{ background: 'linear-gradient(135deg, #58a6ff20 0%, #161b22 100%)' }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                        <div style={{ fontSize: '32px' }}>👥</div>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                <div className="bg-card border rounded-lg p-6">
+                    <div className="flex items-center gap-3">
+                        <Users className="h-8 w-8 text-primary" />
                         <div>
-                            <div style={{ fontSize: '12px', color: '#8b949e', marginBottom: '4px' }}>Total Contributors</div>
-                            <div style={{ fontSize: '28px', fontWeight: 'bold', color: '#58a6ff' }}>
+                            <div className="text-xs text-muted-foreground mb-1">Total Contributors</div>
+                            <div className="text-3xl font-bold text-primary">
                                 {metrics?.totalContributors || 0}
                             </div>
                         </div>
                     </div>
                 </div>
 
-                <div className="card" style={{ background: 'linear-gradient(135deg, #3fb95020 0%, #161b22 100%)' }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                        <div style={{ fontSize: '32px' }}>✅</div>
+                <div className="bg-card border rounded-lg p-6">
+                    <div className="flex items-center gap-3">
+                        <CheckCircle className="h-8 w-8 text-accent" />
                         <div>
-                            <div style={{ fontSize: '12px', color: '#8b949e', marginBottom: '4px' }}>Active (7d)</div>
-                            <div style={{ fontSize: '28px', fontWeight: 'bold', color: '#3fb950' }}>
+                            <div className="text-xs text-muted-foreground mb-1">Active (7d)</div>
+                            <div className="text-3xl font-bold text-accent">
                                 {metrics?.activeContributors || 0}
                             </div>
                         </div>
                     </div>
                 </div>
 
-                <div className="card" style={{ background: 'linear-gradient(135deg, #d2992220 0%, #161b22 100%)' }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                        <div style={{ fontSize: '32px' }}>📊</div>
+                <div className="bg-card border rounded-lg p-6">
+                    <div className="flex items-center gap-3">
+                        <BarChartIcon className="h-8 w-8 text-secondary" />
                         <div>
-                            <div style={{ fontSize: '12px', color: '#8b949e', marginBottom: '4px' }}>Avg Commits</div>
-                            <div style={{ fontSize: '28px', fontWeight: 'bold', color: '#d29922' }}>{
-                                metrics?.avgCommitsPerContributor || 0}
+                            <div className="text-xs text-muted-foreground mb-1">Avg Commits</div>
+                            <div className="text-3xl font-bold text-secondary">
+                                {metrics?.avgCommitsPerContributor || 0}
                             </div>
                         </div>
                     </div>
                 </div>
 
-                <div className="card" style={{ background: 'linear-gradient(135deg, #bc8cff20 0%, #161b22 100%)' }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                        <div style={{ fontSize: '32px' }}>📅</div>
+                <div className="bg-card border rounded-lg p-6">
+                    <div className="flex items-center gap-3">
+                        <Calendar className="h-8 w-8 text-primary" />
                         <div>
-                            <div style={{ fontSize: '12px', color: '#8b949e', marginBottom: '4px' }}>Most Active</div>
-                            <div style={{ fontSize: '20px', fontWeight: 'bold', color: '#bc8cff' }}>
+                            <div className="text-xs text-muted-foreground mb-1">Most Active</div>
+                            <div className="text-2xl font-bold text-primary">
                                 {metrics?.mostActiveDay || 'N/A'}
                             </div>
                         </div>
@@ -112,48 +130,42 @@ export default function TeamInsights({ repositoryId }: TeamInsightsProps) {
             </div>
 
             {/* Collaboration Score */}
-            <div className="card">
-                <h3 style={{ marginTop: 0, fontSize: '16px', color: '#58a6ff', display: 'flex', alignItems: 'center', gap: '8px' }}>
-                    <span>🤝</span> Team Collaboration Score
+            <div className="bg-card border rounded-lg p-6">
+                <div className="flex items-center gap-3 mb-4">
+                    <Handshake className="h-6 w-6 text-primary" />
+                    <h3 className="text-xl font-heading font-bold">Team Collaboration Score</h3>
                     <InfoTooltip text="Measures team health based on contributor activity, distribution of commits, and code ownership patterns. Higher scores indicate better collaboration." />
-                </h3>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '24px', marginTop: '16px' }}>
-                    <div style={{ position: 'relative', width: '100px', height: '100px' }}>
-                        <svg width="100" height="100" style={{ transform: 'rotate(-90deg)' }}>
-                            <circle cx="50" cy="50" r="40" fill="none" stroke="#30363d" strokeWidth="8" />
+                </div>
+                <div className="flex items-center gap-6">
+                    <div className="relative w-24 h-24">
+                        <svg width="96" height="96" className="-rotate-90">
+                            <circle cx="48" cy="48" r="40" fill="none" stroke="hsl(var(--muted))" strokeWidth="8" />
                             <circle
-                                cx="50"
-                                cy="50"
+                                cx="48"
+                                cy="48"
                                 r="40"
                                 fill="none"
-                                stroke={metrics?.collaborationScore > 70 ? '#3fb950' : '#58a6ff'}
+                                stroke={metrics?.collaborationScore > 70 ? 'hsl(var(--accent))' : 'hsl(var(--primary))'}
                                 strokeWidth="8"
                                 strokeDasharray={`${(metrics?.collaborationScore / 100) * 251} 251`}
                                 strokeLinecap="round"
                             />
                         </svg>
-                        <div style={{
-                            position: 'absolute',
-                            top: '50%',
-                            left: '50%',
-                            transform: 'translate(-50%, -50%)',
-                            fontSize: '20px',
-                            fontWeight: 'bold'
-                        }}>
+                        <div className="absolute inset-0 flex items-center justify-center text-2xl font-bold">
                             {metrics?.collaborationScore || 0}
                         </div>
                     </div>
-                    <div style={{ flex: 1 }}>
-                        <p style={{ color: '#8b949e', fontSize: '14px', margin: 0 }}>
+                    <div className="flex-1">
+                        <p className="text-sm text-muted-foreground">
                             Based on number of contributors, commit distribution, and code ownership patterns.
                         </p>
-                        <div style={{ marginTop: '12px', display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+                        <div className="mt-3 flex gap-2 flex-wrap">
                             {metrics?.collaborationScore > 70 && (
-                                <div style={{ padding: '4px 12px', background: '#3fb95020', borderRadius: '12px', fontSize: '11px', color: '#3fb950' }}>
-                                    🌟 Excellent collaboration
+                                <div className="px-3 py-1 bg-accent/20 rounded-full text-xs text-accent font-medium">
+                                    Excellent collaboration
                                 </div>
                             )}
-                            <div style={{ padding: '4px 12px', background: '#58a6ff20', borderRadius: '12px', fontSize: '11px', color: '#58a6ff' }}>
+                            <div className="px-3 py-1 bg-primary/20 rounded-full text-xs text-primary font-medium">
                                 {metrics?.activeContributors}/{metrics?.totalContributors} active
                             </div>
                         </div>
@@ -162,185 +174,174 @@ export default function TeamInsights({ repositoryId }: TeamInsightsProps) {
             </div>
 
             {/* Top Contributors */}
-            <div className="card">
-                <h3 style={{ marginTop: 0, fontSize: '16px', color: '#58a6ff', display: 'flex', alignItems: 'center', gap: '8px' }}>
-                    <span>🏆</span> Top Contributors
+            <div className="bg-card border rounded-lg p-6">
+                <div className="flex items-center gap-3 mb-4">
+                    <Trophy className="h-6 w-6 text-primary" />
+                    <h3 className="text-xl font-heading font-bold">Top Contributors</h3>
                     <InfoTooltip text="Top 10 contributors ranked by commit count and number of files changed. Shows who is most actively contributing code." />
-                </h3>
-                <p style={{ fontSize: '12px', color: '#8b949e', marginBottom: '16px' }}>
+                </div>
+                <p className="text-sm text-muted-foreground mb-4">
                     Ranked by commit count and code impact
                 </p>
                 <ResponsiveContainer width="100%" height={300}>
                     <BarChart data={contributors.slice(0, 10)}>
-                        <CartesianGrid strokeDasharray="3 3" stroke="#30363d" />
+                        <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
                         <XAxis
                             dataKey="name"
-                            stroke="#8b949e"
+                            stroke="hsl(var(--muted-foreground))"
                             style={{ fontSize: '11px' }}
                             tickFormatter={(value) => value.substring(0, 10)}
                         />
-                        <YAxis stroke="#8b949e" style={{ fontSize: '11px' }} />
+                        <YAxis stroke="hsl(var(--muted-foreground))" style={{ fontSize: '11px' }} />
                         <Tooltip
                             contentStyle={{
-                                background: '#161b22',
-                                border: '1px solid #30363d',
+                                background: 'hsl(var(--card))',
+                                border: '1px solid hsl(var(--border))',
                                 borderRadius: '6px',
-                                fontSize: '12px'
+                                fontSize: '12px',
+                                color: 'hsl(var(--foreground))'
                             }}
                         />
                         <Legend />
-                        <Bar dataKey="commits" fill="#58a6ff" name="Commits" radius={[4, 4, 0, 0]} />
-                        <Bar dataKey="filesChanged" fill="#3fb950" name="Files Changed" radius={[4, 4, 0, 0]} />
+                        <Bar dataKey="commits" fill="hsl(var(--primary))" name="Commits" radius={[4, 4, 0, 0]} />
+                        <Bar dataKey="filesChanged" fill="hsl(var(--accent))" name="Files Changed" radius={[4, 4, 0, 0]} />
                     </BarChart>
                 </ResponsiveContainer>
             </div>
 
             {/* Contributor Impact Scatter */}
-            <div className="card">
-                <h3 style={{ marginTop: 0, fontSize: '16px', color: '#58a6ff', display: 'flex', alignItems: 'center', gap: '8px' }}>
-                    <span>💫</span> Contributor Impact Analysis
+            <div className="bg-card border rounded-lg p-6">
+                <div className="flex items-center gap-3 mb-4">
+                    <Sparkles className="h-6 w-6 text-primary" />
+                    <h3 className="text-xl font-heading font-bold">Contributor Impact Analysis</h3>
                     <InfoTooltip text="Visualizes contributor activity by plotting commits vs lines added. Green dots are active contributors (committed in last 7 days), gray are inactive." />
-                </h3>
-                <p style={{ fontSize: '12px', color: '#8b949e', marginBottom: '16px' }}>
+                </div>
+                <p className="text-sm text-muted-foreground mb-4">
                     Commits vs Lines Changed (bubble size = impact score)
                 </p>
                 <ResponsiveContainer width="100%" height={300}>
                     <ScatterChart>
-                        <CartesianGrid strokeDasharray="3 3" stroke="#30363d" />
+                        <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
                         <XAxis
                             type="number"
                             dataKey="commits"
                             name="Commits"
-                            stroke="#8b949e"
+                            stroke="hsl(var(--muted-foreground))"
                             style={{ fontSize: '11px' }}
                         />
                         <YAxis
                             type="number"
                             dataKey="linesAdded"
                             name="Lines Added"
-                            stroke="#8b949e"
+                            stroke="hsl(var(--muted-foreground))"
                             style={{ fontSize: '11px' }}
                         />
                         <Tooltip
                             contentStyle={{
-                                background: '#161b22',
-                                border: '1px solid #30363d',
+                                background: 'hsl(var(--card))',
+                                border: '1px solid hsl(var(--border))',
                                 borderRadius: '6px',
-                                fontSize: '12px'
+                                fontSize: '12px',
+                                color: 'hsl(var(--foreground))'
                             }}
                             cursor={{ strokeDasharray: '3 3' }}
                         />
-                        <Scatter name="Contributors" data={contributors} fill="#58a6ff">
+                        <Scatter name="Contributors" data={contributors} fill="hsl(var(--primary))">
                             {contributors.map((entry, index) => (
                                 <Cell
                                     key={`cell-${index}`}
-                                    fill={entry.active ? '#3fb950' : '#8b949e'}
+                                    fill={entry.active ? 'hsl(var(--accent))' : 'hsl(var(--muted-foreground))'}
                                 />
                             ))}
                         </Scatter>
                     </ScatterChart>
                 </ResponsiveContainer>
-                <div style={{ marginTop: '12px', display: 'flex', gap: '16px', justifyContent: 'center', fontSize: '12px' }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                        <div style={{ width: '12px', height: '12px', borderRadius: '50%', background: '#3fb950' }}></div>
-                        <span style={{ color: '#8b949e' }}>Active (Last 7 days)</span>
+                <div className="mt-3 flex gap-4 justify-center text-xs">
+                    <div className="flex items-center gap-2">
+                        <div className="w-3 h-3 rounded-full" style={{ background: 'hsl(var(--accent))' }}></div>
+                        <span className="text-muted-foreground">Active (Last 7 days)</span>
                     </div>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                        <div style={{ width: '12px', height: '12px', borderRadius: '50%', background: '#8b949e' }}></div>
-                        <span style={{ color: '#8b949e' }}>Inactive</span>
+                    <div className="flex items-center gap-2">
+                        <div className="w-3 h-3 rounded-full" style={{ background: 'hsl(var(--muted-foreground))' }}></div>
+                        <span className="text-muted-foreground">Inactive</span>
                     </div>
                 </div>
             </div>
 
             {/* Ownership Distribution */}
-            {ownershipData.length > 0 && (
-                <div className="card">
-                    <h3 style={{ marginTop: 0, fontSize: '16px', color: '#58a6ff', display: 'flex', alignItems: 'center', gap: '8px' }}>
-                        <span>📂</span> Code Ownership by File Type
-                        <InfoTooltip text="Shows which contributors own the most files of each type. Ownership is determined by semantic analysis of code contributions." />
-                    </h3>
-                    <p style={{ fontSize: '12px', color: '#8b949e', marginBottom: '16px' }}>
-                        Distribution of file ownership across contributors
-                    </p>
-                    <ResponsiveContainer width="100%" height={300}>
-                        <BarChart data={ownershipData}>
-                            <CartesianGrid strokeDasharray="3 3" stroke="#30363d" />
-                            <XAxis dataKey="type" stroke="#8b949e" style={{ fontSize: '11px' }} />
-                            <YAxis stroke="#8b949e" style={{ fontSize: '11px' }} />
-                            <Tooltip
-                                contentStyle={{
-                                    background: '#161b22',
-                                    border: '1px solid #30363d',
-                                    borderRadius: '6px',
-                                    fontSize: '12px'
-                                }}
-                            />
-                            <Legend />
-                            {contributors.slice(0, 5).map((contributor, index) => (
-                                <Bar
-                                    key={contributor.name}
-                                    dataKey={contributor.name}
-                                    stackId="a"
-                                    fill={COLORS[index % COLORS.length]}
+            {
+                ownershipData.length > 0 && (
+                    <div className="bg-card border rounded-lg p-6">
+                        <div className="flex items-center gap-3 mb-4">
+                            <Folder className="h-6 w-6 text-primary" />
+                            <h3 className="text-xl font-heading font-bold">Code Ownership by File Type</h3>
+                            <InfoTooltip text="Shows which contributors own the most files of each type. Ownership is determined by semantic analysis of code contributions." />
+                        </div>
+                        <p className="text-sm text-muted-foreground mb-4">
+                            Distribution of file ownership across contributors
+                        </p>
+                        <ResponsiveContainer width="100%" height={300}>
+                            <BarChart data={ownershipData}>
+                                <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
+                                <XAxis dataKey="type" stroke="hsl(var(--muted-foreground))" style={{ fontSize: '11px' }} />
+                                <YAxis stroke="hsl(var(--muted-foreground))" style={{ fontSize: '11px' }} />
+                                <Tooltip
+                                    contentStyle={{
+                                        background: 'hsl(var(--card))',
+                                        border: '1px solid hsl(var(--border))',
+                                        borderRadius: '6px',
+                                        fontSize: '12px',
+                                        color: 'hsl(var(--foreground))'
+                                    }}
                                 />
-                            ))}
-                        </BarChart>
-                    </ResponsiveContainer>
-                </div>
-            )}
+                                <Legend />
+                                {contributors.slice(0, 5).map((contributor, index) => (
+                                    <Bar
+                                        key={contributor.name}
+                                        dataKey={contributor.name}
+                                        stackId="a"
+                                        fill={COLORS[index % COLORS.length]}
+                                    />
+                                ))}
+                            </BarChart>
+                        </ResponsiveContainer>
+                    </div>
+                )
+            }
 
             {/* Contributor Details List */}
-            <div className="card">
-                <h3 style={{ marginTop: 0, fontSize: '16px', color: '#58a6ff', display: 'flex', alignItems: 'center', gap: '8px' }}>
-                    <span>👤</span> Contributor Details
+            <div className="bg-card border rounded-lg p-6">
+                <div className="flex items-center gap-3 mb-4">
+                    <User className="h-6 w-6 text-primary" />
+                    <h3 className="text-xl font-heading font-bold">Contributor Details</h3>
                     <InfoTooltip text="Complete list of all contributors with their commit count, lines changed, and activity status. Green border indicates active in last 7 days." />
-                </h3>
-                <div style={{ display: 'grid', gap: '8px', marginTop: '16px' }}>
+                </div>
+                <div className="grid gap-2 mt-4">
                     {contributors.map((contributor, index) => (
-                        <div key={index} style={{
-                            display: 'flex',
-                            alignItems: 'center',
-                            gap: '12px',
-                            padding: '12px',
-                            background: '#0d1117',
-                            borderRadius: '6px',
-                            border: `1px solid ${contributor.active ? '#3fb950' : '#30363d'}`
-                        }}>
-                            <div style={{
-                                width: '40px',
-                                height: '40px',
-                                borderRadius: '50%',
-                                background: COLORS[index % COLORS.length],
-                                display: 'flex',
-                                alignItems: 'center',
-                                justifyContent: 'center',
-                                fontSize: '18px',
-                                fontWeight: 'bold',
-                                color: '#0d1117'
-                            }}>
+                        <div key={index} className={`flex items-center gap-3 p-3 rounded-lg border ${contributor.active ? 'border-accent bg-accent/5' : 'border-border bg-muted/30'}`}>
+                            <div
+                                className="w-10 h-10 rounded-full flex items-center justify-center text-lg font-bold"
+                                style={{
+                                    background: COLORS[index % COLORS.length],
+                                    color: 'hsl(var(--card))'
+                                }}
+                            >
                                 {contributor.name.charAt(0).toUpperCase()}
                             </div>
-                            <div style={{ flex: 1 }}>
-                                <div style={{ fontWeight: 600, marginBottom: '2px' }}>{contributor.name}</div>
-                                <div style={{ fontSize: '11px', color: '#8b949e' }}>{contributor.email}</div>
+                            <div className="flex-1">
+                                <div className="font-semibold">{contributor.name}</div>
+                                <div className="text-xs text-muted-foreground">{contributor.email}</div>
                             </div>
-                            <div style={{ textAlign: 'right' }}>
-                                <div style={{ fontSize: '12px', color: '#8b949e', marginBottom: '2px' }}>
+                            <div className="text-right">
+                                <div className="text-sm text-muted-foreground">
                                     {contributor.commits} commits
                                 </div>
-                                <div style={{ fontSize: '11px', color: '#8b949e' }}>
+                                <div className="text-xs text-muted-foreground">
                                     +{contributor.linesAdded} -{contributor.linesRemoved}
                                 </div>
                             </div>
                             {contributor.active && (
-                                <div style={{
-                                    padding: '4px 8px',
-                                    background: '#3fb95020',
-                                    borderRadius: '12px',
-                                    fontSize: '10px',
-                                    color: '#3fb950',
-                                    fontWeight: 600
-                                }}>
+                                <div className="px-2 py-1 bg-accent/20 rounded text-xs text-accent font-semibold">
                                     ACTIVE
                                 </div>
                             )}
@@ -348,6 +349,6 @@ export default function TeamInsights({ repositoryId }: TeamInsightsProps) {
                     ))}
                 </div>
             </div>
-        </div>
+        </div >
     );
 }
