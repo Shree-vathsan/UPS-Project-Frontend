@@ -6,6 +6,10 @@ import CircularProgress from './CircularProgress';
 import BarProgress from './BarProgress';
 import SectionHeader from './SectionHeader';
 import { Skeleton } from '@/components/ui/skeleton';
+import { FaCheck, FaCheckCircle } from "react-icons/fa";
+import { FaTimes, FaTimesCircle } from "react-icons/fa";
+
+
 
 interface FileAnalysisProps {
     file: any;
@@ -135,7 +139,7 @@ export default function FileAnalysis({ file, analysis }: FileAnalysisProps) {
             ) : (
                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '16px' }}>
                     <MetricCard
-                        icon="💚"
+                        icon=""
                         title="Code Health"
                         value={codeHealth.toFixed(0)}
                         subtitle="Based on complexity & dependencies"
@@ -144,7 +148,7 @@ export default function FileAnalysis({ file, analysis }: FileAnalysisProps) {
                         formula="100 - (dependencies × 2) - (changes ÷ 10)"
                     />
                     <MetricCard
-                        icon="⚡"
+                        icon=""
                         title="Impact Score"
                         value={impactScore.toFixed(0)}
                         subtitle={`${dptCount} files depend on this`}
@@ -153,7 +157,7 @@ export default function FileAnalysis({ file, analysis }: FileAnalysisProps) {
                         formula="(dependents × 10) + (dependencies × 5)"
                     />
                     <MetricCard
-                        icon="🔥"
+                        icon=""
                         title="Activity Level"
                         value={activityScore.toFixed(0)}
                         subtitle={`${changeCount} total changes`}
@@ -163,7 +167,7 @@ export default function FileAnalysis({ file, analysis }: FileAnalysisProps) {
                         formula="changes × 2 (capped at 100)"
                     />
                     <MetricCard
-                        icon="🎯"
+                        icon=""
                         title="Connections"
                         value={depCount + dptCount}
                         subtitle={`${depCount} deps, ${dptCount} dependents`}
@@ -191,7 +195,7 @@ export default function FileAnalysis({ file, analysis }: FileAnalysisProps) {
             ) : (
                 <div className="bg-card border rounded-lg p-6">
                     <SectionHeader
-                        icon="📊"
+                        icon=""
                         title="File Metrics Overview"
                         tooltip="Visual dashboard showing key file health indicators at a glance. Each circular gauge represents a different quality metric calculated from code analysis and git history."
                         formula="Visual representation of the metrics above"
@@ -260,7 +264,7 @@ export default function FileAnalysis({ file, analysis }: FileAnalysisProps) {
                     <div className="card">
                         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '16px' }}>
                             <h3 style={{ margin: 0, fontSize: '16px', color: '#3fb950', display: 'flex', alignItems: 'center', gap: '8px' }}>
-                                📦 Dependencies Analysis
+                                 Dependencies Analysis
                             </h3>
                             <InfoTooltip
                                 text="Shows files that this file imports. Lower dependency count means better separation of concerns. Direct imports are explicit, indirect are transitive dependencies."
@@ -320,7 +324,7 @@ export default function FileAnalysis({ file, analysis }: FileAnalysisProps) {
                     <div className="card">
                         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '16px' }}>
                             <h3 style={{ margin: 0, fontSize: '16px', color: '#d29922', display: 'flex', alignItems: 'center', gap: '8px' }}>
-                                🔗 Dependents Impact
+                                 Dependents Impact
                             </h3>
                             <InfoTooltip
                                 text="Files that import this file. Higher numbers mean more files affected by changes. Blast radius shows total files potentially impacted including indirect dependents."
@@ -369,7 +373,7 @@ export default function FileAnalysis({ file, analysis }: FileAnalysisProps) {
 
                         <div className={`mt-4 p-3 rounded-lg border ${impactScore > 70 ? 'bg-destructive/10 border-destructive' : 'bg-accent/10 border-accent'}`}>
                             <div className={`text-xs font-semibold mb-1 ${impactScore > 70 ? 'text-destructive' : 'text-accent'}`}>
-                                Impact Level: {impactScore > 70 ? 'Critical ⚠️' : 'Moderate'}
+                                Impact Level: {impactScore > 70 ? 'Critical ' : 'Moderate'}
                             </div>
                             <div className="text-xs text-muted-foreground">
                                 Changes affect {dptCount} direct consumers
@@ -383,14 +387,14 @@ export default function FileAnalysis({ file, analysis }: FileAnalysisProps) {
             {/* Semantic Purpose */}
             <div className="bg-card/50 border border-primary/20 rounded-lg p-6">
                 <SectionHeader
-                    icon="🤖"
+                    icon=""
                     title="AI-Powered Insights"
                     tooltip="Machine learning analysis of your code using embeddings and semantic patterns. Provides intelligent categorization and quality assessment beyond simple metrics."
                     formula="Vector Similarity(File, Categories)"
                 />
                 <div className="p-4 bg-primary/10 rounded-lg border border-primary/20 mb-4">
                     <div className="text-sm text-foreground leading-relaxed mb-2">
-                        📝 <strong className="text-primary">File Purpose:</strong> This file appears to handle{' '}
+                         <strong className="text-primary">File Purpose:</strong> This file appears to handle{' '}
                         {file.filePath.includes('auth') ? 'authentication logic' :
                             file.filePath.includes('api') ? 'API communication' :
                                 file.filePath.includes('component') ? 'UI component rendering' : 'business logic'}.
@@ -419,7 +423,7 @@ export default function FileAnalysis({ file, analysis }: FileAnalysisProps) {
             {/* Semantic Ownership with Beautiful Visualization */}
             <div className="card">
                 <SectionHeader
-                    icon="👥"
+                    icon=""
                     title="Semantic Ownership Distribution"
                     tooltip="Based on vector embedding changes, not just line counts. Shows who meaningfully contributed to the logic and structure, weighted by semantic impact rather than simple additions/deletions."
                     formula="Σ(VectorDelta * Author) / TotalDelta"
@@ -472,7 +476,7 @@ export default function FileAnalysis({ file, analysis }: FileAnalysisProps) {
                     </div>
                 ) : (
                     <div className="text-center py-10 text-muted-foreground">
-                        <div className="text-5xl mb-3 opacity-30">👥</div>
+                        <div className="text-5xl mb-3 opacity-30"></div>
                         <div className="text-sm">No ownership data available yet</div>
                     </div>
                 )}
@@ -488,7 +492,7 @@ export default function FileAnalysis({ file, analysis }: FileAnalysisProps) {
             ) : enhancedData && (enhancedData.dependencies?.length > 0 || enhancedData.dependents?.length > 0 || enhancedData.semanticNeighbors?.length > 0) && (
                 <div className="card">
                     <SectionHeader
-                        icon="🕸️"
+                        icon=""
                         title="File Connections Network Graph"
                         tooltip="Interactive visualization showing all file relationships. Green nodes = dependencies (imports), Orange = dependents (importers), Purple = similar files. Helps understand code architecture and impact."
                         formula="Graph(Nodes, Edges)"
@@ -508,7 +512,7 @@ export default function FileAnalysis({ file, analysis }: FileAnalysisProps) {
             {/* Change Activity Timeline */}
             <div className="card">
                 <SectionHeader
-                    icon="📈"
+                    icon=""
                     title="Change Activity"
                     tooltip="Shows modification patterns from git history. High change count may indicate active development or code churn. Most active author likely knows this code best."
                     formula="Count(GitCommits)"
@@ -527,10 +531,10 @@ export default function FileAnalysis({ file, analysis }: FileAnalysisProps) {
                         <div className="text-xs text-muted-foreground">Most Active Author</div>
                     </div>
                     <div className={`p-4 rounded-lg text-center border ${analysis.isInOpenPr ? 'bg-primary/10 border-primary' : 'bg-card'}`}>
-                        <div className="text-2xl mb-1">
-                            {analysis.isInOpenPr ? '✅' : '⚪'}
+                        <div className="text-3xl mb-1 flex items-center justify-center">
+                            {analysis.isInOpenPr ? <FaCheck size={0} color="Green"/> : <FaTimes color="Red"/>}
                         </div>
-                        <div className="text-xs text-muted-foreground">Open PR</div>
+                        <div className="text-xs text-muted-foreground">{analysis.isInOpenPr? 'In PR' : 'Not In PR'}</div>
                     </div>
                 </div>
             </div>
@@ -538,7 +542,7 @@ export default function FileAnalysis({ file, analysis }: FileAnalysisProps) {
             {/* Recommended Reviewers */}
             <div className="card">
                 <SectionHeader
-                    icon="👀"
+                    icon=""
                     title="Recommended Reviewers"
                     tooltip="Suggests the best code reviewers based on semantic ownership. These users understand the code's logic and history best."
                     formula="Top 3 Semantic Owners"

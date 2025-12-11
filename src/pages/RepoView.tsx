@@ -6,6 +6,7 @@ import FileTree from '../components/FileTree';
 import BackButton from '../components/BackButton';
 import RepositoryAnalytics from '../components/RepositoryAnalytics';
 import TeamInsights from '../components/TeamInsights';
+import Pagination from '../components/Pagination';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -34,6 +35,11 @@ export default function RepoView({ user: _user }: RepoViewProps) {
     const [prFilter, setPrFilter] = useState<'all' | 'open' | 'closed'>('all');
     const [files, setFiles] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
+
+    // Pagination state
+    const [commitsPage, setCommitsPage] = useState(1);
+    const [prsPage, setPrsPage] = useState(1);
+    const itemsPerPage = 10;
 
     // Helper to reload all data
     const loadRepoData = async () => {
@@ -276,8 +282,8 @@ export default function RepoView({ user: _user }: RepoViewProps) {
                     </TabsTrigger>
                     <TabsTrigger value="prs" className="gap-2">
                         <GitPullRequest className="h-4 w-4" />
-                        <span className="hidden sm:inline">PRs ({allPrs.length})</span>
-                        <span className="sm:hidden">{allPrs.length}</span>
+                        <span className="hidden sm:inline">PRs</span>
+                        {/* <span className="sm:hidden">{allPrs.length}</span> */}
                     </TabsTrigger>
                     <TabsTrigger value="files" className="gap-2">
                         <FolderTree className="h-4 w-4" />
@@ -292,7 +298,7 @@ export default function RepoView({ user: _user }: RepoViewProps) {
                 {/* Commits Tab */}
                 <TabsContent value="commits" className="mt-6 space-y-4">
                     <h2 className="font-heading text-xl font-semibold">
-                        Commits from {selectedBranch}
+                        Commits from {selectedBranch} ({commits.length})
                     </h2>
                     {commits.length === 0 ? (
                         <Card>
@@ -306,34 +312,43 @@ export default function RepoView({ user: _user }: RepoViewProps) {
                         </Card>
                     ) : (
                         <div className="grid gap-4">
-                            {commits.map((commit: any) => (
-                                <Card key={commit.id} className="hover-lift">
-                                    <CardHeader>
-                                        <div className="flex items-start justify-between">
-                                            <div className="flex-1 space-y-2">
-                                                <code className="text-xs text-primary bg-primary/10 px-2 py-1 rounded">
-                                                    {commit.sha.substring(0, 7)}
-                                                </code>
-                                                <CardTitle className="text-base font-normal">
-                                                    {commit.message}
-                                                </CardTitle>
-                                                <CardDescription>
-                                                    {new Date(commit.committedAt).toLocaleString()}
-                                                </CardDescription>
+                            {commits
+                                .slice((commitsPage - 1) * itemsPerPage, commitsPage * itemsPerPage)
+                                .map((commit: any) => (
+                                    <Card key={commit.id} className="hover-lift">
+                                        <CardHeader>
+                                            <div className="flex items-start justify-between">
+                                                <div className="flex-1 space-y-2">
+                                                    <code className="text-xs text-primary bg-primary/10 px-2 py-1 rounded">
+                                                        {commit.sha.substring(0, 7)}
+                                                    </code>
+                                                    <CardTitle className="text-base font-normal">
+                                                        {commit.message}
+                                                    </CardTitle>
+                                                    <CardDescription>
+                                                        {new Date(commit.committedAt).toLocaleString()}
+                                                    </CardDescription>
+                                                </div>
+                                                <Button
+                                                    onClick={() => window.location.href = `/commit/${commit.id}`}
+                                                    size="sm"
+                                                    className="gap-2 ml-4"
+                                                >
+                                                    View Details
+                                                    <ArrowRight className="h-4 w-4" />
+                                                </Button>
                                             </div>
-                                            <Button
-                                                onClick={() => window.location.href = `/commit/${commit.id}`}
-                                                size="sm"
-                                                className="gap-2 ml-4"
-                                            >
-                                                View Details
-                                                <ArrowRight className="h-4 w-4" />
-                                            </Button>
-                                        </div>
-                                    </CardHeader>
-                                </Card>
-                            ))}
+                                        </CardHeader>
+                                    </Card>
+                                ))}
                         </div>
+                    )}
+                    {commits.length > 0 && (
+                        <Pagination
+                            currentPage={commitsPage}
+                            totalPages={Math.ceil(commits.length / itemsPerPage)}
+                            onPageChange={setCommitsPage}
+                        />
                     )}
                 </TabsContent>
 
@@ -382,39 +397,48 @@ export default function RepoView({ user: _user }: RepoViewProps) {
                         </Card>
                     ) : (
                         <div className="grid gap-4">
-                            {prs.map((pr: any) => (
-                                <Card key={pr.id} className="hover-lift">
-                                    <CardHeader>
-                                        <div className="flex items-start justify-between">
-                                            <div className="flex-1 space-y-2">
-                                                <div className="flex items-center gap-2">
-                                                    <Badge variant="secondary" className="text-xs">PR</Badge>
-                                                    <CardTitle className="text-base">
-                                                        {pr.title || `Pull Request #${pr.prNumber}`}
-                                                    </CardTitle>
+                            {prs
+                                .slice((prsPage - 1) * itemsPerPage, prsPage * itemsPerPage)
+                                .map((pr: any) => (
+                                    <Card key={pr.id} className="hover-lift">
+                                        <CardHeader>
+                                            <div className="flex items-start justify-between">
+                                                <div className="flex-1 space-y-2">
+                                                    <div className="flex items-center gap-2">
+                                                        <Badge variant="secondary" className="text-xs">PR</Badge>
+                                                        <CardTitle className="text-base">
+                                                            {pr.title || `Pull Request #${pr.prNumber}`}
+                                                        </CardTitle>
+                                                    </div>
+                                                    <div className="flex items-center gap-2">
+                                                        <code className="text-xs text-muted-foreground">
+                                                            #{pr.prNumber}
+                                                        </code>
+                                                        <Badge variant={pr.state === 'open' ? 'success' : 'secondary'}>
+                                                            {pr.state === 'open' ? 'Open' : 'Merged'}
+                                                        </Badge>
+                                                    </div>
                                                 </div>
-                                                <div className="flex items-center gap-2">
-                                                    <code className="text-xs text-muted-foreground">
-                                                        #{pr.prNumber}
-                                                    </code>
-                                                    <Badge variant={pr.state === 'open' ? 'success' : 'secondary'}>
-                                                        {pr.state === 'open' ? 'Open' : 'Merged'}
-                                                    </Badge>
-                                                </div>
+                                                <Button
+                                                    onClick={() => window.location.href = `/pr/${repository.ownerUsername}/${repository.name}/${pr.prNumber}`}
+                                                    size="sm"
+                                                    className="gap-2 ml-4"
+                                                >
+                                                    View PR
+                                                    <ArrowRight className="h-4 w-4" />
+                                                </Button>
                                             </div>
-                                            <Button
-                                                onClick={() => window.location.href = `/pr/${repository.ownerUsername}/${repository.name}/${pr.prNumber}`}
-                                                size="sm"
-                                                className="gap-2 ml-4"
-                                            >
-                                                View PR
-                                                <ArrowRight className="h-4 w-4" />
-                                            </Button>
-                                        </div>
-                                    </CardHeader>
-                                </Card>
-                            ))}
+                                        </CardHeader>
+                                    </Card>
+                                ))}
                         </div>
+                    )}
+                    {prs.length > 0 && (
+                        <Pagination
+                            currentPage={prsPage}
+                            totalPages={Math.ceil(prs.length / itemsPerPage)}
+                            onPageChange={setPrsPage}
+                        />
                     )}
                 </TabsContent>
 

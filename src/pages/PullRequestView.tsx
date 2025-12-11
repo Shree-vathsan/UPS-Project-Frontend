@@ -3,6 +3,7 @@ import { useParams } from 'react-router-dom';
 import { GitPullRequest, GitBranch, Clock, FileText, AlertTriangle, CheckCircle, ChevronDown, ChevronRight, Target } from 'lucide-react';
 import { api } from '../utils/api';
 import BackButton from '../components/BackButton';
+import Pagination from '../components/Pagination';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -19,6 +20,8 @@ export default function PullRequestView({ user: _user }: PullRequestViewProps) {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState('');
     const [expandedFiles, setExpandedFiles] = useState<Set<string>>(new Set());
+    const [currentPage, setCurrentPage] = useState(1);
+    const itemsPerPage = 10;
 
     useEffect(() => {
         loadPRDetails();
@@ -275,58 +278,67 @@ export default function PullRequestView({ user: _user }: PullRequestViewProps) {
                             Files Changed ({prDetails.filesChanged.length})
                         </h2>
                         <div className="space-y-3">
-                            {prDetails.filesChanged.map((file: any) => (
-                                <Card key={file.filename}>
-                                    <CardHeader
-                                        className="cursor-pointer hover:bg-muted/50 transition-colors"
-                                        onClick={() => toggleFile(file.filename)}
-                                    >
-                                        <div className="flex items-center justify-between">
-                                            <div className="flex items-center gap-2 min-w-0 flex-1">
-                                                {expandedFiles.has(file.filename) ?
-                                                    <ChevronDown className="h-4 w-4 flex-shrink-0" /> :
-                                                    <ChevronRight className="h-4 w-4 flex-shrink-0" />
-                                                }
-                                                <code className="text-sm font-mono truncate">{file.filename}</code>
-                                                <Badge variant={getStatusColor(file.status)} className="flex-shrink-0">
-                                                    {file.status}
-                                                </Badge>
-                                            </div>
-                                            <div className="flex items-center gap-3 flex-shrink-0 ml-4">
-                                                <span className="text-xs text-green-600 dark:text-green-400">+{file.additions}</span>
-                                                <span className="text-xs text-red-600 dark:text-red-400">-{file.deletions}</span>
-                                            </div>
-                                        </div>
-                                    </CardHeader>
-
-                                    {expandedFiles.has(file.filename) && file.patch && (
-                                        <CardContent className="pt-0">
-                                            <div className="bg-muted/30 rounded-md overflow-hidden border">
-                                                {file.patch.split('\n').map((line: string, lineIdx: number) => {
-                                                    let className = 'px-4 py-0.5 font-mono text-xs';
-                                                    if (line.startsWith('+') && !line.startsWith('+++')) {
-                                                        className += ' bg-green-500/10 text-green-600 dark:text-green-400 border-l-2 border-green-500';
-                                                    } else if (line.startsWith('-') && !line.startsWith('---')) {
-                                                        className += ' bg-red-500/10 text-red-600 dark:text-red-400 border-l-2 border-red-500';
-                                                    } else if (line.startsWith('@@')) {
-                                                        className += ' bg-blue-500/10 text-primary border-l-2 border-primary';
-                                                    } else if (line.startsWith('+++') || line.startsWith('---')) {
-                                                        className += ' text-muted-foreground';
+                            {prDetails.filesChanged
+                                .slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage)
+                                .map((file: any) => (
+                                    <Card key={file.filename}>
+                                        <CardHeader
+                                            className="cursor-pointer hover:bg-muted/50 transition-colors"
+                                            onClick={() => toggleFile(file.filename)}
+                                        >
+                                            <div className="flex items-center justify-between">
+                                                <div className="flex items-center gap-2 min-w-0 flex-1">
+                                                    {expandedFiles.has(file.filename) ?
+                                                        <ChevronDown className="h-4 w-4 flex-shrink-0" /> :
+                                                        <ChevronRight className="h-4 w-4 flex-shrink-0" />
                                                     }
-
-                                                    return (
-                                                        <div key={lineIdx} className={className}>
-                                                            {line || ' '}
-                                                        </div>
-                                                    );
-                                                })}
+                                                    <code className="text-sm font-mono truncate">{file.filename}</code>
+                                                    <Badge variant={getStatusColor(file.status)} className="flex-shrink-0">
+                                                        {file.status}
+                                                    </Badge>
+                                                </div>
+                                                <div className="flex items-center gap-3 flex-shrink-0 ml-4">
+                                                    <span className="text-xs text-green-600 dark:text-green-400">+{file.additions}</span>
+                                                    <span className="text-xs text-red-600 dark:text-red-400">-{file.deletions}</span>
+                                                </div>
                                             </div>
-                                        </CardContent>
-                                    )}
-                                </Card>
-                            ))}
+                                        </CardHeader>
+
+                                        {expandedFiles.has(file.filename) && file.patch && (
+                                            <CardContent className="pt-0">
+                                                <div className="bg-muted/30 rounded-md overflow-hidden border">
+                                                    {file.patch.split('\n').map((line: string, lineIdx: number) => {
+                                                        let className = 'px-4 py-0.5 font-mono text-xs';
+                                                        if (line.startsWith('+') && !line.startsWith('+++')) {
+                                                            className += ' bg-green-500/10 text-green-600 dark:text-green-400 border-l-2 border-green-500';
+                                                        } else if (line.startsWith('-') && !line.startsWith('---')) {
+                                                            className += ' bg-red-500/10 text-red-600 dark:text-red-400 border-l-2 border-red-500';
+                                                        } else if (line.startsWith('@@')) {
+                                                            className += ' bg-blue-500/10 text-primary border-l-2 border-primary';
+                                                        } else if (line.startsWith('+++') || line.startsWith('---')) {
+                                                            className += ' text-muted-foreground';
+                                                        }
+
+                                                        return (
+                                                            <div key={lineIdx} className={className}>
+                                                                {line || ' '}
+                                                            </div>
+                                                        );
+                                                    })}
+                                                </div>
+                                            </CardContent>
+                                        )}
+                                    </Card>
+                                ))}
                         </div>
+
+                        <Pagination
+                            currentPage={currentPage}
+                            totalPages={Math.ceil(prDetails.filesChanged.length / itemsPerPage)}
+                            onPageChange={setCurrentPage}
+                        />
                     </div>
+
                 </div>
 
                 {/* Sidebar */}

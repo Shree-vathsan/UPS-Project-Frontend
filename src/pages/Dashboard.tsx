@@ -8,6 +8,7 @@ import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Skeleton } from '@/components/ui/skeleton';
+import Pagination from '../components/Pagination';
 
 interface DashboardProps {
     user: any;
@@ -30,8 +31,7 @@ export default function Dashboard({ user, token }: DashboardProps) {
 
     // Pagination state
     const [currentPage, setCurrentPage] = useState(1);
-    const [perPage] = useState(10);
-    const [totalRepos, setTotalRepos] = useState(0);
+    const [itemsPerPage] = useState(10);
 
     // Analyzed repositories tab state
     const [analyzedRepos, setAnalyzedRepos] = useState<any[]>([]);
@@ -49,9 +49,10 @@ export default function Dashboard({ user, token }: DashboardProps) {
         loadRepositories();
     }, []);
 
-    useEffect(() => {
-        loadRepositories();
-    }, [currentPage]);
+    // Remove dependency on currentPage for fetching
+    // useEffect(() => {
+    //    loadRepositories();
+    // }, [currentPage]);
 
     useEffect(() => {
         if (activeTab === 'analyzed') {
@@ -62,17 +63,13 @@ export default function Dashboard({ user, token }: DashboardProps) {
     const loadRepositories = async () => {
         setLoading(true);
         try {
-            const data = await api.getRepositories(token, user.id, currentPage, perPage);
+            // Fetch up to 100 repos to handle client-side pagination
+            // This ensures we get the correct total count for most users
+            const { data } = await api.getRepositories(token, user.id, 1, 100);
             console.log('Repositories from GitHub:', data);
 
-            // GitHub API returns repos array and total count in headers
-            // For simplicity, we'll just use the returned array
             setRepos(Array.isArray(data) ? data : []);
-
-            // If we got less than perPage items, we know this is the last page
-            if (Array.isArray(data)) {
-                setTotalRepos(data.length < perPage ? (currentPage - 1) * perPage + data.length : currentPage * perPage + 1);
-            }
+            // setTotalPages is no longer needed as we calculate it from repos.length
 
             setError('');
         } catch (err: any) {
@@ -307,93 +304,79 @@ export default function Dashboard({ user, token }: DashboardProps) {
                             </div>
 
                             <div className="grid gap-4">
-                                {repos.map((repo: any) => {
-                                    const key = `${repo.login}/${repo.name}`;
-                                    const isAnalyzing = analyzing.has(key);
-                                    const isCheckingStatus = checkingStatus.has(key);
-                                    const isAnalyzed = repo.analyzed === true;
-                                    const status = repo.status;
+                                {repos
+                                    .slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage)
+                                    .map((repo: any) => {
+                                        const key = `${repo.login}/${repo.name}`;
+                                        const isAnalyzing = analyzing.has(key);
+                                        const isCheckingStatus = checkingStatus.has(key);
+                                        const isAnalyzed = repo.analyzed === true;
+                                        const status = repo.status;
 
-                                    return (
-                                        <Card key={repo.id} className="hover-lift">
-                                            <CardHeader>
-                                                <div className="flex items-start justify-between">
-                                                    <div className="space-y-1 flex-1">
-                                                        <CardTitle className="text-lg">
-                                                            {repo.login}/{repo.name}
-                                                        </CardTitle>
-                                                        <CardDescription>
-                                                            {repo.description || 'No description'}
-                                                        </CardDescription>
-                                                        {isAnalyzed && (
-                                                            <div className="mt-2">
-                                                                {status === 'ready' && (
-                                                                    <Badge variant="success">Analysis Complete</Badge>
-                                                                )}
-                                                                {status === 'analyzing' && (
-                                                                    <Badge variant="warning">Analyzing...</Badge>
-                                                                )}
-                                                                {status === 'pending' && (
-                                                                    <Badge variant="info">Pending</Badge>
-                                                                )}
-                                                            </div>
-                                                        )}
+                                        return (
+                                            <Card key={repo.id} className="hover-lift">
+                                                <CardHeader>
+                                                    <div className="flex items-start justify-between">
+                                                        <div className="space-y-1 flex-1">
+                                                            <CardTitle className="text-lg">
+                                                                {repo.login}/{repo.name}
+                                                            </CardTitle>
+                                                            <CardDescription>
+                                                                {repo.description || 'No description'}
+                                                            </CardDescription>
+                                                            {isAnalyzed && (
+                                                                <div className="mt-2">
+                                                                    {status === 'ready' && (
+                                                                        <Badge variant="success">Analysis Complete</Badge>
+                                                                    )}
+                                                                    {status === 'analyzing' && (
+                                                                        <Badge variant="warning">Analyzing...</Badge>
+                                                                    )}
+                                                                    {status === 'pending' && (
+                                                                        <Badge variant="info">Pending</Badge>
+                                                                    )}
+                                                                </div>
+                                                            )}
+                                                        </div>
+                                                        <div className="ml-4">
+                                                            {isAnalyzing ? (
+                                                                <Button disabled size="sm">
+                                                                    <Loader className="h-4 w-4 mr-2 animate-spin" />
+                                                                    Starting...
+                                                                </Button>
+                                                            ) : !isAnalyzed ? (
+                                                                <Button onClick={() => handleAnalyze(repo.login, repo.name)} size="sm">
+                                                                    Analyze
+                                                                </Button>
+                                                            ) : isCheckingStatus ? (
+                                                                <Button disabled variant="outline" size="sm">
+                                                                    <Loader className="h-4 w-4 mr-2 animate-spin" />
+                                                                    Checking...
+                                                                </Button>
+                                                            ) : status === 'ready' ? (
+                                                                <Button onClick={() => handleViewAnalysis(repo.login, repo.name)} size="sm">
+                                                                    View Analysis
+                                                                </Button>
+                                                            ) : (
+                                                                <Button onClick={() => handleViewAnalysis(repo.login, repo.name)} variant="outline" size="sm">
+                                                                    Check Status
+                                                                </Button>
+                                                            )}
+                                                        </div>
                                                     </div>
-                                                    <div className="ml-4">
-                                                        {isAnalyzing ? (
-                                                            <Button disabled size="sm">
-                                                                <Loader className="h-4 w-4 mr-2 animate-spin" />
-                                                                Starting...
-                                                            </Button>
-                                                        ) : !isAnalyzed ? (
-                                                            <Button onClick={() => handleAnalyze(repo.login, repo.name)} size="sm">
-                                                                Analyze
-                                                            </Button>
-                                                        ) : isCheckingStatus ? (
-                                                            <Button disabled variant="outline" size="sm">
-                                                                <Loader className="h-4 w-4 mr-2 animate-spin" />
-                                                                Checking...
-                                                            </Button>
-                                                        ) : status === 'ready' ? (
-                                                            <Button onClick={() => handleViewAnalysis(repo.login, repo.name)} size="sm">
-                                                                View Analysis
-                                                            </Button>
-                                                        ) : (
-                                                            <Button onClick={() => handleViewAnalysis(repo.login, repo.name)} variant="outline" size="sm">
-                                                                Check Status
-                                                            </Button>
-                                                        )}
-                                                    </div>
-                                                </div>
-                                            </CardHeader>
-                                        </Card>
-                                    );
-                                })}
+                                                </CardHeader>
+                                            </Card>
+                                        );
+                                    })}
                             </div>
 
-                            {/* Pagination Controls */}
                             {repos.length > 0 && (
-                                <div className="flex items-center justify-center gap-4 mt-6 pt-4 border-t">
-                                    <Button
-                                        onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
-                                        disabled={currentPage === 1 || loading}
-                                        variant="outline"
-                                        size="sm"
-                                    >
-                                        Previous
-                                    </Button>
-                                    <div className="text-sm text-muted-foreground">
-                                        Page {currentPage}
-                                    </div>
-                                    <Button
-                                        onClick={() => setCurrentPage(p => p + 1)}
-                                        disabled={repos.length < perPage || loading}
-                                        variant="outline"
-                                        size="sm"
-                                    >
-                                        Next
-                                    </Button>
-                                </div>
+                                <Pagination
+                                    currentPage={currentPage}
+                                    onPageChange={setCurrentPage}
+                                    totalPages={Math.ceil(repos.length / itemsPerPage)}
+                                    disabled={loading}
+                                />
                             )}
 
                             <Card className="mt-6">

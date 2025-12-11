@@ -42,7 +42,19 @@ export const api = {
         const res = await fetch(`${API_BASE}/repositories?userId=${userId}&page=${page}&per_page=${perPage}&sort=pushed`, {
             headers: { 'Authorization': `Bearer ${token}` }
         });
-        return handleResponse(res);
+
+        const linkHeader = res.headers.get('Link');
+        let totalPages = 0;
+
+        if (linkHeader) {
+            const match = linkHeader.match(/&page=(\d+)[^>]*>; rel="last"/);
+            if (match) {
+                totalPages = parseInt(match[1]);
+            }
+        }
+
+        const data = await handleResponse(res);
+        return { data: Array.isArray(data) ? data : [], totalPages };
     },
 
     async analyzeRepository(owner: string, repo: string, userId: string) {
