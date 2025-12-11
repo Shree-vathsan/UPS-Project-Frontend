@@ -105,12 +105,31 @@ export default function Dashboard({ user, token }: DashboardProps) {
 
         try {
             const result = await api.analyzeRepository(owner, name, user.id);
-            console.log('Analysis started:', result);
-            alert(`Analysis started for ${owner}/${name}!\n\nThis will take a few minutes. Check the "Analyzed Repository" tab to see the status.`);
-            await loadRepositories();
+            console.log('Analysis result:', result);
+
+            // Handle different response types
+            if (result.alreadyHasAccess) {
+                // User already has access
+                alert(`Repository Access\n\nYou already have access to this repository!`);
+                setActiveTab('analyzed');
+                await loadAnalyzedRepositories();
+            } else if (result.accessGranted) {
+                // Repository was analyzed by someone else, access granted
+                const message = result.message || `Repository was analyzed by${result.analyzedBy ? ' ' + result.analyzedBy : ' another user'}. Access granted!`;
+                alert(`Access Granted\n\n${message}\n\nYou can now view this repository in the "Analyzed Repository" tab.`);
+                setActiveTab('analyzed');
+                await loadAnalyzedRepositories();
+            } else if (result.newAnalysis) {
+                // New analysis started
+                alert(`Analysis Started\n\nAnalysis started for ${owner}/${name}!\n\nThis will take a few minutes. Check the "Analyzed Repository" tab to see the status.`);
+                await loadRepositories();
+            } else {
+                // Fallback for any other response
+                alert(`Analysis Started\n\nAnalysis started for ${owner}/${name}!`);
+            }
         } catch (error: any) {
             console.error('Analysis failed:', error);
-            alert(`Failed to analyze ${owner}/${name}\n\n${error.message}`);
+            alert(`Failed to Analyze\n\nFailed to analyze ${owner}/${name}\n\n${error.message}`);
         } finally {
             setAnalyzing(prev => {
                 const newSet = new Set(prev);
@@ -167,7 +186,28 @@ export default function Dashboard({ user, token }: DashboardProps) {
         try {
             const result = await api.analyzeRepositoryByUrl(repoUrl.trim(), user.id);
 
-            if (result.alreadyExists) {
+            // Handle different response types
+            if (result.alreadyHasAccess) {
+                // User already has access
+                alert('Repository Access\n\nYou already have access to this repository!\n\nNavigating to the "Analyzed Repository" tab.');
+                setActiveTab('analyzed');
+                setRepoUrl('');
+            } else if (result.accessGranted) {
+                // Repository was analyzed by someone else, access granted
+                const timeAgoText = result.analyzedBy ? ` by ${result.analyzedBy}` : '';
+                alert(`Access Granted\n\nRepository was already analyzed${timeAgoText}. Access granted!\n\nNavigating to the "Analyzed Repository" tab.`);
+                setActiveTab('analyzed');
+                setRepoUrl('');
+            } else if (result.newAnalysis) {
+                // New analysis started
+                setAddSuccess(`Successfully started analysis for the repository!\n\nAnalysis will take a few minutes. Switch to the "Analyzed Repository" tab to see the progress.`);
+                setRepoUrl('');
+                // Refresh analyzed repos
+                if (activeTab !== 'analyzed') {
+                    setTimeout(() => setActiveTab('analyzed'), 2000);
+                }
+            } else if (result.alreadyExists) {
+                // Legacy handling for old backend responses
                 if (result.status === 'ready') {
                     alert('Repository Already Analyzed\n\nThis repository has already been analyzed. You can view it in the "Analyzed Repository" tab.');
                     setActiveTab('analyzed');
@@ -176,12 +216,9 @@ export default function Dashboard({ user, token }: DashboardProps) {
                     setActiveTab('analyzed');
                 }
             } else {
-                setAddSuccess(`Successfully started analysis for the repository!\n\nAnalysis will take a few minutes. Switch to the "Analyzed Repository" tab to see the progress.`);
+                // Fallback
+                setAddSuccess(`Successfully started analysis for the repository!`);
                 setRepoUrl('');
-                // Refresh analyzed repos
-                if (activeTab !== 'analyzed') {
-                    setTimeout(() => setActiveTab('analyzed'), 2000);
-                }
             }
         } catch (error: any) {
             console.error('Failed to add repository:', error);
