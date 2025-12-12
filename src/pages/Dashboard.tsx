@@ -721,18 +721,15 @@ export default function Dashboard({ user, token }: DashboardProps) {
                                     </Alert>
                                 )}
 
-                                <Alert variant="info">
-                                    <AlertTitle>Supported URL Formats:</AlertTitle>
-                                    <AlertDescription>
+                                <Alert className="border-foreground/30 text-foreground [&>svg]:text-foreground">
+                                    <AlertTitle className="text-foreground">Supported URL Formats:</AlertTitle>
+                                    <AlertDescription className="text-foreground/80">
                                         <ul className="text-xs space-y-1 list-disc list-inside mt-2">
-                                            <li><code>https://github.com/owner/repo</code></li>
-                                            <li><code>https://github.com/owner/repo.git</code></li>
-                                            <li><code>github.com/owner/repo</code></li>
-                                            <li><code>owner/repo</code></li>
+                                            <li><code className="text-foreground">https://github.com/owner/repo</code></li>
+                                            <li><code className="text-foreground">https://github.com/owner/repo.git</code></li>
+                                            <li><code className="text-foreground">github.com/owner/repo</code></li>
+                                            <li><code className="text-foreground">owner/repo</code></li>
                                         </ul>
-                                        <p className="text-xs mt-2">
-                                            <strong>Note:</strong> Only public repositories can be analyzed. Private repositories require the owner to log in.
-                                        </p>
                                     </AlertDescription>
                                 </Alert>
                             </CardContent>

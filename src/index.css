@@ -10,48 +10,67 @@
 
 @layer base {
   :root {
-    /* Theme: Black & Beige - Warm Minimal Editorial with Custom Palette */
-    --background: 45 42 38; /* pale-oak-50 #f5f3ef */
-    --foreground: 15 13 8; /* pale-oak-950 #16130e */
-    --card: 48 45 41; /* Custom white */
-    --card-foreground: 15 13 8;
-    --popover: 48 45 41;
-    --popover-foreground: 15 13 8;
-    --primary: 32 24 16; /* desert-sand-900 #28180b */
-    --primary-foreground: 45 42 38;
-    --secondary: 36 25 14; /* sandy-clay-800 #533313 */
-    --secondary-foreground: 45 42 38;
-    --muted: 43 41 37; /* pale-oak-100 #ebe7e0 */
-    --muted-foreground: 31 27 20; /* pale-oak-900 #1f1b14 */
-    --accent: 25 17 10; /* desert-sand-950 #1c1107 */
-    --accent-foreground: 45 42 38;
+    /* Theme: Black & Beige - Soft Charcoal on Warm Orange-Beige */
+    --background: 28 30 94;
+    /* Warm orange-beige #F6EDE0 */
+    --foreground: 25 18 18;
+    /* Warm charcoal #312720 */
+    --card: 28 28 97;
+    /* Warm peachy white #FCF8F2 */
+    --card-foreground: 25 18 18;
+    --popover: 28 28 97;
+    --popover-foreground: 25 18 18;
+    --primary: 25 15 22;
+    /* Soft warm charcoal #3E3328 */
+    --primary-foreground: 28 30 94;
+    --secondary: 26 30 84;
+    /* Orange-tinted beige #E4D4C0 */
+    --secondary-foreground: 25 18 18;
+    --muted: 26 28 88;
+    /* Soft orange-beige #EAE0D2 */
+    --muted-foreground: 25 12 45;
+    /* Warm gray #7A6F64 */
+    --accent: 25 15 25;
+    /* Soft dark accent #443929 */
+    --accent-foreground: 28 30 94;
     --destructive: 0 70 50;
-    --destructive-foreground: 45 42 38;
-    --border: 40 37 32; /* pale-oak-200 #d7cfc1 */
-    --input: 40 37 32;
-    --ring: 32 24 16;
+    --destructive-foreground: 28 30 94;
+    --border: 26 25 76;
+    /* Warm orange border #D2C3AC */
+    --input: 26 25 76;
+    --ring: 25 15 22;
     --radius: 0.75rem;
   }
 
   .theme-light {
     /* Theme: Light - Clean Minimal Professional */
-    --background: 0 0 100; /* Pure white */
-    --foreground: 222 47 11; /* Deep slate #0F172A */
-    --card: 0 0 99; /* Off white #FCFCFC */
+    --background: 0 0 100;
+    /* Pure white */
+    --foreground: 222 47 11;
+    /* Deep slate #0F172A */
+    --card: 0 0 99;
+    /* Off white #FCFCFC */
     --card-foreground: 222 47 11;
     --popover: 0 0 100;
     --popover-foreground: 222 47 11;
-    --primary: 221 83 53; /* Modern blue #2563EB */
+    --primary: 221 83 53;
+    /* Modern blue #2563EB */
     --primary-foreground: 0 0 100;
-    --secondary: 214 32 91; /* Light gray #E2E8F0 */
+    --secondary: 214 32 91;
+    /* Light gray #E2E8F0 */
     --secondary-foreground: 222 47 11;
-    --muted: 210 40 96; /* Very light gray #F1F5F9 */
-    --muted-foreground: 215 25 27; /* Medium gray #64748B */
-    --accent: 262 83 58; /* Modern purple #A855F7 */
+    --muted: 210 40 96;
+    /* Very light gray #F1F5F9 */
+    --muted-foreground: 215 25 27;
+    /* Medium gray #64748B */
+    --accent: 262 83 58;
+    /* Modern purple #A855F7 */
     --accent-foreground: 0 0 100;
-    --destructive: 0 84 60; /* Bright red #EF4444 */
+    --destructive: 0 84 60;
+    /* Bright red #EF4444 */
     --destructive-foreground: 0 0 100;
-    --border: 220 13 85; /* More visible border #D1D5DB */
+    --border: 220 13 85;
+    /* More visible border #D1D5DB */
     --input: 220 13 85;
     --ring: 221 83 53;
     --radius: 0.75rem;
@@ -59,23 +78,33 @@
 
   .theme-dark {
     /* Theme: Dark - Deep Calm Professional */
-    --background: 224 71 4; /* Deep dark blue #020617 */
-    --foreground: 210 40 98; /* Very light text #F8FAFC */
-    --card: 217 33 15; /* Dark elevated #0F1629 */
+    --background: 224 71 4;
+    /* Deep dark blue #020617 */
+    --foreground: 210 40 98;
+    /* Very light text #F8FAFC */
+    --card: 217 33 15;
+    /* Dark elevated #0F1629 */
     --card-foreground: 210 40 98;
     --popover: 224 71 4;
     --popover-foreground: 210 40 98;
-    --primary: 217 91 60; /* Bright blue #3B82F6 */
+    --primary: 217 91 60;
+    /* Bright blue #3B82F6 */
     --primary-foreground: 222 47 11;
-    --secondary: 215 25 27; /* Dark gray #334155 */
+    --secondary: 215 25 27;
+    /* Dark gray #334155 */
     --secondary-foreground: 210 40 98;
-    --muted: 215 30 25; /* Muted dark #1E293B */
-    --muted-foreground: 215 20 65; /* Light gray #94A3B8 */
-    --accent: 262 83 58; /* Purple accent */
+    --muted: 215 30 25;
+    /* Muted dark #1E293B */
+    --muted-foreground: 215 20 65;
+    /* Light gray #94A3B8 */
+    --accent: 262 83 58;
+    /* Purple accent */
     --accent-foreground: 210 40 98;
-    --destructive: 0 84 60; /* Bright red */
+    --destructive: 0 84 60;
+    /* Bright red */
     --destructive-foreground: 210 40 98;
-    --border: 217 33 27; /* More visible border #1E293B */
+    --border: 217 33 27;
+    /* More visible border #1E293B */
     --input: 215 25 27;
     --ring: 217 91 60;
     --radius: 0.75rem;
@@ -83,23 +112,32 @@
 
   .theme-night {
     /* Theme: Night - Using EXACT palette hex codes */
-    --background: 30 23 7; /* pale-oak-950 #16130e */
-    --foreground: 40 33 95; /* pale-oak-50 #f5f3ef */
-    --card: 31 27 10; /* pale-oak-900 #1f1b14 */
+    --background: 30 23 7;
+    /* pale-oak-950 #16130e */
+    --foreground: 40 33 95;
+    /* pale-oak-50 #f5f3ef */
+    --card: 31 27 10;
+    /* pale-oak-900 #1f1b14 */
     --card-foreground: 40 33 95;
     --popover: 31 27 10;
     --popover-foreground: 40 33 95;
-    --primary: 27 62 50; /* sandy-clay-500 #cf8030 */
+    --primary: 27 62 50;
+    /* sandy-clay-500 #cf8030 */
     --primary-foreground: 40 33 95;
-    --secondary: 27 57 50; /* desert-sand-500 #c97836 */
+    --secondary: 27 57 50;
+    /* desert-sand-500 #c97836 */
     --secondary-foreground: 40 33 95;
-    --muted: 27 47 21; /* desert-sand-800 #513015 */
-    --muted-foreground: 40 26 76; /* pale-oak-200 #d7cfc1 */
-    --accent: 154 14 50; /* muted-teal-500 #6e9182 */
+    --muted: 27 47 21;
+    /* desert-sand-800 #513015 */
+    --muted-foreground: 40 26 76;
+    /* pale-oak-200 #d7cfc1 */
+    --accent: 154 14 50;
+    /* muted-teal-500 #6e9182 */
     --accent-foreground: 40 33 95;
     --destructive: 0 70 50;
     --destructive-foreground: 40 33 95;
-    --border: 30 29 17; /* pale-oak-800 #3e3628 */
+    --border: 30 29 17;
+    /* pale-oak-800 #3e3628 */
     --input: 30 29 17;
     --ring: 27 62 50;
     --radius: 0.75rem;
@@ -107,25 +145,36 @@
 
   .theme-light-pallete {
     /* Theme: Light Palette - Earthy & Natural - Using EXACT hex codes */
-    --background: 46 61 92; /* #F7F1DE - Warm cream background */
-    --foreground: 27 42 20; /* Derived from #B87C4C for dark text */
-    --card: 0 0 100; /* Pure white for cards */
+    --background: 46 61 92;
+    /* #F7F1DE - Warm cream background */
+    --foreground: 27 42 20;
+    /* Derived from #B87C4C for dark text */
+    --card: 0 0 100;
+    /* Pure white for cards */
     --card-foreground: 27 42 20;
     --popover: 0 0 100;
     --popover-foreground: 27 42 20;
-    --primary: 27 42 51; /* #B87C4C - Warm brown */
+    --primary: 27 42 51;
+    /* #B87C4C - Warm brown */
     --primary-foreground: 46 61 92;
-    --secondary: 30 34 64; /* #C4A484 - Light tan */
+    --secondary: 30 34 64;
+    /* #C4A484 - Light tan */
     --secondary-foreground: 27 42 20;
-    --muted: 46 61 88; /* Lighter shade of cream */
-    --muted-foreground: 27 42 40; /* Medium brown for muted text */
-    --accent: 105 17 69; /* #A8BBA3 - Sage green */
+    --muted: 46 61 88;
+    /* Lighter shade of cream */
+    --muted-foreground: 27 42 40;
+    /* Medium brown for muted text */
+    --accent: 105 17 69;
+    /* #A8BBA3 - Sage green */
     --accent-foreground: 27 42 20;
-    --destructive: 0 70 50; /* Warm red */
+    --destructive: 0 70 50;
+    /* Warm red */
     --destructive-foreground: 0 0 100;
-    --border: 30 34 64; /* #C4A484 - Light tan for visible borders */
+    --border: 30 34 64;
+    /* #C4A484 - Light tan for visible borders */
     --input: 30 34 64;
-    --ring: 27 42 51; /* #B87C4C */
+    --ring: 27 42 51;
+    /* #B87C4C */
     --radius: 0.75rem;
   }
 }
@@ -146,7 +195,12 @@
     line-height: 1.7;
   }
 
-  h1, h2, h3, h4, h5, h6 {
+  h1,
+  h2,
+  h3,
+  h4,
+  h5,
+  h6 {
     @apply font-heading font-bold tracking-tight;
     line-height: 1.2;
   }
@@ -194,6 +248,7 @@
   0% {
     background-position: -1000px 0;
   }
+
   100% {
     background-position: 1000px 0;
   }
@@ -202,12 +257,10 @@
 .skeleton {
   @apply rounded-md bg-muted/50;
   animation: shimmer 2s infinite linear;
-  background-image: linear-gradient(
-    90deg,
-    hsl(var(--muted) / 0) 0%,
-    hsl(var(--muted) / 0.5) 50%,
-    hsl(var(--muted) / 0) 100%
-  );
+  background-image: linear-gradient(90deg,
+      hsl(var(--muted) / 0) 0%,
+      hsl(var(--muted) / 0.5) 50%,
+      hsl(var(--muted) / 0) 100%);
   background-size: 1000px 100%;
   background-repeat: no-repeat;
 }
@@ -217,6 +270,7 @@
 /* ============================================ */
 
 @layer utilities {
+
   /* Smooth Transitions */
   .transition-smooth {
     transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
@@ -269,28 +323,61 @@
 
   /* Slide In Animations */
   @keyframes slideInUp {
-    from { opacity: 0; transform: translateY(20px); }
-    to { opacity: 1; transform: translateY(0); }
+    from {
+      opacity: 0;
+      transform: translateY(20px);
+    }
+
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
   }
 
   @keyframes slideInLeft {
-    from { opacity: 0; transform: translateX(-20px); }
-    to { opacity: 1; transform: translateX(0); }
+    from {
+      opacity: 0;
+      transform: translateX(-20px);
+    }
+
+    to {
+      opacity: 1;
+      transform: translateX(0);
+    }
   }
 
   @keyframes slideInRight {
-    from { opacity: 0; transform: translateX(20px); }
-    to { opacity: 1; transform: translateX(0); }
+    from {
+      opacity: 0;
+      transform: translateX(20px);
+    }
+
+    to {
+      opacity: 1;
+      transform: translateX(0);
+    }
   }
 
   @keyframes fadeIn {
-    from { opacity: 0; }
-    to { opacity: 1; }
+    from {
+      opacity: 0;
+    }
+
+    to {
+      opacity: 1;
+    }
   }
 
   @keyframes scaleIn {
-    from { opacity: 0; transform: scale(0.95); }
-    to { opacity: 1; transform: scale(1); }
+    from {
+      opacity: 0;
+      transform: scale(0.95);
+    }
+
+    to {
+      opacity: 1;
+      transform: scale(1);
+    }
   }
 
   .animate-slide-in-up {
@@ -314,10 +401,21 @@
   }
 
   /* Stagger Delays */
-.animate-delay-100 { animation-delay: 100ms; }
-  .animate-delay-200 { animation-delay: 200ms; }
-  .animate-delay-300 { animation-delay: 300ms; }
-  .animate-delay-400 { animation-delay: 400ms; }
+  .animate-delay-100 {
+    animation-delay: 100ms;
+  }
+
+  .animate-delay-200 {
+    animation-delay: 200ms;
+  }
+
+  .animate-delay-300 {
+    animation-delay: 300ms;
+  }
+
+  .animate-delay-400 {
+    animation-delay: 400ms;
+  }
 }
 
 /* ============================================ */

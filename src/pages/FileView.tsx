@@ -5,7 +5,8 @@ import { api } from '../utils/api';
 import BackButton from '../components/BackButton';
 import FileAnalysis from '../components/FileAnalysis';
 import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
-import { vscDarkPlus } from 'react-syntax-highlighter/dist/esm/styles/prism';
+import { vscDarkPlus, vs } from 'react-syntax-highlighter/dist/esm/styles/prism';
+import { useTheme } from '@/components/theme-provider';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -15,6 +16,7 @@ import { Alert, AlertDescription } from '@/components/ui/alert';
 
 export default function FileView() {
     const { fileId } = useParams<{ fileId: string }>();
+    const { theme } = useTheme();
     const [file, setFile] = useState<any>(null);
     const [content, setContent] = useState<string>('');
     const [analysis, setAnalysis] = useState<any>(null);
@@ -23,6 +25,9 @@ export default function FileView() {
     const [error, setError] = useState<string>('');
     const [commitHistory, setCommitHistory] = useState<any[]>([]);
     const [currentCommitSha, setCurrentCommitSha] = useState<string | null>(null);
+
+    // Determine if current theme is light (includes black-beige which has light background)
+    const isLightTheme = theme === 'light' || theme === 'light-pallete' || theme === 'black-beige';
 
     const getLanguageFromPath = (filePath: string): string => {
         const extension = filePath.split('.').pop()?.toLowerCase();
@@ -228,7 +233,7 @@ export default function FileView() {
                         <CardContent className="p-0">
                             <SyntaxHighlighter
                                 language={getLanguageFromPath(file?.filePath || '')}
-                                style={vscDarkPlus}
+                                style={isLightTheme ? vs : vscDarkPlus}
                                 showLineNumbers={true}
                                 wrapLines={true}
                                 customStyle={{
@@ -237,12 +242,20 @@ export default function FileView() {
                                     padding: '1rem',
                                     fontSize: '13px',
                                     lineHeight: '1.6',
+                                    fontFamily: 'ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, "Liberation Mono", monospace',
+                                }}
+                                codeTagProps={{
+                                    style: {
+                                        fontSize: '13px',
+                                        fontFamily: 'ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, "Liberation Mono", monospace',
+                                    }
                                 }}
                                 lineNumberStyle={{
                                     minWidth: '3em',
                                     paddingRight: '1em',
-                                    color: '#6e7681',
+                                    color: isLightTheme ? '#666' : '#6e7681',
                                     userSelect: 'none',
+                                    fontSize: '13px',
                                 }}
                             >
                                 {content}
