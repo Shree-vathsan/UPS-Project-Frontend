@@ -13,11 +13,7 @@ import ThemeSelector from './components/ThemeSelector.tsx';
 import { ThemeProvider } from './components/theme-provider.tsx';
 import { api } from './utils/api';
 
-const GUEST_USER = {
-    id: 'guest',
-    username: 'Guest',
-    avatarUrl: null
-};
+
 
 function App() {
     const [user, setUser] = useState<any>(null);
@@ -65,14 +61,14 @@ function App() {
         }
     }, []);
 
-    const currentUser = user || GUEST_USER;
+
 
     const handleLogout = () => {
         localStorage.removeItem('user');
         localStorage.removeItem('token');
         setUser(null);
         setToken('');
-        window.location.href = '/';
+        window.location.href = '/login';
     };
 
     return (
@@ -131,12 +127,12 @@ function App() {
                 {/* Routes with fade-in animation */}
                 <main className="animate-fade-in">
                     <Routes>
-                        <Route path="/" element={<Dashboard user={currentUser} token={token} />} />
+                        <Route path="/" element={user ? <Dashboard user={user} token={token} /> : <Login />} />
                         <Route path="/login" element={<Login />} />
-                        <Route path="/repo/:repositoryId" element={<RepoView user={currentUser} />} />
+                        <Route path="/repo/:repositoryId" element={user ? <RepoView user={user} /> : <Login />} />
                         <Route path="/commit/:commitId" element={<CommitView />} />
                         <Route path="/pr/:prId" element={<PRView />} />
-                        <Route path="/pr/:owner/:repo/:prNumber" element={<PullRequestView user={currentUser} />} />
+                        <Route path="/pr/:owner/:repo/:prNumber" element={user ? <PullRequestView user={user} /> : <Login />} />
                         <Route path="/file/:fileId" element={<FileView />} />
                         <Route path="/filetree/:fileId" element={<FileTreeView />} />
                     </Routes>

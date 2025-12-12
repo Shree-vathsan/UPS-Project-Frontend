@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Package, BarChart, Plus, Loader, RefreshCw, AlertTriangle } from 'lucide-react';
+import { Package, BarChart, Plus, Loader, RefreshCw, AlertTriangle, Search } from 'lucide-react';
 import { api } from '../utils/api';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -33,6 +33,9 @@ export default function Dashboard({ user, token }: DashboardProps) {
     const [currentPage, setCurrentPage] = useState(1);
     const [itemsPerPage] = useState(10);
 
+    // Search state
+    const [searchQuery, setSearchQuery] = useState('');
+
     // Analyzed repositories tab state
     const [analyzedRepos, setAnalyzedRepos] = useState<any[]>([]);
     const [analyzedFilter, setAnalyzedFilter] = useState<FilterType>('all');
@@ -47,7 +50,7 @@ export default function Dashboard({ user, token }: DashboardProps) {
 
     useEffect(() => {
         loadRepositories();
-    }, []);
+    }, [user?.id]);
 
     // Remove dependency on currentPage for fetching
     // useEffect(() => {
@@ -58,7 +61,7 @@ export default function Dashboard({ user, token }: DashboardProps) {
         if (activeTab === 'analyzed') {
             loadAnalyzedRepositories();
         }
-    }, [activeTab, analyzedFilter]);
+    }, [activeTab, analyzedFilter, user?.id]);
 
     const loadRepositories = async () => {
         setLoading(true);
@@ -295,16 +298,38 @@ export default function Dashboard({ user, token }: DashboardProps) {
                             <div className="flex items-center justify-between mb-4">
                                 <div className="flex items-center gap-2">
                                     <h2 className="font-heading text-xl font-semibold">Your Repositories</h2>
-                                    <Badge>{repos.length}</Badge>
+                                    <Badge>{itemsPerPage}/Page</Badge>
                                 </div>
-                                <Button onClick={loadRepositories} variant="outline" size="sm">
-                                    <RefreshCw className="h-4 w-4 mr-2" />
-                                    Refresh
-                                </Button>
+                                <div className="flex items-center gap-2">
+                                    <div className="relative">
+                                        <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                                        <input
+                                            type="text"
+                                            placeholder="Search repositories..."
+                                            value={searchQuery}
+                                            onChange={(e) => {
+                                                setSearchQuery(e.target.value);
+                                                setCurrentPage(1); // Reset to first page on search
+                                            }}
+                                            className="pl-9 pr-4 py-2 text-sm border border-border rounded-md bg-background text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring transition-all duration-200 hover:shadow-[0_0_10px_rgba(255,255,255,0.3)] w-[200px]"
+                                        />
+                                    </div>
+                                    <Button onClick={loadRepositories} variant="outline" size="sm">
+                                        <RefreshCw className="h-4 w-4 mr-2" />
+                                        Refresh
+                                    </Button>
+                                </div>
                             </div>
 
                             <div className="grid gap-4">
                                 {repos
+                                    .filter((repo: any) => {
+                                        if (!searchQuery.trim()) return true;
+                                        const query = searchQuery.toLowerCase();
+                                        const repoName = `${repo.login}/${repo.name}`.toLowerCase();
+                                        const description = (repo.description || '').toLowerCase();
+                                        return repoName.includes(query) || description.includes(query);
+                                    })
                                     .slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage)
                                     .map((repo: any) => {
                                         const key = `${repo.login}/${repo.name}`;
@@ -370,14 +395,23 @@ export default function Dashboard({ user, token }: DashboardProps) {
                                     })}
                             </div>
 
-                            {repos.length > 0 && (
-                                <Pagination
-                                    currentPage={currentPage}
-                                    onPageChange={setCurrentPage}
-                                    totalPages={Math.ceil(repos.length / itemsPerPage)}
-                                    disabled={loading}
-                                />
-                            )}
+                            {(() => {
+                                const filteredRepos = repos.filter((repo: any) => {
+                                    if (!searchQuery.trim()) return true;
+                                    const query = searchQuery.toLowerCase();
+                                    const repoName = `${repo.login}/${repo.name}`.toLowerCase();
+                                    const description = (repo.description || '').toLowerCase();
+                                    return repoName.includes(query) || description.includes(query);
+                                });
+                                return filteredRepos.length > 0 ? (
+                                    <Pagination
+                                        currentPage={currentPage}
+                                        onPageChange={setCurrentPage}
+                                        totalPages={Math.ceil(filteredRepos.length / itemsPerPage)}
+                                        disabled={loading}
+                                    />
+                                ) : null;
+                            })()}
 
                             <Card className="mt-6">
                                 <CardContent className="py-4">
