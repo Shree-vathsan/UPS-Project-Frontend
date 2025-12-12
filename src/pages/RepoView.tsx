@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { useParams } from 'react-router-dom';
+import { useParams, useNavigate } from 'react-router-dom';
 import { GitCommit, GitPullRequest, FolderTree, BarChart, RefreshCw, GitBranch, Clock, ArrowRight } from 'lucide-react';
 import { api } from '../utils/api';
 import FileTree from '../components/FileTree';
@@ -24,6 +24,7 @@ interface RepoViewProps {
 }
 
 export default function RepoView({ user: _user }: RepoViewProps) {
+    const navigate = useNavigate();
     const { repositoryId } = useParams<{ repositoryId: string }>();
     const [activeTab, setActiveTab] = useState<'commits' | 'prs' | 'files' | 'analytics'>('commits');
     const [repository, setRepository] = useState<any>(null);
@@ -330,7 +331,7 @@ export default function RepoView({ user: _user }: RepoViewProps) {
                                                     </CardDescription>
                                                 </div>
                                                 <Button
-                                                    onClick={() => window.location.href = `/commit/${commit.id}`}
+                                                    onClick={() => navigate(`/commit/${commit.id}`)}
                                                     size="sm"
                                                     className="gap-2 ml-4"
                                                 >
@@ -420,7 +421,7 @@ export default function RepoView({ user: _user }: RepoViewProps) {
                                                     </div>
                                                 </div>
                                                 <Button
-                                                    onClick={() => window.location.href = `/pr/${repository.ownerUsername}/${repository.name}/${pr.prNumber}`}
+                                                    onClick={() => navigate(`/pr/${repository.ownerUsername}/${repository.name}/${pr.prNumber}`)}
                                                     size="sm"
                                                     className="gap-2 ml-4"
                                                 >
@@ -459,7 +460,7 @@ export default function RepoView({ user: _user }: RepoViewProps) {
                             <CardContent className="pt-6">
                                 <FileTree
                                     files={files}
-                                    onFileClick={(fileId) => window.location.href = `/file/${fileId}?branch=${encodeURIComponent(selectedBranch)}`}
+                                    onFileClick={(fileId) => navigate(`/file/${fileId}?branch=${encodeURIComponent(selectedBranch)}`)}
                                 />
                             </CardContent>
                         </Card>

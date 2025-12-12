@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Package, BarChart, Plus, Loader, RefreshCw, AlertTriangle, Search, Info, ChevronDown, ChevronUp } from 'lucide-react';
 import { api } from '../utils/api';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -20,6 +21,8 @@ type FilterType = 'your' | 'others' | 'all';
 type RepoFilterType = 'all' | 'public' | 'private' | 'contributor';
 
 export default function Dashboard({ user, token }: DashboardProps) {
+    const navigate = useNavigate();
+
     // Tab state
     const [activeTab, setActiveTab] = useState<TabType>('your');
 
@@ -159,7 +162,7 @@ export default function Dashboard({ user, token }: DashboardProps) {
             }
 
             if (status.status === 'ready') {
-                window.location.href = `/repo/${status.repositoryId}`;
+                navigate(`/repo/${status.repositoryId}`);
             } else if (status.status === 'analyzing') {
                 alert('Analysis in Progress\n\nAnalysis is still in progress. Please wait a few minutes and try again.');
             } else if (status.status === 'pending') {
@@ -405,14 +408,14 @@ export default function Dashboard({ user, token }: DashboardProps) {
                             </div>
 
                             {/* Collapsible Quick Guide */}
-                            <button
+                            {/* <button
                                 onClick={() => setShowQuickGuide(!showQuickGuide)}
                                 className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors mb-3"
                             >
                                 {showQuickGuide ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
                                 <Info className="h-3 w-3" />
                                 <span>Quick Tips</span>
-                            </button>
+                            </button> */}
 
                             {showQuickGuide && (
                                 <div className="bg-muted/50 border rounded-lg p-3 mb-4 text-xs text-muted-foreground">
@@ -638,7 +641,7 @@ export default function Dashboard({ user, token }: DashboardProps) {
                                             <Button
                                                 onClick={() => {
                                                     if (repo.status === 'ready') {
-                                                        window.location.href = `/repo/${repo.id}`;
+                                                        navigate(`/repo/${repo.id}`);
                                                     } else if (repo.status === 'analyzing') {
                                                         alert('Analysis in Progress\n\nThis repository is still being analyzed. Please check back in a few minutes.');
                                                     } else {
