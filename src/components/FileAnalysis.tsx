@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import NetworkGraph from './NetworkGraph';
 import InfoTooltip from './InfoTooltip';
 import MetricCard from './MetricCard';
@@ -23,10 +23,15 @@ export default function FileAnalysis({ file, analysis }: FileAnalysisProps) {
     const [summaryLoading, setSummaryLoading] = useState(false);
     const [summaryError, setSummaryError] = useState<string | null>(null);
     const [chunkCount, setChunkCount] = useState<number>(0);
+    const summaryFetchedRef = useRef<string | null>(null);
 
     useEffect(() => {
         loadEnhancedData();
-        fetchSummary();
+        // Only fetch summary once per file.id (prevents React Strict Mode double-call)
+        if (summaryFetchedRef.current !== file.id) {
+            summaryFetchedRef.current = file.id;
+            fetchSummary();
+        }
     }, [file.id]);
 
     const loadEnhancedData = async () => {
@@ -264,7 +269,7 @@ export default function FileAnalysis({ file, analysis }: FileAnalysisProps) {
                     <div className="card">
                         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '16px' }}>
                             <h3 style={{ margin: 0, fontSize: '16px', color: '#3fb950', display: 'flex', alignItems: 'center', gap: '8px' }}>
-                                 Dependencies Analysis
+                                Dependencies Analysis
                             </h3>
                             <InfoTooltip
                                 text="Shows files that this file imports. Lower dependency count means better separation of concerns. Direct imports are explicit, indirect are transitive dependencies."
@@ -324,7 +329,7 @@ export default function FileAnalysis({ file, analysis }: FileAnalysisProps) {
                     <div className="card">
                         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '16px' }}>
                             <h3 style={{ margin: 0, fontSize: '16px', color: '#d29922', display: 'flex', alignItems: 'center', gap: '8px' }}>
-                                 Dependents Impact
+                                Dependents Impact
                             </h3>
                             <InfoTooltip
                                 text="Files that import this file. Higher numbers mean more files affected by changes. Blast radius shows total files potentially impacted including indirect dependents."
@@ -394,7 +399,7 @@ export default function FileAnalysis({ file, analysis }: FileAnalysisProps) {
                 />
                 <div className="p-4 bg-primary/10 rounded-lg border border-primary/20 mb-4">
                     <div className="text-sm text-foreground leading-relaxed mb-2">
-                         <strong className="text-primary">File Purpose:</strong> This file appears to handle{' '}
+                        <strong className="text-primary">File Purpose:</strong> This file appears to handle{' '}
                         {file.filePath.includes('auth') ? 'authentication logic' :
                             file.filePath.includes('api') ? 'API communication' :
                                 file.filePath.includes('component') ? 'UI component rendering' : 'business logic'}.
@@ -532,9 +537,9 @@ export default function FileAnalysis({ file, analysis }: FileAnalysisProps) {
                     </div>
                     <div className={`p-4 rounded-lg text-center border ${analysis.isInOpenPr ? 'bg-primary/10 border-primary' : 'bg-card'}`}>
                         <div className="text-3xl mb-1 flex items-center justify-center">
-                            {analysis.isInOpenPr ? <FaCheck size={0} color="Green"/> : <FaTimes color="Red"/>}
+                            {analysis.isInOpenPr ? <FaCheck size={0} color="Green" /> : <FaTimes color="Red" />}
                         </div>
-                        <div className="text-xs text-muted-foreground">{analysis.isInOpenPr? 'In PR' : 'Not In PR'}</div>
+                        <div className="text-xs text-muted-foreground">{analysis.isInOpenPr ? 'In PR' : 'Not In PR'}</div>
                     </div>
                 </div>
             </div>
