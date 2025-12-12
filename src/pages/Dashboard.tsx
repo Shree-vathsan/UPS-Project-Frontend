@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Package, BarChart, Plus, Loader, RefreshCw, AlertTriangle, Search } from 'lucide-react';
+import { Package, BarChart, Plus, Loader, RefreshCw, AlertTriangle, Search, Info, ChevronDown, ChevronUp } from 'lucide-react';
 import { api } from '../utils/api';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -17,6 +17,7 @@ interface DashboardProps {
 
 type TabType = 'your' | 'analyzed' | 'add';
 type FilterType = 'your' | 'others' | 'all';
+type RepoFilterType = 'all' | 'public' | 'private' | 'contributor';
 
 export default function Dashboard({ user, token }: DashboardProps) {
     // Tab state
@@ -35,6 +36,12 @@ export default function Dashboard({ user, token }: DashboardProps) {
 
     // Search state
     const [searchQuery, setSearchQuery] = useState('');
+
+    // Repository filter state (for Your Repositories tab)
+    const [repoFilter, setRepoFilter] = useState<RepoFilterType>('all');
+
+    // Quick guide visibility
+    const [showQuickGuide, setShowQuickGuide] = useState(false);
 
     // Analyzed repositories tab state
     const [analyzedRepos, setAnalyzedRepos] = useState<any[]>([]);
@@ -230,10 +237,52 @@ export default function Dashboard({ user, token }: DashboardProps) {
     return (
         <div className="container-custom py-8 animate-fade-in">
             <div className="mb-8">
-                <h1 className="font-heading text-3xl font-bold mb-2">Repository Management</h1>
-                <p className="text-muted-foreground">
-                    Analyze repositories, track progress, and view insights
-                </p>
+                <div className="flex items-start justify-between">
+                    <div>
+                        <h1 className="font-heading text-3xl font-bold mb-2">Repository Management</h1>
+                        <p className="text-muted-foreground">
+                            Analyze repositories, track progress, and view insights
+                        </p>
+                    </div>
+
+                    {/* Quick Tips Toggle */}
+                    <Button
+                        onClick={() => setShowQuickGuide(!showQuickGuide)}
+                        variant="default"
+                        size="sm"
+                        className="gap-2"
+                    >
+                        <Info className="h-4 w-4" />
+                        <span>Quick Tips</span>
+                        {showQuickGuide ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
+                    </Button>
+                </div>
+
+                {/* Collapsible Quick Guide */}
+                {showQuickGuide && (
+                    <Card className="mt-4 max-w-4xl">
+                        <CardContent className="pt-6">
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                <div className="flex items-center gap-3">
+                                    <span className="text-primary text-xl font-bold">•</span>
+                                    <span className="text-base">Repositories are fetched from your GitHub account</span>
+                                </div>
+                                <div className="flex items-center gap-3">
+                                    <span className="text-primary text-xl font-bold">•</span>
+                                    <span className="text-base">Click "Analyze" to start repository analysis</span>
+                                </div>
+                                <div className="flex items-center gap-3">
+                                    <span className="text-primary text-xl font-bold">•</span>
+                                    <span className="text-base">Analysis includes Git history & semantic embeddings</span>
+                                </div>
+                                <div className="flex items-center gap-3">
+                                    <span className="text-primary text-xl font-bold">•</span>
+                                    <span className="text-base">View detailed insights when analysis is ready</span>
+                                </div>
+                            </div>
+                        </CardContent>
+                    </Card>
+                )}
             </div>
 
             <Tabs value={activeTab} onValueChange={(value) => setActiveTab(value as TabType)}>
@@ -320,9 +369,75 @@ export default function Dashboard({ user, token }: DashboardProps) {
                                 </div>
                             </div>
 
+                            {/* Repository Type Filter */}
+                            <div className="flex gap-2 mb-4">
+                                <Button
+                                    onClick={() => setRepoFilter('all')}
+                                    variant={repoFilter === 'all' ? 'default' : 'outline'}
+                                    size="sm"
+                                >
+                                    All ({repos.length})
+                                </Button>
+                                <Button
+                                    onClick={() => setRepoFilter('public')}
+                                    variant={repoFilter === 'public' ? 'default' : 'outline'}
+                                    size="sm"
+                                >
+                                    Public ({repos.filter((r: any) => r.private === false).length})
+                                </Button>
+                                <Button
+                                    onClick={() => setRepoFilter('private')}
+                                    variant={repoFilter === 'private' ? 'default' : 'outline'}
+                                    size="sm"
+                                >
+                                    Private ({repos.filter((r: any) => r.private === true).length})
+                                </Button>
+                                <Button
+                                    onClick={() => setRepoFilter('contributor')}
+                                    variant={repoFilter === 'contributor' ? 'default' : 'outline'}
+                                    size="sm"
+                                >
+                                    Contributor ({repos.filter((r: any) => {
+                                        const perms = r.permissions;
+                                        return perms && perms.admin === false && perms.push === true;
+                                    }).length})
+                                </Button>
+                            </div>
+
+                            {/* Collapsible Quick Guide */}
+                            <button
+                                onClick={() => setShowQuickGuide(!showQuickGuide)}
+                                className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors mb-3"
+                            >
+                                {showQuickGuide ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
+                                <Info className="h-3 w-3" />
+                                <span>Quick Tips</span>
+                            </button>
+
+                            {showQuickGuide && (
+                                <div className="bg-muted/50 border rounded-lg p-3 mb-4 text-xs text-muted-foreground">
+                                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                                        <div>• Repos fetched from your GitHub account</div>
+                                        <div>• Click "Analyze" to start analysis</div>
+                                        <div>• Includes Git history & semantic embeddings</div>
+                                        <div>• View detailed insights when ready</div>
+                                    </div>
+                                </div>
+                            )}
+
                             <div className="grid gap-4">
                                 {repos
                                     .filter((repo: any) => {
+                                        // Filter by repository type
+                                        if (repoFilter === 'public' && repo.private === true) return false;
+                                        if (repoFilter === 'private' && repo.private === false) return false;
+                                        if (repoFilter === 'contributor') {
+                                            // Contributor: has push access but is not admin/owner
+                                            const perms = repo.permissions;
+                                            if (!perms || perms.admin === true || perms.push !== true) return false;
+                                        }
+
+                                        // Filter by search query
                                         if (!searchQuery.trim()) return true;
                                         const query = searchQuery.toLowerCase();
                                         const repoName = `${repo.login}/${repo.name}`.toLowerCase();
@@ -396,6 +511,16 @@ export default function Dashboard({ user, token }: DashboardProps) {
 
                             {(() => {
                                 const filteredRepos = repos.filter((repo: any) => {
+                                    // Filter by repository type
+                                    if (repoFilter === 'public' && repo.private === true) return false;
+                                    if (repoFilter === 'private' && repo.private === false) return false;
+                                    if (repoFilter === 'contributor') {
+                                        // Contributor: has push access but is not admin/owner
+                                        const perms = repo.permissions;
+                                        if (!perms || perms.admin === true || perms.push !== true) return false;
+                                    }
+
+                                    // Filter by search query
                                     if (!searchQuery.trim()) return true;
                                     const query = searchQuery.toLowerCase();
                                     const repoName = `${repo.login}/${repo.name}`.toLowerCase();
@@ -412,17 +537,7 @@ export default function Dashboard({ user, token }: DashboardProps) {
                                 ) : null;
                             })()}
 
-                            <Card className="mt-6">
-                                <CardContent className="py-4">
-                                    <h4 className="font-medium mb-2">How it works:</h4>
-                                    <ul className="text-sm text-muted-foreground space-y-1 list-disc list-inside">
-                                        <li>Repositories are fetched from your GitHub account</li>
-                                        <li>Click "Analyze" to clone and analyze a repository</li>
-                                        <li>Analysis includes: Git history parsing, semantic embeddings, and ownership calculation</li>
-                                        <li>Click "View Analysis" when ready to see detailed insights</li>
-                                    </ul>
-                                </CardContent>
-                            </Card>
+
                         </>
                     )}
                 </TabsContent>
