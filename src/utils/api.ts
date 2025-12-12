@@ -38,8 +38,10 @@ export const api = {
     },
 
     // Repositories
-    async getRepositories(token: string, userId: string, page: number = 1, perPage: number = 10) {
-        const res = await fetch(`${API_BASE}/repositories?userId=${userId}&page=${page}&per_page=${perPage}&sort=pushed`, {
+    async getRepositories(token: string, userId: string, page: number = 1, perPage: number = 100) {
+        // GitHub API max per_page is 100
+        const actualPerPage = Math.min(perPage, 100);
+        const res = await fetch(`${API_BASE}/repositories?userId=${userId}&page=${page}&per_page=${actualPerPage}&sort=pushed`, {
             headers: { 'Authorization': `Bearer ${token}` }
         });
 
@@ -55,6 +57,33 @@ export const api = {
 
         const data = await handleResponse(res);
         return { data: Array.isArray(data) ? data : [], totalPages };
+    },
+
+    // Fetch ALL repositories by paginating through all pages
+    async getAllRepositories(token: string, userId: string) {
+        const perPage = 100; // GitHub API max
+        let allRepos: any[] = [];
+        let page = 1;
+        let hasMore = true;
+
+        while (hasMore) {
+            const { data, totalPages } = await this.getRepositories(token, userId, page, perPage);
+
+            if (data.length === 0) {
+                hasMore = false;
+            } else {
+                allRepos = [...allRepos, ...data];
+                // If we got fewer than perPage, we're on the last page
+                // Or if we've reached the totalPages from the Link header
+                if (data.length < perPage || (totalPages > 0 && page >= totalPages)) {
+                    hasMore = false;
+                } else {
+                    page++;
+                }
+            }
+        }
+
+        return { data: allRepos, totalPages: page };
     },
 
     async analyzeRepository(owner: string, repo: string, userId: string) {

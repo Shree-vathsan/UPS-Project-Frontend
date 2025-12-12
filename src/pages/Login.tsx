@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Github, Code, AlertTriangle, CheckCircle } from 'lucide-react';
+import { Github, Code, AlertTriangle, CheckCircle, Files } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
@@ -26,31 +26,30 @@ export default function Login() {
     return (
         <div className="min-h-screen flex items-center justify-center bg-background">
             {/* Theme Selector - Top Right */}
-            <div className="absolute top-4 right-4 z-10">
+            {/* <div className="absolute top-4 right-4 z-10">
                 <ThemeSelector />
-            </div>
+            </div> */}
 
-            <div className="w-full max-w-md px-4 animate-fade-in">
+            <div className="w-full -mt-16 max-w-md px-4 animate-fade-in">
                 {/* Logo/Title */}
                 <div className="text-center mb-8">
                     <div className="flex items-center justify-center gap-3 mb-3">
                         <Code className="h-10 w-10 text-primary" />
                         <h1 className="font-heading text-4xl font-bold text-foreground">
-                            CodeFamily
+                            ForeSite
                         </h1>
                     </div>
-                    <p className="text-muted-foreground text-base">
-                        AI-Powered Engineering Intelligence Platform
-                    </p>
+
                 </div>
 
                 {/* Login Card */}
-                <Card>
+                <Card className="-mt-4">
                     <CardHeader>
-                        <CardTitle>Welcome Back</CardTitle>
-                        <CardDescription>
+                        {/* <CardTitle>Login</CardTitle> */}
+                        <CardDescription className="text-center">
                             Sign in with your GitHub account to continue
                         </CardDescription>
+                        
                     </CardHeader>
                     <CardContent className="space-y-4">
                         {error && (
@@ -79,8 +78,19 @@ export default function Login() {
                             <Github className="h-5 w-5" />
                             Login with GitHub
                         </Button>
+                        <CardDescription className="text-center">
+                            Know about us
+                        </CardDescription>
+                        <Button
+                            onClick={handleLogin}
+                            className="w-full gap-2 bg-black"
+                            size="lg"
+                        >
+                            <Files className="h-5 w-5" />
+                            Click here
+                        </Button>
 
-                        <div className="bg-muted/50 p-4 rounded-md border border-border">
+                        {/* <div className="bg-muted/50 p-4 rounded-md border border-border">
                             <div className="text-sm font-medium text-foreground mb-2">
                                 System Status
                             </div>
@@ -94,7 +104,7 @@ export default function Login() {
                                     <span>Backend: {error ? 'Not responding' : 'Checking...'}</span>
                                 </div>
                             </div>
-                        </div>
+                        </div> */}
                     </CardContent>
                 </Card>
             </div>

@@ -117,7 +117,6 @@ function App() {
                                     onClick={() => window.location.href = '/login'}
                                     className="font-medium text-sm text-foreground hover:underline"
                                 >
-                                    Login
                                 </button>
                             )}
                         </div>

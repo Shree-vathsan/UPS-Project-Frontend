@@ -66,9 +66,8 @@ export default function Dashboard({ user, token }: DashboardProps) {
     const loadRepositories = async () => {
         setLoading(true);
         try {
-            // Fetch up to 100 repos to handle client-side pagination
-            // This ensures we get the correct total count for most users
-            const { data } = await api.getRepositories(token, user.id, 1, 100);
+            // Fetch ALL repositories by paginating through all pages
+            const { data } = await api.getAllRepositories(token, user.id);
             console.log('Repositories from GitHub:', data);
 
             setRepos(Array.isArray(data) ? data : []);
@@ -298,7 +297,7 @@ export default function Dashboard({ user, token }: DashboardProps) {
                             <div className="flex items-center justify-between mb-4">
                                 <div className="flex items-center gap-2">
                                     <h2 className="font-heading text-xl font-semibold">Your Repositories</h2>
-                                    <Badge>{itemsPerPage}/Page</Badge>
+                                    <Badge>{repos.length}</Badge>
                                 </div>
                                 <div className="flex items-center gap-2">
                                     <div className="relative">
