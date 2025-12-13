@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import {
     BarChart, Bar, ScatterChart, Scatter,
     XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, Cell
@@ -9,21 +9,31 @@ import InfoTooltip from './InfoTooltip';
 
 interface TeamInsightsProps {
     repositoryId: string;
+    branchName: string;
 }
 
-export default function TeamInsights({ repositoryId }: TeamInsightsProps) {
+export default function TeamInsights({ repositoryId, branchName }: TeamInsightsProps) {
     const [loading, setLoading] = useState(true);
     const [contributors, setContributors] = useState<any[]>([]);
     const [ownershipData, setOwnershipData] = useState<any[]>([]);
     const [metrics, setMetrics] = useState<any>(null);
 
+    // Track previous values to prevent duplicate calls
+    const prevBranchRef = useRef<string | null>(null);
+
     useEffect(() => {
+        // Skip if branchName is empty or same as previous
+        if (!branchName || branchName === prevBranchRef.current) return;
+
+        prevBranchRef.current = branchName;
+        setLoading(true); // Show skeleton when branch changes
+
         loadTeamData();
-    }, [repositoryId]);
+    }, [repositoryId, branchName]);
 
     const loadTeamData = async () => {
         try {
-            const response = await fetch(`http://localhost:5000/repositories/${repositoryId}/team-insights`);
+            const response = await fetch(`http://localhost:5000/repositories/${repositoryId}/team-insights?branchName=${encodeURIComponent(branchName)}`);
             if (!response.ok) {
                 throw new Error('Failed to fetch team insights');
             }

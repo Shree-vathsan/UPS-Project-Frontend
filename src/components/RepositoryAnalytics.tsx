@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import {
     BarChart, Bar, PieChart, Pie, Cell,
     XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
@@ -10,9 +10,10 @@ import MetricCard from './MetricCard';
 
 interface RepositoryAnalyticsProps {
     repositoryId: string;
+    branchName: string;
 }
 
-export default function RepositoryAnalytics({ repositoryId }: RepositoryAnalyticsProps) {
+export default function RepositoryAnalytics({ repositoryId, branchName }: RepositoryAnalyticsProps) {
     const [loading, setLoading] = useState(true);
     const [activityData, setActivityData] = useState<any[]>([]);
     const [fileTypeData, setFileTypeData] = useState<any[]>([]);
@@ -20,14 +21,23 @@ export default function RepositoryAnalytics({ repositoryId }: RepositoryAnalytic
     const [metrics, setMetrics] = useState<any>(null);
     const [summary, setSummary] = useState<string>('');
 
+    // Track previous values to prevent duplicate calls
+    const prevBranchRef = useRef<string | null>(null);
+
     useEffect(() => {
+        // Skip if branchName is empty or same as previous
+        if (!branchName || branchName === prevBranchRef.current) return;
+
+        prevBranchRef.current = branchName;
+        setLoading(true); // Show skeleton when branch changes
+
         loadAnalyticsData();
         loadRepositorySummary();
-    }, [repositoryId]);
+    }, [repositoryId, branchName]);
 
     const loadRepositorySummary = async () => {
         try {
-            const response = await fetch(`http://localhost:5000/repositories/${repositoryId}/summary`);
+            const response = await fetch(`http://localhost:5000/repositories/${repositoryId}/summary?branchName=${encodeURIComponent(branchName)}`);
             if (response.ok) {
                 const data = await response.json();
                 setSummary(data.summary || 'No summary available');
@@ -40,7 +50,7 @@ export default function RepositoryAnalytics({ repositoryId }: RepositoryAnalytic
     const loadAnalyticsData = async () => {
         try {
             // Fetch analytics from backend API
-            const response = await fetch(`http://localhost:5000/repositories/${repositoryId}/analytics`);
+            const response = await fetch(`http://localhost:5000/repositories/${repositoryId}/analytics?branchName=${encodeURIComponent(branchName)}`);
             if (!response.ok) {
                 throw new Error('Failed to fetch analytics');
             }

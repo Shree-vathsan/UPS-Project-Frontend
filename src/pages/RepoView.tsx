@@ -471,12 +471,12 @@ export default function RepoView({ user: _user }: RepoViewProps) {
                 <TabsContent value="analytics" className="mt-6 space-y-8">
                     <div>
                         <h2 className="font-heading text-2xl font-semibold mb-6">Repository Analytics</h2>
-                        <RepositoryAnalytics repositoryId={repositoryId!} />
+                        <RepositoryAnalytics repositoryId={repositoryId!} branchName={selectedBranch} />
                     </div>
 
                     <div>
                         <h2 className="font-heading text-2xl font-semibold mb-6">Team Insights</h2>
-                        <TeamInsights repositoryId={repositoryId!} />
+                        <TeamInsights repositoryId={repositoryId!} branchName={selectedBranch} />
                     </div>
                 </TabsContent>
             </Tabs>

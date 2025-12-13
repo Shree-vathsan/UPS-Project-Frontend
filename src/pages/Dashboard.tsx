@@ -417,7 +417,7 @@ export default function Dashboard({ user, token }: DashboardProps) {
                                 <span>Quick Tips</span>
                             </button> */}
 
-                            {showQuickGuide && (
+                            {/* {showQuickGuide && (
                                 <div className="bg-muted/50 border rounded-lg p-3 mb-4 text-xs text-muted-foreground">
                                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                                         <div>• Repos fetched from your GitHub account</div>
@@ -426,7 +426,7 @@ export default function Dashboard({ user, token }: DashboardProps) {
                                         <div>• View detailed insights when ready</div>
                                     </div>
                                 </div>
-                            )}
+                            )} */}
 
                             <div className="grid gap-4">
                                 {repos
