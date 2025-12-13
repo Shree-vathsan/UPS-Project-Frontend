@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
 import { GitCommit, GitPullRequest, FolderTree, BarChart, RefreshCw, GitBranch, Clock, ArrowRight } from 'lucide-react';
 import { api } from '../utils/api';
 import FileTree from '../components/FileTree';
@@ -26,10 +26,34 @@ interface RepoViewProps {
 export default function RepoView({ user: _user }: RepoViewProps) {
     const navigate = useNavigate();
     const { repositoryId } = useParams<{ repositoryId: string }>();
-    const [activeTab, setActiveTab] = useState<'commits' | 'prs' | 'files' | 'analytics'>('commits');
+    const [searchParams, setSearchParams] = useSearchParams();
+
+    // Get initial tab from URL or default to 'commits'
+    const getInitialTab = (): 'commits' | 'prs' | 'files' | 'analytics' => {
+        const tabParam = searchParams.get('tab');
+        if (tabParam === 'prs' || tabParam === 'files' || tabParam === 'analytics' || tabParam === 'commits') {
+            return tabParam;
+        }
+        return 'commits';
+    };
+
+    const [activeTab, setActiveTab] = useState<'commits' | 'prs' | 'files' | 'analytics'>(getInitialTab());
     const [repository, setRepository] = useState<any>(null);
     const [branches, setBranches] = useState<any[]>([]);
-    const [selectedBranch, setSelectedBranch] = useState<string>('main');
+
+    // Get initial branch from URL or default to 'main'
+    const getInitialBranch = (): string => {
+        return searchParams.get('branch') || 'main';
+    };
+    const [selectedBranch, setSelectedBranchState] = useState<string>(getInitialBranch());
+
+    // Helper to update branch and URL together
+    const setSelectedBranch = (branch: string) => {
+        setSelectedBranchState(branch);
+        const newParams = new URLSearchParams(searchParams);
+        newParams.set('branch', branch);
+        setSearchParams(newParams);
+    };
     const [commits, setCommits] = useState<any[]>([]);
     const [prs, setPrs] = useState<any[]>([]);
     const [allPrs, setAllPrs] = useState<any[]>([]);
@@ -88,13 +112,20 @@ export default function RepoView({ user: _user }: RepoViewProps) {
     const loadBranches = async () => {
         try {
             const data = await fetch(`http://localhost:5000/api/repositories/${repositoryId}/branches`);
-            const branches = await data.json();
-            setBranches(branches);
+            const branchList = await data.json();
+            setBranches(branchList);
 
-            // Set default branch
-            const defaultBranch = branches.find((b: any) => b.isDefault);
-            if (defaultBranch) {
-                setSelectedBranch(defaultBranch.name);
+            // Check if there's a branch in URL params first
+            const branchFromUrl = searchParams.get('branch');
+            if (branchFromUrl && branchList.some((b: any) => b.name === branchFromUrl)) {
+                // URL branch exists in the list, keep it
+                setSelectedBranchState(branchFromUrl);
+            } else {
+                // No URL branch or invalid, use default branch
+                const defaultBranch = branchList.find((b: any) => b.isDefault);
+                if (defaultBranch) {
+                    setSelectedBranchState(defaultBranch.name);
+                }
             }
         } catch (error) {
             console.error('Failed to load branches:', error);
@@ -275,7 +306,13 @@ export default function RepoView({ user: _user }: RepoViewProps) {
             </div>
 
             {/* Tabs */}
-            <Tabs value={activeTab} onValueChange={(value) => setActiveTab(value as any)}>
+            <Tabs value={activeTab} onValueChange={(value) => {
+                const newTab = value as 'commits' | 'prs' | 'files' | 'analytics';
+                setActiveTab(newTab);
+                const newParams = new URLSearchParams(searchParams);
+                newParams.set('tab', newTab);
+                setSearchParams(newParams);
+            }}>
                 <TabsList className="grid w-full max-w-2xl grid-cols-4">
                     <TabsTrigger value="commits" className="gap-2">
                         <GitCommit className="h-4 w-4" />
