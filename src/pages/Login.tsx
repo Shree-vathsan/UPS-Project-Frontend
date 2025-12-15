@@ -49,7 +49,7 @@ export default function Login() {
                         <CardDescription className="text-center">
                             Sign in with your GitHub account to continue
                         </CardDescription>
-                        
+
                     </CardHeader>
                     <CardContent className="space-y-4">
                         {error && (
@@ -83,7 +83,7 @@ export default function Login() {
                         </CardDescription>
                         <Button
                             onClick={handleLogin}
-                            className="w-full gap-2 bg-black"
+                            className="w-full gap-2 bg-black text-white"
                             size="lg"
                         >
                             <Files className="h-5 w-5" />
