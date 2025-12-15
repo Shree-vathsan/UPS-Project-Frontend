@@ -279,7 +279,7 @@ export default function TeamInsights({ repositoryId, branchName }: TeamInsightsP
             </div>
 
             {/* Ownership Distribution */}
-            {
+            {/* {
                 ownershipData.length > 0 && (
                     <div className="bg-card border rounded-lg p-6">
                         <div className="flex items-center gap-3 mb-4">
@@ -317,7 +317,7 @@ export default function TeamInsights({ repositoryId, branchName }: TeamInsightsP
                         </ResponsiveContainer>
                     </div>
                 )
-            }
+            } */}
 
             {/* Contributor Details List */}
             <div className="bg-card border rounded-lg p-6">
