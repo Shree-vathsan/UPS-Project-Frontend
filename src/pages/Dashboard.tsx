@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Package, BarChart, Plus, Loader, RefreshCw, AlertTriangle, Search, Info, ChevronDown, ChevronUp } from 'lucide-react';
 import { api } from '../utils/api';
@@ -10,6 +10,7 @@ import { Badge } from '@/components/ui/badge';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Skeleton } from '@/components/ui/skeleton';
 import Pagination from '../components/Pagination';
+import { useAllRepositories, useAnalyzedRepositories, useInvalidateRepositories } from '../hooks/useApiQueries';
 
 interface DashboardProps {
     user: any;
@@ -26,10 +27,31 @@ export default function Dashboard({ user, token }: DashboardProps) {
     // Tab state
     const [activeTab, setActiveTab] = useState<TabType>('your');
 
-    // Your repositories tab state
-    const [repos, setRepos] = useState<any[]>([]);
-    const [loading, setLoading] = useState(true);
-    const [error, setError] = useState<string>('');
+    // React Query hooks for data fetching with caching
+    const {
+        data: reposData,
+        isLoading: loading,
+        error: reposError,
+        refetch: refetchRepos
+    } = useAllRepositories(token, user?.id);
+
+    const repos = reposData?.data || [];
+    const error = reposError?.message || '';
+
+    // Analyzed repositories filter state
+    const [analyzedFilter, setAnalyzedFilter] = useState<FilterType>('all');
+
+    const {
+        data: analyzedReposData,
+        isLoading: loadingAnalyzed,
+        error: analyzedReposError,
+        refetch: refetchAnalyzed
+    } = useAnalyzedRepositories(user?.id, analyzedFilter);
+
+    const analyzedRepos = Array.isArray(analyzedReposData) ? analyzedReposData : [];
+    const analyzedError = analyzedReposError?.message || '';
+
+    // UI state (not data fetching)
     const [analyzing, setAnalyzing] = useState<Set<string>>(new Set());
     const [checkingStatus, setCheckingStatus] = useState<Set<string>>(new Set());
 
@@ -46,66 +68,22 @@ export default function Dashboard({ user, token }: DashboardProps) {
     // Quick guide visibility
     const [showQuickGuide, setShowQuickGuide] = useState(false);
 
-    // Analyzed repositories tab state
-    const [analyzedRepos, setAnalyzedRepos] = useState<any[]>([]);
-    const [analyzedFilter, setAnalyzedFilter] = useState<FilterType>('all');
-    const [loadingAnalyzed, setLoadingAnalyzed] = useState(false);
-    const [analyzedError, setAnalyzedError] = useState<string>('');
-
     // Add repository tab state
     const [repoUrl, setRepoUrl] = useState('');
     const [addingRepo, setAddingRepo] = useState(false);
     const [addError, setAddError] = useState<string>('');
     const [addSuccess, setAddSuccess] = useState<string>('');
 
-    useEffect(() => {
-        loadRepositories();
-    }, [user?.id]);
+    // Cache invalidation helper
+    const { invalidateAll } = useInvalidateRepositories();
 
-    // Remove dependency on currentPage for fetching
-    // useEffect(() => {
-    //    loadRepositories();
-    // }, [currentPage]);
-
-    useEffect(() => {
-        if (activeTab === 'analyzed') {
-            loadAnalyzedRepositories();
-        }
-    }, [activeTab, analyzedFilter, user?.id]);
-
-    const loadRepositories = async () => {
-        setLoading(true);
-        try {
-            // Fetch ALL repositories by paginating through all pages
-            const { data } = await api.getAllRepositories(token, user.id);
-            console.log('Repositories from GitHub:', data);
-
-            setRepos(Array.isArray(data) ? data : []);
-            // setTotalPages is no longer needed as we calculate it from repos.length
-
-            setError('');
-        } catch (err: any) {
-            console.error('Failed to load repositories:', err);
-            setError(err.message || 'Failed to load repositories from GitHub');
-            setRepos([]);
-        } finally {
-            setLoading(false);
-        }
+    // Wrapper function for backward compatibility
+    const loadRepositories = () => {
+        refetchRepos();
     };
 
-    const loadAnalyzedRepositories = async () => {
-        setLoadingAnalyzed(true);
-        setAnalyzedError('');
-        try {
-            const data = await api.getAnalyzedRepositories(user.id, analyzedFilter);
-            setAnalyzedRepos(Array.isArray(data) ? data : []);
-        } catch (err: any) {
-            console.error('Failed to load analyzed repositories:', err);
-            setAnalyzedError(err.message || 'Failed to load analyzed repositories');
-            setAnalyzedRepos([]);
-        } finally {
-            setLoadingAnalyzed(false);
-        }
+    const loadAnalyzedRepositories = () => {
+        refetchAnalyzed();
     };
 
     const handleAnalyze = async (owner: string, name: string) => {

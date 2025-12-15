@@ -1,4 +1,4 @@
-import { useEffect, useState, useRef } from 'react';
+import { useQueryClient } from '@tanstack/react-query';
 import NetworkGraph from './NetworkGraph';
 import InfoTooltip from './InfoTooltip';
 import MetricCard from './MetricCard';
@@ -8,6 +8,7 @@ import SectionHeader from './SectionHeader';
 import { Skeleton } from '@/components/ui/skeleton';
 import { FaCheck, FaCheckCircle } from "react-icons/fa";
 import { FaTimes, FaTimesCircle } from "react-icons/fa";
+import { useFileEnhancedAnalysis, useFileSummary, queryKeys } from '../hooks/useApiQueries';
 
 
 
@@ -17,58 +18,21 @@ interface FileAnalysisProps {
 }
 
 export default function FileAnalysis({ file, analysis }: FileAnalysisProps) {
-    const [enhancedData, setEnhancedData] = useState<any>(null);
-    const [enhancedDataLoading, setEnhancedDataLoading] = useState(true);
-    const [summary, setSummary] = useState<string | null>(null);
-    const [summaryLoading, setSummaryLoading] = useState(false);
-    const [summaryError, setSummaryError] = useState<string | null>(null);
-    const [chunkCount, setChunkCount] = useState<number>(0);
-    const summaryFetchedRef = useRef<string | null>(null);
+    const queryClient = useQueryClient();
 
-    useEffect(() => {
-        loadEnhancedData();
-        // Only fetch summary once per file.id (prevents React Strict Mode double-call)
-        if (summaryFetchedRef.current !== file.id) {
-            summaryFetchedRef.current = file.id;
-            fetchSummary();
-        }
-    }, [file.id]);
+    // React Query hooks for data fetching with caching
+    const { data: enhancedData, isLoading: enhancedDataLoading } = useFileEnhancedAnalysis(file.id);
+    const { data: summaryData, isLoading: summaryLoading, refetch: refetchSummary } = useFileSummary(file.id);
 
-    const loadEnhancedData = async () => {
-        setEnhancedDataLoading(true);
-        try {
-            const response = await fetch(`http://localhost:5000/repositories/files/${file.id}/enhanced-analysis`);
-            if (response.ok) {
-                const data = await response.json();
-                setEnhancedData(data);
-            }
-        } catch (error) {
-            console.error('Failed to load enhanced data:', error);
-        } finally {
-            setEnhancedDataLoading(false);
-        }
-    };
+    const summary = summaryData?.success ? summaryData.summary : null;
+    const chunkCount = summaryData?.chunkCount || 0;
+    const summaryErrorMessage = summaryData?.success === false ? (summaryData.message || summaryData.error || 'Failed to generate summary') : null;
 
-    const fetchSummary = async () => {
-        setSummaryLoading(true);
-        setSummaryError(null);
-
-        try {
-            const response = await fetch(`http://localhost:5000/files/${file.id}/summary`);
-            const data = await response.json();
-
-            if (data.success) {
-                setSummary(data.summary);
-                setChunkCount(data.chunkCount || 0);
-            } else {
-                setSummaryError(data.message || data.error || 'Failed to generate summary');
-                setChunkCount(data.chunkCount || 0);
-            }
-        } catch (error) {
-            setSummaryError('Unable to fetch summary. Please try again.');
-        } finally {
-            setSummaryLoading(false);
-        }
+    // Function to refresh summary
+    const fetchSummary = () => {
+        // Invalidate the cache and refetch
+        queryClient.invalidateQueries({ queryKey: queryKeys.fileSummary(file.id) });
+        refetchSummary();
     };
 
     // Calculate metrics
@@ -123,9 +87,9 @@ export default function FileAnalysis({ file, analysis }: FileAnalysisProps) {
                     </div>
                 )}
 
-                {!summaryLoading && summaryError && (
+                {!summaryLoading && summaryErrorMessage && (
                     <div className="text-destructive text-sm bg-destructive/10 p-2 rounded border border-destructive">
-                        {summaryError}
+                        {summaryErrorMessage}
                     </div>
                 )}
             </div>
