@@ -49,10 +49,10 @@ export function useAnalyzedRepositories(userId: string, filter: 'your' | 'others
     });
 }
 
-export function useRepository(repositoryId: string | undefined) {
+export function useRepository(repositoryId: string | undefined, token?: string) {
     return useQuery({
         queryKey: queryKeys.repository(repositoryId || ''),
-        queryFn: () => api.getRepository(repositoryId!),
+        queryFn: () => api.getRepository(repositoryId!, token),
         enabled: !!repositoryId,
     });
 }
@@ -194,6 +194,7 @@ export function useFileContent(fileId: string | undefined, commitSha?: string, b
     return useQuery({
         queryKey: queryKeys.fileContent(fileId || '', commitSha, branch),
         queryFn: async () => {
+            const token = localStorage.getItem('token');
             let contentUrl = `${API_BASE}/files/${fileId}/content`;
             const params = new URLSearchParams();
 
@@ -207,7 +208,12 @@ export function useFileContent(fileId: string | undefined, commitSha?: string, b
                 contentUrl += `?${params.toString()}`;
             }
 
-            const res = await fetch(contentUrl);
+            const headers: Record<string, string> = {};
+            if (token) {
+                headers['Authorization'] = `Bearer ${token}`;
+            }
+
+            const res = await fetch(contentUrl, { headers });
             if (!res.ok) throw new Error('Failed to fetch file content');
             return res.json();
         },
@@ -302,8 +308,8 @@ export function useAnalyzeRepository() {
     const queryClient = useQueryClient();
 
     return useMutation({
-        mutationFn: ({ owner, repo, userId }: { owner: string; repo: string; userId: string }) =>
-            api.analyzeRepository(owner, repo, userId),
+        mutationFn: ({ owner, repo, userId, token }: { owner: string; repo: string; userId: string; token?: string }) =>
+            api.analyzeRepository(owner, repo, userId, token),
         onSuccess: (_, { owner, repo, userId }) => {
             // Invalidate related queries after analysis starts
             queryClient.invalidateQueries({ queryKey: ['repositoryStatus', owner, repo] });
@@ -316,8 +322,8 @@ export function useAnalyzeRepositoryByUrl() {
     const queryClient = useQueryClient();
 
     return useMutation({
-        mutationFn: ({ url, userId }: { url: string; userId: string }) =>
-            api.analyzeRepositoryByUrl(url, userId),
+        mutationFn: ({ url, userId, token }: { url: string; userId: string; token?: string }) =>
+            api.analyzeRepositoryByUrl(url, userId, token),
         onSuccess: (_, { userId }) => {
             queryClient.invalidateQueries({ queryKey: ['analyzedRepositories', userId] });
         },

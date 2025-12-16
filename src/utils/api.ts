@@ -86,9 +86,14 @@ export const api = {
         return { data: allRepos, totalPages: page };
     },
 
-    async analyzeRepository(owner: string, repo: string, userId: string) {
+    async analyzeRepository(owner: string, repo: string, userId: string, token?: string) {
+        const headers: Record<string, string> = {};
+        if (token) {
+            headers['Authorization'] = `Bearer ${token}`;
+        }
         const res = await fetch(`${API_BASE}/repositories/${owner}/${repo}/analyze?userId=${userId}`, {
-            method: 'POST'
+            method: 'POST',
+            headers
         });
         return handleResponse(res);
     },
@@ -98,8 +103,12 @@ export const api = {
         return handleResponse(res);
     },
 
-    async getRepository(id: string) {
-        const res = await fetch(`${API_BASE}/repositories/${id}`);
+    async getRepository(id: string, token?: string) {
+        const headers: Record<string, string> = {};
+        if (token) {
+            headers['Authorization'] = `Bearer ${token}`;
+        }
+        const res = await fetch(`${API_BASE}/repositories/${id}`, { headers });
         return handleResponse(res);
     },
 
@@ -141,10 +150,14 @@ export const api = {
         return handleResponse(res);
     },
 
-    async analyzeRepositoryByUrl(url: string, userId: string) {
+    async analyzeRepositoryByUrl(url: string, userId: string, token?: string) {
+        const headers: Record<string, string> = { 'Content-Type': 'application/json' };
+        if (token) {
+            headers['Authorization'] = `Bearer ${token}`;
+        }
         const res = await fetch(`${API_BASE}/repositories/analyze-url`, {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
+            headers,
             body: JSON.stringify({ url, userId })
         });
         return handleResponse(res);

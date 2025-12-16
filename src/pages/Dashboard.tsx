@@ -91,7 +91,7 @@ export default function Dashboard({ user, token }: DashboardProps) {
         setAnalyzing(prev => new Set(prev).add(key));
 
         try {
-            const result = await api.analyzeRepository(owner, name, user.id);
+            const result = await api.analyzeRepository(owner, name, user.id, token);
             console.log('Analysis result:', result);
 
             // Handle different response types
@@ -171,7 +171,7 @@ export default function Dashboard({ user, token }: DashboardProps) {
         setAddSuccess('');
 
         try {
-            const result = await api.analyzeRepositoryByUrl(repoUrl.trim(), user.id);
+            const result = await api.analyzeRepositoryByUrl(repoUrl.trim(), user.id, token);
 
             // Handle different response types
             if (result.alreadyHasAccess) {
