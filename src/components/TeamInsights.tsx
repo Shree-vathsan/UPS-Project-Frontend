@@ -338,6 +338,6 @@ export default function TeamInsights({ repositoryId, branchName }: TeamInsightsP
                     ))}
                 </div>
             </div>
-        </div >
+        </div>
     );
 }

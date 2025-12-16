@@ -357,7 +357,7 @@ export default function FileAnalysis({ file, analysis }: FileAnalysisProps) {
             <div className="bg-card/50 border border-primary/20 rounded-lg p-6">
                 <SectionHeader
                     icon=""
-                    title="AI-Powered Insights"
+                    title="Code Insights"
                     tooltip="Machine learning analysis of your code using embeddings and semantic patterns. Provides intelligent categorization and quality assessment beyond simple metrics."
                     formula="Vector Similarity(File, Categories)"
                 />
