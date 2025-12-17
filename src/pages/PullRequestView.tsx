@@ -429,6 +429,44 @@ export default function PullRequestView({ user: _user }: PullRequestViewProps) {
                             </CardContent>
                         </Card>
                     )}
+
+                    {/* PR Reviews (review comments) */}
+                    {prDetails.reviews && prDetails.reviews.length > 0 && (
+                        <Card>
+                            <CardHeader>
+                                <CardTitle className="text-sm flex items-center gap-2">
+                                    <MessageSquare className="h-4 w-4" />
+                                    Review Comments ({prDetails.reviews.length})
+                                </CardTitle>
+                            </CardHeader>
+                            <CardContent className="space-y-4">
+                                {prDetails.reviews.slice(0, 5).map((review: any, idx: number) => (
+                                    <div key={idx} className="space-y-2">
+                                        <div className="flex items-center gap-2">
+                                            <img
+                                                src={review.author.avatarUrl}
+                                                alt={review.author.login}
+                                                className="w-6 h-6 rounded-full"
+                                            />
+                                            <span className="font-medium text-sm">{review.author.login}</span>
+                                            <Badge variant={review.state === 'approved' ? 'success' : 'secondary'} className="text-xs">
+                                                {review.state}
+                                            </Badge>
+                                        </div>
+                                        <p className="text-sm text-muted-foreground line-clamp-3 pl-8">
+                                            {review.body}
+                                        </p>
+                                        {idx < Math.min(prDetails.reviews.length - 1, 4) && <Separator />}
+                                    </div>
+                                ))}
+                                {prDetails.reviews.length > 5 && (
+                                    <p className="text-xs text-muted-foreground text-center">
+                                        +{prDetails.reviews.length - 5} more reviews
+                                    </p>
+                                )}
+                            </CardContent>
+                        </Card>
+                    )}
                 </div>
             </div>
         </div>
