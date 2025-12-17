@@ -161,5 +161,262 @@ export const api = {
             body: JSON.stringify({ url, userId })
         });
         return handleResponse(res);
+    },
+
+    // ==========================================
+    // NOTES SYSTEM
+    // ==========================================
+
+    // File-Level Sticky Notes
+    async getFileStickyNotes(fileId: string) {
+        const res = await fetch(`${API_BASE}/api/notes/file/sticky/${fileId}`);
+        return handleResponse(res);
+    },
+
+    async createFileStickyNote(userId: string, data: { repositoryId: string; fileId: string; content: string }) {
+        const res = await fetch(`${API_BASE}/api/notes/file/sticky/text?userId=${userId}`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                RepositoryId: data.repositoryId,
+                FileId: data.fileId,
+                Content: data.content
+            })
+        });
+        return handleResponse(res);
+    },
+
+    async uploadFileDocument(userId: string, repositoryId: string, fileId: string, file: File) {
+        const formData = new FormData();
+        formData.append('file', file);
+        const res = await fetch(
+            `${API_BASE}/api/notes/file/sticky/document?userId=${userId}&repositoryId=${repositoryId}&fileId=${fileId}`,
+            { method: 'POST', body: formData }
+        );
+        return handleResponse(res);
+    },
+
+    async updateStickyNote(noteId: string, userId: string, data: { content?: string; taggedFileIds?: string[] }) {
+        const res = await fetch(`${API_BASE}/api/notes/sticky/${noteId}?userId=${userId}`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                Content: data.content,
+                TaggedFileIds: data.taggedFileIds
+            })
+        });
+        return handleResponse(res);
+    },
+
+    async deleteStickyNote(noteId: string, userId: string) {
+        const res = await fetch(`${API_BASE}/api/notes/sticky/${noteId}?userId=${userId}`, {
+            method: 'DELETE'
+        });
+        return handleResponse(res);
+    },
+
+    // File-Level Discussion
+    async getFileDiscussion(fileId: string) {
+        const res = await fetch(`${API_BASE}/api/notes/file/discussion/${fileId}`);
+        return handleResponse(res);
+    },
+
+    async postFileMessage(fileId: string, userId: string, message: string) {
+        const res = await fetch(`${API_BASE}/api/notes/file/discussion/${fileId}/messages?userId=${userId}`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ Message: message })
+        });
+        return handleResponse(res);
+    },
+
+    async updateDiscussionMessage(messageId: string, userId: string, message: string) {
+        const res = await fetch(`${API_BASE}/api/notes/discussion/messages/${messageId}?userId=${userId}`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ Message: message })
+        });
+        return handleResponse(res);
+    },
+
+    async deleteDiscussionMessage(messageId: string, userId: string) {
+        const res = await fetch(`${API_BASE}/api/notes/discussion/messages/${messageId}?userId=${userId}`, {
+            method: 'DELETE'
+        });
+        return handleResponse(res);
+    },
+
+    // File-Level Personal Notes
+    async getFilePersonalNotes(fileId: string, userId: string) {
+        const res = await fetch(`${API_BASE}/api/notes/file/personal/${fileId}?userId=${userId}`);
+        return handleResponse(res);
+    },
+
+    async createFilePersonalNote(userId: string, data: { fileId: string; content: string; lineNumber?: number }) {
+        const res = await fetch(`${API_BASE}/api/notes/file/personal?userId=${userId}`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                FileId: data.fileId,
+                Content: data.content,
+                LineNumber: data.lineNumber
+            })
+        });
+        return handleResponse(res);
+    },
+
+    async updatePersonalNote(noteId: string, userId: string, data: { content: string; lineNumber?: number }) {
+        const res = await fetch(`${API_BASE}/api/notes/personal/${noteId}?userId=${userId}`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                Content: data.content,
+                LineNumber: data.lineNumber
+            })
+        });
+        return handleResponse(res);
+    },
+
+    async deletePersonalNote(noteId: string, userId: string) {
+        const res = await fetch(`${API_BASE}/api/notes/personal/${noteId}?userId=${userId}`, {
+            method: 'DELETE'
+        });
+        return handleResponse(res);
+    },
+
+    // Repository-Level Sticky Notes
+    async getRepoStickyNotes(repositoryId: string) {
+        const res = await fetch(`${API_BASE}/api/notes/repo/sticky/${repositoryId}`);
+        return handleResponse(res);
+    },
+
+    async createRepoStickyNote(userId: string, data: { repositoryId: string; content: string; taggedFileIds?: string[] }) {
+        const res = await fetch(`${API_BASE}/api/notes/repo/sticky/text?userId=${userId}`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(data)
+        });
+        return handleResponse(res);
+    },
+
+    async uploadRepoDocument(userId: string, repositoryId: string, file: File, taggedFileIds?: string[]) {
+        const formData = new FormData();
+        formData.append('file', file);
+        let url = `${API_BASE}/api/notes/repo/sticky/document?userId=${userId}&repositoryId=${repositoryId}`;
+        if (taggedFileIds && taggedFileIds.length > 0) {
+            url += `&taggedFileIds=${taggedFileIds.join(',')}`;
+        }
+        const res = await fetch(url, { method: 'POST', body: formData });
+        return handleResponse(res);
+    },
+
+    // Repository-Level Discussion
+    async getRepoDiscussion(repositoryId: string) {
+        const res = await fetch(`${API_BASE}/api/notes/repo/discussion/${repositoryId}`);
+        return handleResponse(res);
+    },
+
+    async postRepoMessage(repositoryId: string, userId: string, message: string) {
+        const res = await fetch(`${API_BASE}/api/notes/repo/discussion/${repositoryId}/messages?userId=${userId}`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ message })
+        });
+        return handleResponse(res);
+    },
+
+    // Repository-Level Personal Notes
+    async getRepoPersonalNotes(repositoryId: string, userId: string) {
+        const res = await fetch(`${API_BASE}/api/notes/repo/personal/${repositoryId}?userId=${userId}`);
+        return handleResponse(res);
+    },
+
+    async createRepoPersonalNote(userId: string, data: { repositoryId: string; content: string; taggedFileIds?: string[] }) {
+        const res = await fetch(`${API_BASE}/api/notes/repo/personal?userId=${userId}`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(data)
+        });
+        return handleResponse(res);
+    },
+
+    // Users with Repo Access (for @mention autocomplete)
+    async getUsersWithRepoAccess(repositoryId: string) {
+        const res = await fetch(`${API_BASE}/api/notes/users/${repositoryId}`);
+        return handleResponse(res);
+    },
+
+    // Notifications
+    async getNotifications(userId: string, page: number = 1, pageSize: number = 20) {
+        const res = await fetch(`${API_BASE}/api/notifications?userId=${userId}&page=${page}&pageSize=${pageSize}`);
+        return handleResponse(res);
+    },
+
+    async getUnreadNotificationCount(userId: string) {
+        const res = await fetch(`${API_BASE}/api/notifications/unread-count?userId=${userId}`);
+        return handleResponse(res);
+    },
+
+    async markNotificationAsRead(notificationId: string, userId: string) {
+        const res = await fetch(`${API_BASE}/api/notifications/${notificationId}/read?userId=${userId}`, {
+            method: 'PUT'
+        });
+        return handleResponse(res);
+    },
+
+    async markAllNotificationsAsRead(userId: string) {
+        const res = await fetch(`${API_BASE}/api/notifications/mark-all-read?userId=${userId}`, {
+            method: 'PUT'
+        });
+        return handleResponse(res);
+    },
+
+    async deleteNotification(notificationId: string, userId: string) {
+        const res = await fetch(`${API_BASE}/api/notifications/${notificationId}?userId=${userId}`, {
+            method: 'DELETE'
+        });
+        return handleResponse(res);
+    },
+
+    // Line Comments
+    async getLineCommentsForFile(fileId: string, userId: string) {
+        const res = await fetch(`${API_BASE}/api/linecomments/file/${fileId}?userId=${userId}`);
+        return handleResponse(res);
+    },
+
+    async getLineCommentsForLine(fileId: string, lineNumber: number, userId: string) {
+        const res = await fetch(`${API_BASE}/api/linecomments/file/${fileId}/line/${lineNumber}?userId=${userId}`);
+        return handleResponse(res);
+    },
+
+    async createLineComment(userId: string, data: { repositoryId: string; fileId: string; lineNumber: number; commentText: string; isShared: boolean }) {
+        const res = await fetch(`${API_BASE}/api/linecomments?userId=${userId}`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                RepositoryId: data.repositoryId,
+                FileId: data.fileId,
+                LineNumber: data.lineNumber,
+                CommentText: data.commentText,
+                IsShared: data.isShared
+            })
+        });
+        return handleResponse(res);
+    },
+
+    async updateLineComment(commentId: string, userId: string, commentText: string) {
+        const res = await fetch(`${API_BASE}/api/linecomments/${commentId}?userId=${userId}`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ CommentText: commentText })
+        });
+        return handleResponse(res);
+    },
+
+    async deleteLineComment(commentId: string, userId: string) {
+        const res = await fetch(`${API_BASE}/api/linecomments/${commentId}?userId=${userId}`, {
+            method: 'DELETE'
+        });
+        return handleResponse(res);
     }
 };

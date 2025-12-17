@@ -1,0 +1,184 @@
+import { useState, useRef, useEffect } from 'react';
+import { Bell, CheckCheck, Trash2, ExternalLink } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { useNotifications, useUnreadNotificationCount, useMarkNotificationAsRead, useMarkAllNotificationsAsRead, useDeleteNotification } from '@/hooks/useApiQueries';
+import { formatDistanceToNow } from 'date-fns';
+import { useNavigate } from 'react-router-dom';
+
+interface Notification {
+    id: string;
+    notificationType: string;
+    title: string;
+    message: string;
+    linkUrl?: string;
+    relatedFileId?: string;
+    relatedRepositoryId?: string;
+    isRead: boolean;
+    createdAt: string;
+}
+
+interface NotificationsResponse {
+    notifications: Notification[];
+    totalCount: number;
+    unreadCount: number;
+}
+
+export function NotificationBell() {
+    const [isOpen, setIsOpen] = useState(false);
+    const dropdownRef = useRef<HTMLDivElement>(null);
+    const navigate = useNavigate();
+
+    const user = JSON.parse(localStorage.getItem('user') || '{}');
+    const userId = user?.id;
+
+    const { data: countData } = useUnreadNotificationCount(userId);
+    const { data: notificationsData, isLoading } = useNotifications(userId, 1);
+    const markAsRead = useMarkNotificationAsRead();
+    const markAllAsRead = useMarkAllNotificationsAsRead();
+    const deleteNotification = useDeleteNotification();
+
+    const unreadCount = (countData as { count: number })?.count || 0;
+    const notifications = (notificationsData as NotificationsResponse)?.notifications || [];
+
+    // Close dropdown when clicking outside
+    useEffect(() => {
+        const handleClickOutside = (event: MouseEvent) => {
+            if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+                setIsOpen(false);
+            }
+        };
+
+        document.addEventListener('mousedown', handleClickOutside);
+        return () => document.removeEventListener('mousedown', handleClickOutside);
+    }, []);
+
+    const handleNotificationClick = async (notification: Notification) => {
+        if (!notification.isRead && userId) {
+            await markAsRead.mutateAsync({ notificationId: notification.id, userId });
+        }
+
+        if (notification.linkUrl) {
+            navigate(notification.linkUrl);
+            setIsOpen(false);
+        }
+    };
+
+    const handleMarkAllAsRead = async () => {
+        if (!userId) return;
+        await markAllAsRead.mutateAsync({ userId });
+    };
+
+    const handleDelete = async (e: React.MouseEvent, notificationId: string) => {
+        e.stopPropagation();
+        if (!userId) return;
+        await deleteNotification.mutateAsync({ notificationId, userId });
+    };
+
+    if (!userId) return null;
+
+    return (
+        <div className="relative" ref={dropdownRef}>
+            {/* Bell Button */}
+            <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setIsOpen(!isOpen)}
+                className="relative text-slate-300 hover:text-white hover:bg-slate-700/50"
+            >
+                <Bell className="h-5 w-5" />
+                {unreadCount > 0 && (
+                    <span className="absolute -top-1 -right-1 h-5 w-5 flex items-center justify-center text-xs font-bold rounded-full bg-red-500 text-white">
+                        {unreadCount > 9 ? '9+' : unreadCount}
+                    </span>
+                )}
+            </Button>
+
+            {/* Dropdown */}
+            {isOpen && (
+                <div className="absolute right-0 mt-2 w-80 max-h-[400px] overflow-hidden rounded-lg border border-slate-700 bg-slate-900 shadow-xl z-50">
+                    {/* Header */}
+                    <div className="flex items-center justify-between px-4 py-3 border-b border-slate-700">
+                        <h3 className="font-semibold text-white">Notifications</h3>
+                        {unreadCount > 0 && (
+                            <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={handleMarkAllAsRead}
+                                disabled={markAllAsRead.isPending}
+                                className="text-xs text-blue-400 hover:text-blue-300 h-6"
+                            >
+                                <CheckCheck className="h-3 w-3 mr-1" />
+                                Mark all read
+                            </Button>
+                        )}
+                    </div>
+
+                    {/* Notifications List */}
+                    <div className="overflow-y-auto max-h-[320px]">
+                        {isLoading ? (
+                            <div className="p-4 text-center text-slate-400">Loading...</div>
+                        ) : notifications.length === 0 ? (
+                            <div className="p-8 text-center text-slate-400">
+                                <Bell className="h-8 w-8 mx-auto mb-2 opacity-50" />
+                                <p>No notifications yet</p>
+                            </div>
+                        ) : (
+                            notifications.map((notification) => (
+                                <div
+                                    key={notification.id}
+                                    onClick={() => handleNotificationClick(notification)}
+                                    className={`
+                    px-4 py-3 border-b border-slate-700/50 cursor-pointer
+                    hover:bg-slate-800/50 transition-colors
+                    ${!notification.isRead ? 'bg-blue-500/5' : ''}
+                  `}
+                                >
+                                    <div className="flex items-start gap-3">
+                                        {/* Unread indicator */}
+                                        <div className="mt-1.5">
+                                            {!notification.isRead ? (
+                                                <div className="h-2 w-2 rounded-full bg-blue-500" />
+                                            ) : (
+                                                <div className="h-2 w-2 rounded-full bg-transparent" />
+                                            )}
+                                        </div>
+
+                                        {/* Content */}
+                                        <div className="flex-1 min-w-0">
+                                            <p className="text-sm font-medium text-white truncate">
+                                                {notification.title}
+                                            </p>
+                                            <p className="text-xs text-slate-400 mt-0.5 line-clamp-2">
+                                                {notification.message}
+                                            </p>
+                                            <div className="flex items-center gap-2 mt-1">
+                                                <p className="text-xs text-slate-500">
+                                                    {formatDistanceToNow(new Date(notification.createdAt), { addSuffix: true })}
+                                                </p>
+                                                {notification.linkUrl && (
+                                                    <ExternalLink className="h-3 w-3 text-slate-500" />
+                                                )}
+                                            </div>
+                                        </div>
+
+                                        {/* Delete button */}
+                                        <Button
+                                            variant="ghost"
+                                            size="sm"
+                                            onClick={(e) => handleDelete(e, notification.id)}
+                                            className="h-6 w-6 p-0 text-slate-400 hover:text-red-400 opacity-0 group-hover:opacity-100"
+                                        >
+                                            <Trash2 className="h-3 w-3" />
+                                        </Button>
+                                    </div>
+                                </div>
+                            ))
+                        )}
+                    </div>
+                </div>
+            )}
+        </div>
+    );
+}
+
+export default NotificationBell;

@@ -1,0 +1,36 @@
+/* react-split styles */
+.gutter {
+  background-color: transparent;
+  background-repeat: no-repeat;
+  background-position: 50%;
+  transition: all 0.2s;
+  position: relative;
+}
+
+.gutter::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 3px;
+  background-color: rgb(100 116 139);
+  border-radius: 2px;
+  transition: all 0.2s;
+}
+
+.gutter:hover::before {
+  background-color: rgb(59 130 246);
+  width: 4px;
+}
+
+.gutter.gutter-horizontal {
+  cursor: col-resize;
+  width: 12px !important;
+}
+
+.gutter.gutter-vertical {
+  cursor: row-resize;
+  height: 12px !important;
+}

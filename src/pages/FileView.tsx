@@ -1,8 +1,10 @@
 import { useState, useEffect } from 'react';
 import { useParams, useSearchParams } from 'react-router-dom';
-import { Code, BarChart, FileText, ChevronLeft, ChevronRight, Clock } from 'lucide-react';
+import { Code, BarChart, FileText, ChevronLeft, ChevronRight, Clock, MessageSquare } from 'lucide-react';
 import BackButton from '../components/BackButton';
 import FileAnalysis from '../components/FileAnalysis';
+import NotesTab from '../components/NotesTab';
+import PersonalNotesPanel from '../components/PersonalNotesPanel';
 import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
 import { vscDarkPlus, vs } from 'react-syntax-highlighter/dist/esm/styles/prism';
 import { useTheme } from '@/components/theme-provider';
@@ -12,13 +14,15 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Alert, AlertDescription } from '@/components/ui/alert';
+import Split from 'react-split';
+import '../split.css';
 import { useFile, useFileAnalysis, useFileContent, useFileCommits } from '../hooks/useApiQueries';
 
 export default function FileView() {
     const { fileId } = useParams<{ fileId: string }>();
     const [searchParams] = useSearchParams();
     const { theme } = useTheme();
-    const [activeTab, setActiveTab] = useState<'code' | 'analysis'>('code');
+    const [activeTab, setActiveTab] = useState<'code' | 'analysis' | 'notes'>('code');
     const [currentCommitSha, setCurrentCommitSha] = useState<string | null>(null);
 
     // Get branch from URL params
@@ -161,7 +165,7 @@ export default function FileView() {
 
             {/* Tabs */}
             <Tabs value={activeTab} onValueChange={(value) => setActiveTab(value as any)}>
-                <TabsList className="grid w-full max-w-md grid-cols-2">
+                <TabsList className="grid w-full max-w-lg grid-cols-3">
                     <TabsTrigger value="code" className="gap-2">
                         <Code className="h-4 w-4" />
                         Code View
@@ -170,74 +174,92 @@ export default function FileView() {
                         <BarChart className="h-4 w-4" />
                         File Analysis
                     </TabsTrigger>
+                    <TabsTrigger value="notes" className="gap-2">
+                        <MessageSquare className="h-4 w-4" />
+                        Notes
+                    </TabsTrigger>
                 </TabsList>
 
                 {/* Code View Tab */}
-                <TabsContent value="code" className="mt-6 space-y-4">
-                    <Card>
-                        <CardContent className="p-0">
-                            <SyntaxHighlighter
-                                language={getLanguageFromPath(file?.filePath || '')}
-                                style={isLightTheme ? vs : vscDarkPlus}
-                                showLineNumbers={true}
-                                wrapLines={true}
-                                customStyle={{
-                                    background: 'transparent',
-                                    margin: 0,
-                                    padding: '1rem',
-                                    fontSize: '13px',
-                                    lineHeight: '1.6',
-                                    fontFamily: 'ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, "Liberation Mono", monospace',
-                                }}
-                                codeTagProps={{
-                                    style: {
-                                        fontSize: '13px',
-                                        fontFamily: 'ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, "Liberation Mono", monospace',
-                                    }
-                                }}
-                                lineNumberStyle={{
-                                    minWidth: '3em',
-                                    paddingRight: '1em',
-                                    color: isLightTheme ? '#666' : '#6e7681',
-                                    userSelect: 'none',
-                                    fontSize: '13px',
-                                }}
-                            >
-                                {content}
-                            </SyntaxHighlighter>
-                        </CardContent>
-                    </Card>
+                <TabsContent value="code" className="mt-6">
+                    <Split
+                        className="flex"
+                        sizes={[60, 40]}
+                        minSize={[300, 200]}
+                        gutterSize={12}
+                        direction="horizontal"
+                    >
+                        <div className="space-y-4 pr-2 overflow-auto">
+                            <Card>
+                                <CardContent className="p-0">
+                                    <SyntaxHighlighter
+                                        language={getLanguageFromPath(file?.filePath || '')}
+                                        style={isLightTheme ? vs : vscDarkPlus}
+                                        showLineNumbers={true}
+                                        wrapLines={true}
+                                        customStyle={{
+                                            background: 'transparent',
+                                            margin: 0,
+                                            padding: '1rem',
+                                            fontSize: '13px',
+                                            lineHeight: '1.6',
+                                            fontFamily: 'ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, "Liberation Mono", monospace',
+                                        }}
+                                        codeTagProps={{
+                                            style: {
+                                                fontSize: '13px',
+                                                fontFamily: 'ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, "Liberation Mono", monospace',
+                                            }
+                                        }}
+                                        lineNumberStyle={{
+                                            minWidth: '3em',
+                                            paddingRight: '1em',
+                                            color: isLightTheme ? '#666' : '#6e7681',
+                                            userSelect: 'none',
+                                            fontSize: '13px',
+                                        }}
+                                    >
+                                        {content}
+                                    </SyntaxHighlighter>
+                                </CardContent>
+                            </Card>
 
-                    {/* Commit Navigation */}
-                    <div className="flex items-center gap-3">
-                        <Button
-                            onClick={handlePreviousCommit}
-                            disabled={!canGoPrevious}
-                            variant="outline"
-                            size="sm"
-                            className="gap-2"
-                        >
-                            <ChevronLeft className="h-4 w-4" />
-                            Previous Commit
-                        </Button>
-                        <Button
-                            onClick={handleNextCommit}
-                            disabled={!canGoNext}
-                            variant="outline"
-                            size="sm"
-                            className="gap-2"
-                        >
-                            Next Commit
-                            <ChevronRight className="h-4 w-4" />
-                        </Button>
-                        {commitHistory.length > 0 && (
-                            <Badge variant="secondary">
-                                {currentIndex !== -1
-                                    ? `Commit ${commitHistory.length - currentIndex} of ${commitHistory.length}`
-                                    : 'Latest Unindexed Commit'}
-                            </Badge>
-                        )}
-                    </div>
+                            {/* Commit Navigation */}
+                            <div className="flex items-center gap-3">
+                                <Button
+                                    onClick={handlePreviousCommit}
+                                    disabled={!canGoPrevious}
+                                    variant="outline"
+                                    size="sm"
+                                    className="gap-2"
+                                >
+                                    <ChevronLeft className="h-4 w-4" />
+                                    Previous Commit
+                                </Button>
+                                <Button
+                                    onClick={handleNextCommit}
+                                    disabled={!canGoNext}
+                                    variant="outline"
+                                    size="sm"
+                                    className="gap-2"
+                                >
+                                    Next Commit
+                                    <ChevronRight className="h-4 w-4" />
+                                </Button>
+                                {commitHistory.length > 0 && (
+                                    <Badge variant="secondary">
+                                        {currentIndex !== -1
+                                            ? `Commit ${commitHistory.length - currentIndex} of ${commitHistory.length}`
+                                            : 'Latest Unindexed Commit'}
+                                    </Badge>
+                                )}
+                            </div>
+                        </div>
+
+                        <div className="pl-2 overflow-auto">
+                            <PersonalNotesPanel fileId={fileId!} repositoryId={file?.repositoryId} />
+                        </div>
+                    </Split>
                 </TabsContent>
 
                 {/* File Analysis Tab */}
@@ -255,6 +277,11 @@ export default function FileView() {
                             </CardContent>
                         </Card>
                     )}
+                </TabsContent>
+
+                {/* Notes Tab */}
+                <TabsContent value="notes" className="mt-6">
+                    <NotesTab fileId={fileId!} file={file} />
                 </TabsContent>
             </Tabs>
         </div>

@@ -10,6 +10,7 @@ import FileTreeView from './pages/FileTreeView.tsx';
 import FileView from './pages/FileView.tsx';
 import Login from './pages/Login.tsx';
 import ThemeSelector from './components/ThemeSelector.tsx';
+import NotificationBell from './components/NotificationBell.tsx';
 import { ThemeProvider } from './components/theme-provider.tsx';
 import { api } from './utils/api';
 
@@ -128,9 +129,11 @@ function AppContent() {
                         </span>
                     </Link>
 
-                    {/* User Info + Theme Selector */}
+                    {/* User Info + Theme Selector + Notifications */}
                     <div className="flex items-center gap-4">
                         <ThemeSelector />
+
+                        {user && <NotificationBell />}
 
                         {user ? (
                             <div className="flex items-center gap-0.5 px-3 py-2 bg-card border border-border rounded-full transition-all hover:shadow-md">
