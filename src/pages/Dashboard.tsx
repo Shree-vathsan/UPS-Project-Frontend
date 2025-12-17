@@ -1,0 +1,768 @@
+import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { Package, BarChart, Plus, Loader, RefreshCw, AlertTriangle, Search, Info, ChevronDown, ChevronUp } from 'lucide-react';
+import { api } from '../utils/api';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Badge } from '@/components/ui/badge';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import { Skeleton } from '@/components/ui/skeleton';
+import Pagination from '../components/Pagination';
+import { useAllRepositories, useAnalyzedRepositories, useInvalidateRepositories } from '../hooks/useApiQueries';
+
+interface DashboardProps {
+    user: any;
+    token: string;
+}
+
+type TabType = 'your' | 'analyzed' | 'add';
+type FilterType = 'your' | 'others' | 'all';
+type RepoFilterType = 'all' | 'public' | 'private' | 'contributor';
+
+export default function Dashboard({ user, token }: DashboardProps) {
+    const navigate = useNavigate();
+
+    // Tab state
+    const [activeTab, setActiveTab] = useState<TabType>('your');
+
+    // React Query hooks for data fetching with caching
+    const {
+        data: reposData,
+        isLoading: loading,
+        error: reposError,
+        refetch: refetchRepos
+    } = useAllRepositories(token, user?.id);
+
+    const repos = reposData?.data || [];
+    const error = reposError?.message || '';
+
+    // Analyzed repositories filter state
+    const [analyzedFilter, setAnalyzedFilter] = useState<FilterType>('all');
+
+    const {
+        data: analyzedReposData,
+        isLoading: loadingAnalyzed,
+        error: analyzedReposError,
+        refetch: refetchAnalyzed
+    } = useAnalyzedRepositories(user?.id, analyzedFilter);
+
+    const analyzedRepos = Array.isArray(analyzedReposData) ? analyzedReposData : [];
+    const analyzedError = analyzedReposError?.message || '';
+
+    // UI state (not data fetching)
+    const [analyzing, setAnalyzing] = useState<Set<string>>(new Set());
+    const [checkingStatus, setCheckingStatus] = useState<Set<string>>(new Set());
+
+    // Pagination state
+    const [currentPage, setCurrentPage] = useState(1);
+    const [itemsPerPage] = useState(10);
+
+    // Search state
+    const [searchQuery, setSearchQuery] = useState('');
+    const [analyzedSearchQuery, setAnalyzedSearchQuery] = useState('');
+
+    // Pagination state for analyzed repos
+    const [analyzedCurrentPage, setAnalyzedCurrentPage] = useState(1);
+
+    // Repository filter state (for Your Repositories tab)
+    const [repoFilter, setRepoFilter] = useState<RepoFilterType>('all');
+
+    // Quick guide visibility
+    const [showQuickGuide, setShowQuickGuide] = useState(false);
+
+    // Add repository tab state
+    const [repoUrl, setRepoUrl] = useState('');
+    const [addingRepo, setAddingRepo] = useState(false);
+    const [addError, setAddError] = useState<string>('');
+    const [addSuccess, setAddSuccess] = useState<string>('');
+
+    // Cache invalidation helper
+    const { invalidateAll } = useInvalidateRepositories();
+
+    // Wrapper function for backward compatibility
+    const loadRepositories = () => {
+        refetchRepos();
+    };
+
+    const loadAnalyzedRepositories = () => {
+        refetchAnalyzed();
+    };
+
+    const handleAnalyze = async (owner: string, name: string) => {
+        const key = `${owner}/${name}`;
+        setAnalyzing(prev => new Set(prev).add(key));
+
+        try {
+            const result = await api.analyzeRepository(owner, name, user.id, token);
+            console.log('Analysis result:', result);
+
+            // Handle different response types
+            if (result.alreadyHasAccess) {
+                // User already has access
+                alert(`Repository Access\n\nYou already have access to this repository!`);
+                setActiveTab('analyzed');
+                await loadAnalyzedRepositories();
+            } else if (result.accessGranted) {
+                // Repository was analyzed by someone else, access granted
+                const message = result.message || `Repository was analyzed by${result.analyzedBy ? ' ' + result.analyzedBy : ' another user'}. Access granted!`;
+                alert(`Access Granted\n\n${message}\n\nYou can now view this repository in the "Analyzed Repository" tab.`);
+                setActiveTab('analyzed');
+                await loadAnalyzedRepositories();
+            } else if (result.newAnalysis) {
+                // New analysis started
+                alert(`Analysis Started\n\nAnalysis started for ${owner}/${name}!\n\nThis will take a few minutes. Check the "Analyzed Repository" tab to see the status.`);
+                await loadRepositories();
+            } else {
+                // Fallback for any other response
+                alert(`Analysis Started\n\nAnalysis started for ${owner}/${name}!`);
+            }
+        } catch (error: any) {
+            console.error('Analysis failed:', error);
+            alert(`Failed to Analyze\n\nFailed to analyze ${owner}/${name}\n\n${error.message}`);
+        } finally {
+            setAnalyzing(prev => {
+                const newSet = new Set(prev);
+                newSet.delete(key);
+                return newSet;
+            });
+        }
+    };
+
+    const handleViewAnalysis = async (owner: string, name: string) => {
+        const key = `${owner}/${name}`;
+        setCheckingStatus(prev => new Set(prev).add(key));
+
+        try {
+            const status = await api.getRepositoryStatus(owner, name);
+            console.log('Repository status:', status);
+
+            if (!status.analyzed) {
+                alert('Repository Not Analyzed\n\nThis repository has not been analyzed yet. Click "Analyze" first!');
+                return;
+            }
+
+            if (status.status === 'ready') {
+                navigate(`/repo/${status.repositoryId}`);
+            } else if (status.status === 'analyzing') {
+                alert('Analysis in Progress\n\nAnalysis is still in progress. Please wait a few minutes and try again.');
+            } else if (status.status === 'pending') {
+                alert('Analysis Queued\n\nAnalysis is queued and will start soon.');
+            } else {
+                alert(`Repository Status\n\nCurrent status: ${status.status}`);
+            }
+        } catch (error: any) {
+            console.error('Failed to check status:', error);
+            alert(`Status Check Failed\n\n${error.message}`);
+        } finally {
+            setCheckingStatus(prev => {
+                const newSet = new Set(prev);
+                newSet.delete(key);
+                return newSet;
+            });
+        }
+    };
+
+    const handleAddRepository = async () => {
+        if (!repoUrl.trim()) {
+            setAddError('Please enter a GitHub repository URL');
+            return;
+        }
+
+        setAddingRepo(true);
+        setAddError('');
+        setAddSuccess('');
+
+        try {
+            const result = await api.analyzeRepositoryByUrl(repoUrl.trim(), user.id, token);
+
+            // Handle different response types
+            if (result.alreadyHasAccess) {
+                // User already has access
+                alert('Repository Access\n\nYou already have access to this repository!\n\nNavigating to the "Analyzed Repository" tab.');
+                setActiveTab('analyzed');
+                setRepoUrl('');
+            } else if (result.accessGranted) {
+                // Repository was analyzed by someone else, access granted
+                const timeAgoText = result.analyzedBy ? ` by ${result.analyzedBy}` : '';
+                alert(`Access Granted\n\nRepository was already analyzed${timeAgoText}. Access granted!\n\nNavigating to the "Analyzed Repository" tab.`);
+                setActiveTab('analyzed');
+                setRepoUrl('');
+            } else if (result.newAnalysis) {
+                // New analysis started
+                setAddSuccess(`Successfully started analysis for the repository!\n\nAnalysis will take a few minutes. Switch to the "Analyzed Repository" tab to see the progress.`);
+                setRepoUrl('');
+                // Refresh analyzed repos
+                if (activeTab !== 'analyzed') {
+                    setTimeout(() => setActiveTab('analyzed'), 2000);
+                }
+            } else if (result.alreadyExists) {
+                // Legacy handling for old backend responses
+                if (result.status === 'ready') {
+                    alert('Repository Already Analyzed\n\nThis repository has already been analyzed. You can view it in the "Analyzed Repository" tab.');
+                    setActiveTab('analyzed');
+                } else {
+                    alert('Analysis in Progress\n\nThis repository is already being analyzed. Check the "Analyzed Repository" tab for status updates.');
+                    setActiveTab('analyzed');
+                }
+            } else {
+                // Fallback
+                setAddSuccess(`Successfully started analysis for the repository!`);
+                setRepoUrl('');
+            }
+        } catch (error: any) {
+            console.error('Failed to add repository:', error);
+            setAddError(error.message || 'Failed to add repository');
+        } finally {
+            setAddingRepo(false);
+        }
+    };
+
+    return (
+        <div className="container-custom py-8 animate-fade-in">
+            <div className="mb-8">
+                <div className="flex items-start justify-between">
+                    <div>
+                        <h1 className="font-heading text-3xl font-bold mb-2">Repository Management</h1>
+                        <p className="text-muted-foreground">
+                            Analyze repositories, track progress, and view insights
+                        </p>
+                    </div>
+
+                    {/* Quick Tips Toggle */}
+                    <Button
+                        onClick={() => setShowQuickGuide(!showQuickGuide)}
+                        variant="default"
+                        size="sm"
+                        className="gap-2"
+                    >
+                        <Info className="h-4 w-4" />
+                        <span>Quick Tips</span>
+                        {showQuickGuide ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
+                    </Button>
+                </div>
+
+                {/* Collapsible Quick Guide */}
+                {showQuickGuide && (
+                    <Card className="mt-4 max-w-4xl">
+                        <CardContent className="pt-6">
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                <div className="flex items-center gap-3">
+                                    <span className="text-primary text-xl font-bold">•</span>
+                                    <span className="text-base">Repositories are fetched from your GitHub account</span>
+                                </div>
+                                <div className="flex items-center gap-3">
+                                    <span className="text-primary text-xl font-bold">•</span>
+                                    <span className="text-base">Click "Analyze" to start repository analysis</span>
+                                </div>
+                                <div className="flex items-center gap-3">
+                                    <span className="text-primary text-xl font-bold">•</span>
+                                    <span className="text-base">Analysis includes Git history & semantic embeddings</span>
+                                </div>
+                                <div className="flex items-center gap-3">
+                                    <span className="text-primary text-xl font-bold">•</span>
+                                    <span className="text-base">View detailed insights when analysis is ready</span>
+                                </div>
+                            </div>
+                        </CardContent>
+                    </Card>
+                )}
+            </div>
+
+            <Tabs value={activeTab} onValueChange={(value) => setActiveTab(value as TabType)}>
+                <TabsList className="grid w-full max-w-md grid-cols-3">
+                    <TabsTrigger value="your" className="gap-2">
+                        <Package className="h-4 w-4" />
+                        <span className="hidden sm:inline">Your Repositories</span>
+                        <span className="sm:hidden">Your</span>
+                    </TabsTrigger>
+                    <TabsTrigger value="analyzed" className="gap-2" loading={loadingAnalyzed}>
+                        <BarChart className="h-4 w-4" />
+                        <span className="hidden sm:inline">Analyzed</span>
+                        <span className="sm:hidden">Analyzed</span>
+                    </TabsTrigger>
+                    <TabsTrigger value="add" className="gap-2">
+                        <Plus className="h-4 w-4" />
+                        <span className="hidden sm:inline">Add Repository</span>
+                        <span className="sm:hidden">Add</span>
+                    </TabsTrigger>
+                </TabsList>
+
+                {/* Your Repositories Tab */}
+                <TabsContent value="your" className="mt-6 space-y-4">
+                    {loading ? (
+                        <div className="space-y-4">
+                            {[1, 2, 3].map(i => (
+                                <Card key={i}>
+                                    <CardHeader>
+                                        <Skeleton className="h-6 w-3/4" />
+                                        <Skeleton className="h-4 w-full mt-2" />
+                                    </CardHeader>
+                                </Card>
+                            ))}
+                        </div>
+                    ) : error ? (
+                        <Alert variant="destructive">
+                            <AlertTriangle className="h-4 w-4" />
+                            <AlertTitle>Error Loading Repositories</AlertTitle>
+                            <AlertDescription>
+                                {error}
+                                <div className="mt-4">
+                                    <Button onClick={loadRepositories} variant="outline" size="sm">
+                                        <RefreshCw className="h-4 w-4 mr-2" />
+                                        Try Again
+                                    </Button>
+                                </div>
+                            </AlertDescription>
+                        </Alert>
+                    ) : repos.length === 0 ? (
+                        <Card>
+                            <CardContent className="py-12 text-center">
+                                <Package className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
+                                <h3 className="font-heading text-lg font-semibold mb-2">No repositories found</h3>
+                                <p className="text-muted-foreground text-sm">
+                                    Create a repository on GitHub to get started!
+                                </p>
+                            </CardContent>
+                        </Card>
+                    ) : (
+                        <>
+                            <div className="flex items-center justify-between mb-4">
+                                <div className="flex items-center gap-2">
+                                    <h2 className="font-heading text-xl font-semibold">Your Repositories</h2>
+                                    <Badge>{repos.length}</Badge>
+                                </div>
+                                <div className="flex items-center gap-2">
+                                    <div className="relative">
+                                        <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                                        <input
+                                            type="text"
+                                            placeholder="Search repositories..."
+                                            value={searchQuery}
+                                            onChange={(e) => {
+                                                setSearchQuery(e.target.value);
+                                                setCurrentPage(1); // Reset to first page on search
+                                            }}
+                                            className="pl-9 pr-4 py-2 text-sm border border-border rounded-md bg-background text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring transition-all duration-200 hover:shadow-[0_0_10px_rgba(255,255,255,0.3)] w-[200px]"
+                                        />
+                                    </div>
+                                    <Button onClick={loadRepositories} variant="outline" size="sm">
+                                        <RefreshCw className="h-4 w-4 mr-2" />
+                                        Refresh
+                                    </Button>
+                                </div>
+                            </div>
+
+                            {/* Repository Type Filter */}
+                            <div className="flex gap-2 mb-4">
+                                <Button
+                                    onClick={() => setRepoFilter('all')}
+                                    variant={repoFilter === 'all' ? 'default' : 'outline'}
+                                    size="sm"
+                                >
+                                    All ({repos.length})
+                                </Button>
+                                <Button
+                                    onClick={() => setRepoFilter('public')}
+                                    variant={repoFilter === 'public' ? 'default' : 'outline'}
+                                    size="sm"
+                                >
+                                    Public ({repos.filter((r: any) => r.private === false).length})
+                                </Button>
+                                <Button
+                                    onClick={() => setRepoFilter('private')}
+                                    variant={repoFilter === 'private' ? 'default' : 'outline'}
+                                    size="sm"
+                                >
+                                    Private ({repos.filter((r: any) => r.private === true).length})
+                                </Button>
+                                <Button
+                                    onClick={() => setRepoFilter('contributor')}
+                                    variant={repoFilter === 'contributor' ? 'default' : 'outline'}
+                                    size="sm"
+                                >
+                                    Contributor ({repos.filter((r: any) => {
+                                        const perms = r.permissions;
+                                        return perms && perms.admin === false && perms.push === true;
+                                    }).length})
+                                </Button>
+                            </div>
+
+                            {/* Collapsible Quick Guide */}
+                            {/* <button
+                                onClick={() => setShowQuickGuide(!showQuickGuide)}
+                                className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors mb-3"
+                            >
+                                {showQuickGuide ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
+                                <Info className="h-3 w-3" />
+                                <span>Quick Tips</span>
+                            </button> */}
+
+                            {/* {showQuickGuide && (
+                                <div className="bg-muted/50 border rounded-lg p-3 mb-4 text-xs text-muted-foreground">
+                                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                                        <div>• Repos fetched from your GitHub account</div>
+                                        <div>• Click "Analyze" to start analysis</div>
+                                        <div>• Includes Git history & semantic embeddings</div>
+                                        <div>• View detailed insights when ready</div>
+                                    </div>
+                                </div>
+                            )} */}
+
+                            <div className="grid gap-4">
+                                {repos
+                                    .filter((repo: any) => {
+                                        // Filter by repository type
+                                        if (repoFilter === 'public' && repo.private === true) return false;
+                                        if (repoFilter === 'private' && repo.private === false) return false;
+                                        if (repoFilter === 'contributor') {
+                                            // Contributor: has push access but is not admin/owner
+                                            const perms = repo.permissions;
+                                            if (!perms || perms.admin === true || perms.push !== true) return false;
+                                        }
+
+                                        // Filter by search query
+                                        if (!searchQuery.trim()) return true;
+                                        const query = searchQuery.toLowerCase();
+                                        const repoName = `${repo.login}/${repo.name}`.toLowerCase();
+                                        const description = (repo.description || '').toLowerCase();
+                                        return repoName.includes(query) || description.includes(query);
+                                    })
+                                    .slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage)
+                                    .map((repo: any) => {
+                                        const key = `${repo.login}/${repo.name}`;
+                                        const isAnalyzing = analyzing.has(key);
+                                        const isCheckingStatus = checkingStatus.has(key);
+                                        const isAnalyzed = repo.analyzed === true;
+                                        const status = repo.status;
+
+                                        return (
+                                            <Card key={repo.id} className="hover-lift">
+                                                <CardHeader>
+                                                    <div className="flex items-start justify-between">
+                                                        <div className="space-y-1 flex-1">
+                                                            <CardTitle className="text-lg">
+                                                                {repo.login}/{repo.name}
+                                                            </CardTitle>
+                                                            <CardDescription>
+                                                                {repo.description || 'No description'}
+                                                            </CardDescription>
+                                                            {isAnalyzed && (
+                                                                <div className="mt-2">
+                                                                    {status === 'ready' && (
+                                                                        <Badge variant="success">Analysis Complete</Badge>
+                                                                    )}
+                                                                    {status === 'analyzing' && (
+                                                                        <Badge variant="warning">Analyzing...</Badge>
+                                                                    )}
+                                                                    {status === 'pending' && (
+                                                                        <Badge variant="info">Pending</Badge>
+                                                                    )}
+                                                                </div>
+                                                            )}
+                                                        </div>
+                                                        <div className="ml-4">
+                                                            {isAnalyzing ? (
+                                                                <Button disabled size="sm">
+                                                                    <Loader className="h-4 w-4 mr-2 animate-spin" />
+                                                                    Starting...
+                                                                </Button>
+                                                            ) : !isAnalyzed ? (
+                                                                <Button onClick={() => handleAnalyze(repo.login, repo.name)} size="sm">
+                                                                    Analyze
+                                                                </Button>
+                                                            ) : isCheckingStatus ? (
+                                                                <Button disabled variant="outline" size="sm">
+                                                                    <Loader className="h-4 w-4 mr-2 animate-spin" />
+                                                                    Checking...
+                                                                </Button>
+                                                            ) : status === 'ready' ? (
+                                                                <Button onClick={() => handleViewAnalysis(repo.login, repo.name)} size="sm">
+                                                                    View Analysis
+                                                                </Button>
+                                                            ) : (
+                                                                <Button onClick={() => handleViewAnalysis(repo.login, repo.name)} variant="outline" size="sm">
+                                                                    Check Status
+                                                                </Button>
+                                                            )}
+                                                        </div>
+                                                    </div>
+                                                </CardHeader>
+                                            </Card>
+                                        );
+                                    })}
+                            </div>
+
+                            {(() => {
+                                const filteredRepos = repos.filter((repo: any) => {
+                                    // Filter by repository type
+                                    if (repoFilter === 'public' && repo.private === true) return false;
+                                    if (repoFilter === 'private' && repo.private === false) return false;
+                                    if (repoFilter === 'contributor') {
+                                        // Contributor: has push access but is not admin/owner
+                                        const perms = repo.permissions;
+                                        if (!perms || perms.admin === true || perms.push !== true) return false;
+                                    }
+
+                                    // Filter by search query
+                                    if (!searchQuery.trim()) return true;
+                                    const query = searchQuery.toLowerCase();
+                                    const repoName = `${repo.login}/${repo.name}`.toLowerCase();
+                                    const description = (repo.description || '').toLowerCase();
+                                    return repoName.includes(query) || description.includes(query);
+                                });
+                                return filteredRepos.length > 0 ? (
+                                    <Pagination
+                                        currentPage={currentPage}
+                                        onPageChange={setCurrentPage}
+                                        totalPages={Math.ceil(filteredRepos.length / itemsPerPage)}
+                                        disabled={loading}
+                                    />
+                                ) : null;
+                            })()}
+
+
+                        </>
+                    )}
+                </TabsContent>
+
+                {/* Analyzed Repositories Tab */}
+                <TabsContent value="analyzed" className="mt-6 space-y-4">
+                    <div className="flex items-center justify-between mb-4">
+                        <div className="flex items-center gap-2">
+                            <h2 className="font-heading text-xl font-semibold">Analyzed Repositories</h2>
+                            <Badge>{analyzedRepos.length}</Badge>
+                        </div>
+                        <div className="flex items-center gap-2">
+                            <div className="relative">
+                                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                                <input
+                                    type="text"
+                                    placeholder="Search repositories..."
+                                    value={analyzedSearchQuery}
+                                    onChange={(e) => {
+                                        setAnalyzedSearchQuery(e.target.value);
+                                        setAnalyzedCurrentPage(1); // Reset to first page on search
+                                    }}
+                                    className="pl-9 pr-4 py-2 text-sm border border-border rounded-md bg-background text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring transition-all duration-200 hover:shadow-[0_0_10px_rgba(255,255,255,0.3)] w-[200px]"
+                                />
+                            </div>
+                            <Button onClick={loadAnalyzedRepositories} variant="outline" size="sm">
+                                <RefreshCw className="h-4 w-4 mr-2" />
+                                Refresh
+                            </Button>
+                        </div>
+                    </div>
+
+                    <div className="flex gap-2 mb-4">
+                        <Button
+                            onClick={() => setAnalyzedFilter('all')}
+                            variant={analyzedFilter === 'all' ? 'default' : 'outline'}
+                            size="sm"
+                        >
+                            All
+                        </Button>
+                        <Button
+                            onClick={() => setAnalyzedFilter('your')}
+                            variant={analyzedFilter === 'your' ? 'default' : 'outline'}
+                            size="sm"
+                        >
+                            Your
+                        </Button>
+                        <Button
+                            onClick={() => setAnalyzedFilter('others')}
+                            variant={analyzedFilter === 'others' ? 'default' : 'outline'}
+                            size="sm"
+                        >
+                            Others
+                        </Button>
+                    </div>
+
+                    {loadingAnalyzed ? (
+                        <div className="space-y-4">
+                            {[1, 2, 3].map(i => (
+                                <Card key={i}>
+                                    <CardHeader>
+                                        <Skeleton className="h-6 w-3/4" />
+                                        <Skeleton className="h-4 w-1/2 mt-2" />
+                                    </CardHeader>
+                                </Card>
+                            ))}
+                        </div>
+                    ) : analyzedError ? (
+                        <Alert variant="destructive">
+                            <AlertTriangle className="h-4 w-4" />
+                            <AlertTitle>Error</AlertTitle>
+                            <AlertDescription>{analyzedError}</AlertDescription>
+                        </Alert>
+                    ) : analyzedRepos.length === 0 ? (
+                        <Card>
+                            <CardContent className="py-12 text-center">
+                                <BarChart className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
+                                <h3 className="font-heading text-lg font-semibold mb-2">No Analyzed Repositories</h3>
+                                <p className="text-muted-foreground text-sm mb-4">
+                                    {analyzedFilter === 'your'
+                                        ? "You haven't analyzed any repositories yet."
+                                        : analyzedFilter === 'others'
+                                            ? 'No repositories from other users have been added.'
+                                            : 'No repositories have been analyzed yet.'}
+                                </p>
+                                <p className="text-muted-foreground text-xs">
+                                    {analyzedFilter === 'your'
+                                        ? 'Go to "Your Repository" tab and click "Analyze" on a repository.'
+                                        : 'Go to "Add Repository" tab to add a repository from another user.'}
+                                </p>
+                            </CardContent>
+                        </Card>
+                    ) : (() => {
+                        // Filter analyzed repos by search query
+                        const filteredAnalyzedRepos = analyzedRepos.filter((repo: any) => {
+                            if (!analyzedSearchQuery.trim()) return true;
+                            const query = analyzedSearchQuery.toLowerCase();
+                            const repoName = `${repo.ownerUsername}/${repo.name}`.toLowerCase();
+                            return repoName.includes(query);
+                        });
+
+                        // Paginate filtered results
+                        const paginatedRepos = filteredAnalyzedRepos.slice(
+                            (analyzedCurrentPage - 1) * itemsPerPage,
+                            analyzedCurrentPage * itemsPerPage
+                        );
+
+                        return (
+                            <>
+                                <div className="grid gap-4">
+                                    {paginatedRepos.map((repo: any) => (
+                                        <Card key={repo.id} className="hover-lift">
+                                            <CardHeader>
+                                                <div className="flex items-start justify-between">
+                                                    <div className="space-y-2 flex-1">
+                                                        <CardTitle className="text-lg">
+                                                            {repo.ownerUsername}/{repo.name}
+                                                        </CardTitle>
+                                                        <div className="flex gap-2">
+                                                            <Badge variant={repo.isMine ? 'success' : 'info'}>
+                                                                {repo.label}
+                                                            </Badge>
+                                                            <Badge variant={
+                                                                repo.status === 'ready' ? 'success' :
+                                                                    repo.status === 'analyzing' ? 'warning' : 'secondary'
+                                                            }>
+                                                                {repo.status === 'ready' ? 'Ready' :
+                                                                    repo.status === 'analyzing' ? 'Analyzing' : repo.status}
+                                                            </Badge>
+                                                        </div>
+                                                    </div>
+                                                    <Button
+                                                        onClick={() => {
+                                                            if (repo.status === 'ready') {
+                                                                navigate(`/repo/${repo.id}`);
+                                                            } else if (repo.status === 'analyzing') {
+                                                                alert('Analysis in Progress\n\nThis repository is still being analyzed. Please check back in a few minutes.');
+                                                            } else {
+                                                                alert(`Repository Status\n\nCurrent status: ${repo.status}`);
+                                                            }
+                                                        }}
+                                                        disabled={repo.status !== 'ready'}
+                                                        size="sm"
+                                                    >
+                                                        {repo.status === 'ready' ? 'View Details' :
+                                                            repo.status === 'analyzing' ? 'Analyzing...' : 'Pending'}
+                                                    </Button>
+                                                </div>
+                                            </CardHeader>
+                                        </Card>
+                                    ))}
+                                </div>
+                                {filteredAnalyzedRepos.length > 0 && (
+                                    <Pagination
+                                        currentPage={analyzedCurrentPage}
+                                        onPageChange={setAnalyzedCurrentPage}
+                                        totalPages={Math.ceil(filteredAnalyzedRepos.length / itemsPerPage)}
+                                        disabled={loadingAnalyzed}
+                                    />
+                                )}
+                            </>
+                        );
+                    })()}
+                </TabsContent>
+
+                {/* Add Repository Tab */}
+                <TabsContent value="add" className="mt-6">
+                    <div className="max-w-2xl mx-auto">
+                        <Card>
+                            <CardHeader className="text-center">
+                                <Plus className="h-12 w-12 mx-auto mb-4 text-primary" />
+                                <CardTitle>Add Repository to Analyze</CardTitle>
+                                <CardDescription>
+                                    Add any public GitHub repository to analyze, even if the owner hasn't logged in to this platform.
+                                </CardDescription>
+                            </CardHeader>
+                            <CardContent className="space-y-4">
+                                <div>
+                                    <label className="text-sm font-medium mb-2 block">
+                                        GitHub Repository URL
+                                    </label>
+                                    <Input
+                                        value={repoUrl}
+                                        onChange={(e) => setRepoUrl(e.target.value)}
+                                        placeholder="https://github.com/owner/repo"
+                                        onKeyPress={(e) => {
+                                            if (e.key === 'Enter' && !addingRepo) {
+                                                handleAddRepository();
+                                            }
+                                        }}
+                                    />
+                                </div>
+
+                                <Button
+                                    onClick={handleAddRepository}
+                                    disabled={addingRepo || !repoUrl.trim()}
+                                    className="w-full"
+                                    size="lg"
+                                >
+                                    {addingRepo ? (
+                                        <>
+                                            <Loader className="h-4 w-4 mr-2 animate-spin" />
+                                            Analyzing...
+                                        </>
+                                    ) : (
+                                        'Analyze Repository'
+                                    )}
+                                </Button>
+
+                                {addError && (
+                                    <Alert variant="destructive">
+                                        <AlertTriangle className="h-4 w-4" />
+                                        <AlertTitle>Error</AlertTitle>
+                                        <AlertDescription>{addError}</AlertDescription>
+                                    </Alert>
+                                )}
+
+                                {addSuccess && (
+                                    <Alert variant="success">
+                                        <AlertTitle>Success</AlertTitle>
+                                        <AlertDescription>{addSuccess}</AlertDescription>
+                                    </Alert>
+                                )}
+
+                                <Alert className="border-foreground/30 text-foreground [&>svg]:text-foreground">
+                                    <AlertTitle className="text-foreground">Supported URL Formats:</AlertTitle>
+                                    <AlertDescription className="text-foreground/80">
+                                        <ul className="text-xs space-y-1 list-disc list-inside mt-2">
+                                            <li><code className="text-foreground">https://github.com/owner/repo</code></li>
+                                            <li><code className="text-foreground">https://github.com/owner/repo.git</code></li>
+                                            <li><code className="text-foreground">github.com/owner/repo</code></li>
+                                            <li><code className="text-foreground">owner/repo</code></li>
+                                        </ul>
+                                    </AlertDescription>
+                                </Alert>
+                            </CardContent>
+                        </Card>
+                    </div>
+                </TabsContent>
+            </Tabs>
+        </div>
+    );
+}

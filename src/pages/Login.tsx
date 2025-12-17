@@ -1,43 +1,120 @@
-import React from "react";
-import { Btn } from "../components/Button";
-import { useNavigate } from "react-router-dom";
+import { useState } from 'react';
+import { Github, Code, AlertTriangle, CheckCircle, Files, Download } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import { api } from '../utils/api';
+import ThemeSelector from '../components/ThemeSelector';
 
 export default function Login() {
-  const nav = useNavigate();
+    const [error, setError] = useState<string>('');
 
-  return (
-    <div className="min-h-screen bg-gray-50 flex items-center justify-center px-4">
-      <div className="bg-white w-full max-w-md rounded-2xl shadow-xl border border-gray-100 p-10">
-        <div className="flex flex-col items-center text-center">
-          <div className="w-16 h-16 rounded-2xl bg-indigo-600 flex items-center justify-center text-white text-2xl font-bold shadow-lg shadow-indigo-200 mb-6">
-            F
-          </div>
+    const handleLogin = async () => {
+        try {
+            const result = await api.githubLogin(window.location.origin);
+            if (result && result.url) {
+                window.location.href = result.url;
+            } else {
+                setError('Failed to get OAuth URL from backend');
+            }
+        } catch (err) {
+            console.error('Login error:', err);
+            setError('Backend is not responding. Make sure the backend is running on port 5000.');
+        }
+    };
 
-          <h1 className="text-2xl font-bold text-gray-900">Welcome to Foresite</h1>
-          <p className="text-gray-500 mt-2 mb-8 text-sm">
-            AI-Powered Code Intelligence Platform
-          </p>
+    // Handle opening/downloading the user manual PDF
+    const handleOpenUserManual = () => {
+        // Using a sample PDF URL - replace with your actual user manual PDF path
+        const pdfUrl = '/user-manual.pdf';
+        window.open(pdfUrl, '_blank');
+    };
 
-          <div className="w-full space-y-4">
-            <Btn variant="primary" className="w-full py-3 text-sm" onClick={() => nav("/repos")}>
-              <svg className="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-                <path fillRule="evenodd" d="M12 2C6.477 2 2 6.484 2 12.017c0 4.425 2.865 8.18 6.839 9.504.5.092.682-.217.682-.483 0-.237-.008-.868-.013-1.703-2.782.605-3.369-1.343-3.369-1.343-.454-1.158-1.11-1.466-1.11-1.466-.908-.62.069-.608.069-.608 1.003.07 1.531 1.032 1.531 1.032.892 1.53 2.341 1.088 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.113-4.555-4.951 0-1.093.39-1.988 1.029-2.688-.103-.253-.446-1.272.098-2.65 0 0 .84-.27 2.75 1.026A9.564 9.564 0 0112 6.844c.85.004 1.705.115 2.504.337 1.909-1.296 2.747-1.027 2.747-1.027.546 1.379.202 2.398.1 2.651.64.7 1.028 1.595 1.028 2.688 0 3.848-2.339 4.695-4.566 4.943.359.309.678.92.678 1.855 0 1.338-.012 2.419-.012 2.747 0 .268.18.58.688.482A10.019 10.019 0 0022 12.017C22 6.484 17.522 2 12 2z" clipRule="evenodd" />
-              </svg>
-              Continue with GitHub
-            </Btn>
+    return (
+        <div className="min-h-screen flex items-center justify-center bg-background">
+            {/* Theme Selector - Top Right */}
+            {/* <div className="absolute top-4 right-4 z-10">
+                <ThemeSelector />
+            </div> */}
 
-            <div className="relative flex py-2 items-center">
-              <div className="flex-grow border-t border-gray-200"></div>
-              <span className="flex-shrink-0 mx-4 text-gray-400 text-xs uppercase font-medium">Or</span>
-              <div className="flex-grow border-t border-gray-200"></div>
+            <div className="w-full -mt-16 max-w-md px-4 animate-fade-in">
+                {/* Logo/Title */}
+                <div className="text-center mb-8">
+                    <div className="flex items-center justify-center gap-3 mb-3">
+                        <Code className="h-10 w-10 text-primary" />
+                        <h1 className="font-heading text-4xl font-bold text-foreground">
+                            ForeSite
+                        </h1>
+                    </div>
+
+                </div>
+
+                {/* Login Card */}
+                <Card className="-mt-4">
+                    <CardHeader>
+                        {/* <CardTitle>Login</CardTitle> */}
+                        <CardDescription className="text-center">
+                            Sign in with your GitHub account to continue
+                        </CardDescription>
+
+                    </CardHeader>
+                    <CardContent className="space-y-4">
+                        {error && (
+                            <Alert variant="destructive">
+                                <AlertTriangle className="h-4 w-4" />
+                                <AlertTitle>Authentication Error</AlertTitle>
+                                <AlertDescription>
+                                    {error}
+                                    <div className="mt-3 text-xs bg-background/50 p-3 rounded-md border border-border">
+                                        <strong className="block mb-2">Troubleshooting:</strong>
+                                        <ul className="list-disc list-inside space-y-1">
+                                            <li>Make sure backend is running: <code>dotnet run</code></li>
+                                            <li>Backend should be at: http://localhost:5000</li>
+                                            <li>Supabase database must be configured</li>
+                                        </ul>
+                                    </div>
+                                </AlertDescription>
+                            </Alert>
+                        )}
+
+                        <Button
+                            onClick={handleLogin}
+                            className="w-full gap-2"
+                            size="lg"
+                        >
+                            <Github className="h-5 w-5" />
+                            Login with GitHub
+                        </Button>
+                        <CardDescription className="text-center">
+                            Know about us
+                        </CardDescription>
+                        <Button
+                            onClick={handleOpenUserManual}
+                            className="w-full gap-2 bg-black text-white hover:bg-gray-800"
+                            size="lg"
+                        >
+                            <Files className="h-5 w-5" />
+                            User Manual
+                        </Button>
+
+                        {/* <div className="bg-muted/50 p-4 rounded-md border border-border">
+                            <div className="text-sm font-medium text-foreground mb-2">
+                                System Status
+                            </div>
+                            <div className="space-y-1 text-sm">
+                                <div className="flex items-center gap-2 text-green-600 dark:text-green-400">
+                                    <CheckCircle className="h-4 w-4" />
+                                    <span>Frontend: Running</span>
+                                </div>
+                                <div className={`flex items-center gap-2 ${error ? 'text-destructive' : 'text-muted-foreground'}`}>
+                                    {error ? <AlertTriangle className="h-4 w-4" /> : <span className="h-4 w-4">...</span>}
+                                    <span>Backend: {error ? 'Not responding' : 'Checking...'}</span>
+                                </div>
+                            </div>
+                        </div> */}
+                    </CardContent>
+                </Card>
             </div>
-
-            <Btn variant="secondary" className="w-full" onClick={() => { }}>
-              View Documentation
-            </Btn>
-          </div>
         </div>
-      </div>
-    </div>
-  );
+    );
 }

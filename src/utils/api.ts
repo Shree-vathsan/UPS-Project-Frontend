@@ -1,0 +1,165 @@
+const API_BASE = 'http://localhost:5000';
+
+async function handleResponse(res: Response) {
+    if (!res.ok) {
+        const text = await res.text();
+        try {
+            const json = JSON.parse(text);
+            throw new Error(json.error || json.message || 'Request failed');
+        } catch {
+            throw new Error(text || `HTTP ${res.status}: ${res.statusText}`);
+        }
+    }
+
+    const text = await res.text();
+    if (!text) return null;
+
+    try {
+        return JSON.parse(text);
+    } catch {
+        return text;
+    }
+}
+
+export const api = {
+    // Auth
+    async githubLogin(redirectUri: string) {
+        const res = await fetch(`${API_BASE}/auth/github?redirectUri=${redirectUri}`);
+        return handleResponse(res);
+    },
+
+    async githubCallback(code: string) {
+        const res = await fetch(`${API_BASE}/auth/github/callback`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ code })
+        });
+        return handleResponse(res);
+    },
+
+    // Repositories
+    async getRepositories(token: string, userId: string, page: number = 1, perPage: number = 100) {
+        // GitHub API max per_page is 100
+        const actualPerPage = Math.min(perPage, 100);
+        const res = await fetch(`${API_BASE}/repositories?userId=${userId}&page=${page}&per_page=${actualPerPage}&sort=pushed`, {
+            headers: { 'Authorization': `Bearer ${token}` }
+        });
+
+        const linkHeader = res.headers.get('Link');
+        let totalPages = 0;
+
+        if (linkHeader) {
+            const match = linkHeader.match(/&page=(\d+)[^>]*>; rel="last"/);
+            if (match) {
+                totalPages = parseInt(match[1]);
+            }
+        }
+
+        const data = await handleResponse(res);
+        return { data: Array.isArray(data) ? data : [], totalPages };
+    },
+
+    // Fetch ALL repositories by paginating through all pages
+    async getAllRepositories(token: string, userId: string) {
+        const perPage = 100; // GitHub API max
+        let allRepos: any[] = [];
+        let page = 1;
+        let hasMore = true;
+
+        while (hasMore) {
+            const { data, totalPages } = await this.getRepositories(token, userId, page, perPage);
+
+            if (data.length === 0) {
+                hasMore = false;
+            } else {
+                allRepos = [...allRepos, ...data];
+                // If we got fewer than perPage, we're on the last page
+                // Or if we've reached the totalPages from the Link header
+                if (data.length < perPage || (totalPages > 0 && page >= totalPages)) {
+                    hasMore = false;
+                } else {
+                    page++;
+                }
+            }
+        }
+
+        return { data: allRepos, totalPages: page };
+    },
+
+    async analyzeRepository(owner: string, repo: string, userId: string, token?: string) {
+        const headers: Record<string, string> = {};
+        if (token) {
+            headers['Authorization'] = `Bearer ${token}`;
+        }
+        const res = await fetch(`${API_BASE}/repositories/${owner}/${repo}/analyze?userId=${userId}`, {
+            method: 'POST',
+            headers
+        });
+        return handleResponse(res);
+    },
+
+    async getRepositoryStatus(owner: string, repo: string) {
+        const res = await fetch(`${API_BASE}/repositories/${owner}/${repo}/status`);
+        return handleResponse(res);
+    },
+
+    async getRepository(id: string, token?: string) {
+        const headers: Record<string, string> = {};
+        if (token) {
+            headers['Authorization'] = `Bearer ${token}`;
+        }
+        const res = await fetch(`${API_BASE}/repositories/${id}`, { headers });
+        return handleResponse(res);
+    },
+
+    // Commits
+    async getCommits(repositoryId: string) {
+        const res = await fetch(`${API_BASE}/commits/repository/${repositoryId}`);
+        return handleResponse(res);
+    },
+
+    // Files
+    async getFiles(repositoryId: string) {
+        const res = await fetch(`${API_BASE}/files/repository/${repositoryId}`);
+        return handleResponse(res);
+    },
+
+    async getPullRequests(repositoryId: string) {
+        const res = await fetch(`${API_BASE}/pullrequests/repository/${repositoryId}`);
+        return handleResponse(res);
+    },
+
+    async getPullRequestDetails(owner: string, repo: string, prNumber: number, token?: string) {
+        const headers: any = {};
+        if (token) {
+            headers['Authorization'] = `Bearer ${token}`;
+        }
+        const res = await fetch(`${API_BASE}/pullrequests/${owner}/${repo}/${prNumber}/details`, {
+            headers
+        });
+        return handleResponse(res);
+    },
+
+    async getFileAnalysis(fileId: string) {
+        const res = await fetch(`${API_BASE}/files/${fileId}`);
+        return handleResponse(res);
+    },
+
+    async getAnalyzedRepositories(userId: string, filter: 'your' | 'others' | 'all') {
+        const res = await fetch(`${API_BASE}/repositories/analyzed?userId=${userId}&filter=${filter}`);
+        return handleResponse(res);
+    },
+
+    async analyzeRepositoryByUrl(url: string, userId: string, token?: string) {
+        const headers: Record<string, string> = { 'Content-Type': 'application/json' };
+        if (token) {
+            headers['Authorization'] = `Bearer ${token}`;
+        }
+        const res = await fetch(`${API_BASE}/repositories/analyze-url`, {
+            method: 'POST',
+            headers,
+            body: JSON.stringify({ url, userId })
+        });
+        return handleResponse(res);
+    }
+};

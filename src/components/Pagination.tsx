@@ -1,43 +1,48 @@
-import React from "react";
+import { Button } from '@/components/ui/button';
 
-type Props = {
-  currentPage: number;
-  totalPages: number;
-  onPageChange: (page: number) => void;
-};
+interface PaginationProps {
+    currentPage: number;
+    totalPages?: number;
+    onPageChange: (page: number) => void;
+    disabled?: boolean;
+    className?: string;
+    hasNextPage?: boolean;
+}
 
-const Pagination: React.FC<Props> = ({
-  currentPage,
-  totalPages,
-  onPageChange,
-}) => {
-  return (
-    <div className="w-full flex items-center justify-center py-10 gap-4 text-sm">
+export default function Pagination({
+    currentPage,
+    totalPages,
+    onPageChange,
+    disabled = false,
+    className = '',
+    hasNextPage
+}: PaginationProps) {
+    // If totalPages is defined and <= 1, hide it strictly.
+    // if (totalPages !== undefined && totalPages <= 1) return null;
 
-      {/* Previous button */}
-      <button
-        className="px-4 py-2 border rounded-lg bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-200 border-gray-200 dark:border-gray-700 disabled:opacity-40 disabled:cursor-not-allowed hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
-        disabled={currentPage === 1}
-        onClick={() => onPageChange(currentPage - 1)}
-      >
-        ← Previous
-      </button>
+    const isNextDisabled = totalPages ? currentPage >= totalPages : !hasNextPage;
 
-      {/* Page Indicator */}
-      <span className="text-gray-600 dark:text-gray-400">
-        Page {currentPage} of {totalPages}
-      </span>
-
-      {/* Next button */}
-      <button
-        className="px-4 py-2 border rounded-lg bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-200 border-gray-200 dark:border-gray-700 disabled:opacity-40 disabled:cursor-not-allowed hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
-        disabled={currentPage === totalPages}
-        onClick={() => onPageChange(currentPage + 1)}
-      >
-        Next →
-      </button>
-    </div>
-  );
-};
-
-export default Pagination;
+    return (
+        <div className={`flex items-center justify-center gap-4 mt-6 pt-4 border-t ${className}`}>
+            <Button
+                onClick={() => onPageChange(Math.max(1, currentPage - 1))}
+                disabled={currentPage === 1 || disabled}
+                variant="outline"
+                size="sm"
+            >
+                Previous
+            </Button>
+            <div className="text-sm text-muted-foreground">
+                Page {currentPage}{totalPages ? ` of ${totalPages}` : ''}
+            </div>
+            <Button
+                onClick={() => onPageChange(currentPage + 1)}
+                disabled={isNextDisabled || disabled}
+                variant="outline"
+                size="sm"
+            >
+                Next
+            </Button>
+        </div>
+    );
+}
