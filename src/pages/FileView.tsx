@@ -61,7 +61,7 @@ export default function FileView() {
 
     const handlePreviousCommit = () => {
         if (!commitHistory.length) return;
-        const currentIndex = currentCommitSha ? commitHistory.findIndex(c => c.sha === currentCommitSha) : -1;
+        const currentIndex = currentCommitSha ? commitHistory.findIndex((c: { sha: string }) => c.sha === currentCommitSha) : -1;
 
         if (currentIndex === -1) {
             setCurrentCommitSha(commitHistory[0].sha);
@@ -73,7 +73,7 @@ export default function FileView() {
 
     const handleNextCommit = () => {
         if (!commitHistory.length || !currentCommitSha) return;
-        const currentIndex = commitHistory.findIndex(c => c.sha === currentCommitSha);
+        const currentIndex = commitHistory.findIndex((c: { sha: string }) => c.sha === currentCommitSha);
         if (currentIndex > 0) {
             const nextCommit = commitHistory[currentIndex - 1];
             setCurrentCommitSha(nextCommit.sha);
@@ -114,7 +114,7 @@ export default function FileView() {
         );
     }
 
-    const currentIndex = currentCommitSha ? commitHistory.findIndex(c => c.sha === currentCommitSha) : -1;
+    const currentIndex = currentCommitSha ? commitHistory.findIndex((c: { sha: string }) => c.sha === currentCommitSha) : -1;
     const canGoPrevious = (currentIndex !== -1 && currentIndex < commitHistory.length - 1) || (currentIndex === -1 && commitHistory.length > 0);
     const canGoNext = currentIndex !== -1 && currentIndex > 0;
 
@@ -143,13 +143,13 @@ export default function FileView() {
                             <div className="flex items-center gap-3 text-sm">
                                 <Clock className="h-4 w-4 text-muted-foreground" />
                                 <code className="text-primary font-mono">{currentCommitSha.substring(0, 7)}</code>
-                                {commitHistory.find(c => c.sha === currentCommitSha) && (
+                                {commitHistory.find((c: { sha: string }) => c.sha === currentCommitSha) && (
                                     <>
                                         <span className="text-muted-foreground">•</span>
-                                        <span>{commitHistory.find(c => c.sha === currentCommitSha)?.message}</span>
+                                        <span>{commitHistory.find((c: { sha: string; message: string }) => c.sha === currentCommitSha)?.message}</span>
                                         <span className="text-muted-foreground">•</span>
                                         <span className="text-muted-foreground">
-                                            {new Date(commitHistory.find(c => c.sha === currentCommitSha)?.committedAt || '').toLocaleDateString()}
+                                            {new Date(commitHistory.find((c: { sha: string; committedAt: string }) => c.sha === currentCommitSha)?.committedAt || '').toLocaleDateString()}
                                         </span>
                                     </>
                                 )}
