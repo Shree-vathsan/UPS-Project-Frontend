@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useParams } from 'react-router-dom';
-import { GitPullRequest, GitBranch, Clock, FileText, AlertTriangle, CheckCircle, ChevronDown, ChevronRight, Target } from 'lucide-react';
+import { GitPullRequest, GitBranch, Clock, FileText, AlertTriangle, CheckCircle, ChevronDown, ChevronRight, Target, Users, MessageSquare } from 'lucide-react';
+import { api } from '../utils/api';
 import BackButton from '../components/BackButton';
 import Pagination from '../components/Pagination';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -366,6 +367,68 @@ export default function PullRequestView({ user: _user }: PullRequestViewProps) {
                             )}
                         </CardContent>
                     </Card>
+
+                    {/* Assigned Reviewers */}
+                    {prDetails.requestedReviewers && prDetails.requestedReviewers.length > 0 && (
+                        <Card>
+                            <CardHeader>
+                                <CardTitle className="text-sm flex items-center gap-2">
+                                    <Users className="h-4 w-4" />
+                                    Assigned Reviewers
+                                </CardTitle>
+                            </CardHeader>
+                            <CardContent className="space-y-3">
+                                {prDetails.requestedReviewers.map((reviewer: any, idx: number) => (
+                                    <div key={idx} className="flex items-center gap-3">
+                                        <img
+                                            src={reviewer.avatarUrl}
+                                            alt={reviewer.login}
+                                            className="w-8 h-8 rounded-full"
+                                        />
+                                        <span className="font-medium text-sm">{reviewer.login}</span>
+                                    </div>
+                                ))}
+                            </CardContent>
+                        </Card>
+                    )}
+
+                    {/* PR Comments */}
+                    {prDetails.comments && prDetails.comments.length > 0 && (
+                        <Card>
+                            <CardHeader>
+                                <CardTitle className="text-sm flex items-center gap-2">
+                                    <MessageSquare className="h-4 w-4" />
+                                    Comments ({prDetails.comments.length})
+                                </CardTitle>
+                            </CardHeader>
+                            <CardContent className="space-y-4">
+                                {prDetails.comments.slice(0, 5).map((comment: any, idx: number) => (
+                                    <div key={idx} className="space-y-2">
+                                        <div className="flex items-center gap-2">
+                                            <img
+                                                src={comment.author.avatarUrl}
+                                                alt={comment.author.login}
+                                                className="w-6 h-6 rounded-full"
+                                            />
+                                            <span className="font-medium text-sm">{comment.author.login}</span>
+                                            <span className="text-xs text-muted-foreground">
+                                                {new Date(comment.createdAt).toLocaleDateString()}
+                                            </span>
+                                        </div>
+                                        <p className="text-sm text-muted-foreground line-clamp-3 pl-8">
+                                            {comment.body}
+                                        </p>
+                                        {idx < Math.min(prDetails.comments.length - 1, 4) && <Separator />}
+                                    </div>
+                                ))}
+                                {prDetails.comments.length > 5 && (
+                                    <p className="text-xs text-muted-foreground text-center">
+                                        +{prDetails.comments.length - 5} more comments
+                                    </p>
+                                )}
+                            </CardContent>
+                        </Card>
+                    )}
                 </div>
             </div>
         </div>
