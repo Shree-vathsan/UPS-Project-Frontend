@@ -1,7 +1,6 @@
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { GitPullRequest, GitBranch, Clock, FileText, AlertTriangle, CheckCircle, ChevronDown, ChevronRight, Target } from 'lucide-react';
-import { api } from '../utils/api';
 import BackButton from '../components/BackButton';
 import Pagination from '../components/Pagination';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -9,6 +8,7 @@ import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Separator } from '@/components/ui/separator';
+import { usePullRequestDetails } from '../hooks/useApiQueries';
 
 interface PullRequestViewProps {
     user: any;
@@ -16,29 +16,21 @@ interface PullRequestViewProps {
 
 export default function PullRequestView({ user: _user }: PullRequestViewProps) {
     const { owner, repo, prNumber } = useParams<{ owner: string; repo: string; prNumber: string }>();
-    const [prDetails, setPrDetails] = useState<any>(null);
-    const [loading, setLoading] = useState(true);
-    const [error, setError] = useState('');
     const [expandedFiles, setExpandedFiles] = useState<Set<string>>(new Set());
     const [currentPage, setCurrentPage] = useState(1);
     const itemsPerPage = 10;
 
-    useEffect(() => {
-        loadPRDetails();
-    }, [owner, repo, prNumber]);
+    // Get token from localStorage for authenticated requests
+    const token = localStorage.getItem('token') || undefined;
 
-    const loadPRDetails = async () => {
-        try {
-            const token = localStorage.getItem('token');
-            const data = await api.getPullRequestDetails(owner!, repo!, parseInt(prNumber!), token || undefined);
-            setPrDetails(data);
-        } catch (err: any) {
-            console.error('Failed to load PR details:', err);
-            setError(err.message || 'Failed to load PR details');
-        } finally {
-            setLoading(false);
-        }
-    };
+    // React Query hook for PR details with caching
+    const {
+        data: prDetails,
+        isLoading: loading,
+        error: prError
+    } = usePullRequestDetails(owner, repo, prNumber ? parseInt(prNumber) : undefined, token);
+
+    const error = prError?.message || '';
 
     const toggleFile = (filename: string) => {
         const newExpanded = new Set(expandedFiles);

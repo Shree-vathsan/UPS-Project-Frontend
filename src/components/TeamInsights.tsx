@@ -1,4 +1,4 @@
-import { useEffect, useState, useRef } from 'react';
+import { useMemo } from 'react';
 import {
     BarChart, Bar, ScatterChart, Scatter,
     XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, Cell
@@ -6,6 +6,7 @@ import {
 import { Users, CheckCircle, BarChart as BarChartIcon, Calendar, Handshake, Trophy, Sparkles, Folder, User } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
 import InfoTooltip from './InfoTooltip';
+import { useTeamInsights } from '../hooks/useApiQueries';
 
 interface TeamInsightsProps {
     repositoryId: string;
@@ -13,49 +14,27 @@ interface TeamInsightsProps {
 }
 
 export default function TeamInsights({ repositoryId, branchName }: TeamInsightsProps) {
-    const [loading, setLoading] = useState(true);
-    const [contributors, setContributors] = useState<any[]>([]);
-    const [ownershipData, setOwnershipData] = useState<any[]>([]);
-    const [metrics, setMetrics] = useState<any>(null);
+    // React Query hook for data fetching with caching
+    const { data: teamData, isLoading: loading } = useTeamInsights(repositoryId, branchName);
 
-    // Track previous values to prevent duplicate calls
-    const prevBranchRef = useRef<string | null>(null);
-
-    useEffect(() => {
-        // Skip if branchName is empty or same as previous
-        if (!branchName || branchName === prevBranchRef.current) return;
-
-        prevBranchRef.current = branchName;
-        setLoading(true); // Show skeleton when branch changes
-
-        loadTeamData();
-    }, [repositoryId, branchName]);
-
-    const loadTeamData = async () => {
-        try {
-            const response = await fetch(`http://localhost:5000/repositories/${repositoryId}/team-insights?branchName=${encodeURIComponent(branchName)}`);
-            if (!response.ok) {
-                throw new Error('Failed to fetch team insights');
-            }
-
-            const data = await response.json();
-
-            setContributors(data.contributors || []);
-            setOwnershipData(data.ownershipData || []);
-            setMetrics({
-                totalContributors: data.totalContributors || 0,
-                activeContributors: data.activeContributors || 0,
-                avgCommitsPerContributor: data.avgCommitsPerContributor || '0',
-                mostActiveDay: data.mostActiveDay || 'N/A',
-                collaborationScore: Math.min(100, (data.totalContributors || 0) * 15)
-            });
-
-        } catch (error) {
-            console.error('Failed to load team data:', error);
-        } finally {
-            setLoading(false);
+    // Process data with useMemo for performance
+    const { contributors, ownershipData, metrics } = useMemo(() => {
+        if (!teamData) {
+            return { contributors: [], ownershipData: [], metrics: null };
         }
-    };
+
+        const contributors = teamData.contributors || [];
+        const ownershipData = teamData.ownershipData || [];
+        const metrics = {
+            totalContributors: teamData.totalContributors || 0,
+            activeContributors: teamData.activeContributors || 0,
+            avgCommitsPerContributor: teamData.avgCommitsPerContributor || '0',
+            mostActiveDay: teamData.mostActiveDay || 'N/A',
+            collaborationScore: Math.min(100, (teamData.totalContributors || 0) * 15)
+        };
+
+        return { contributors, ownershipData, metrics };
+    }, [teamData]);
 
     // Theme-aware colors (will work with all themes)
     const COLORS = [
@@ -279,7 +258,7 @@ export default function TeamInsights({ repositoryId, branchName }: TeamInsightsP
             </div>
 
             {/* Ownership Distribution */}
-            {
+            {/* {
                 ownershipData.length > 0 && (
                     <div className="bg-card border rounded-lg p-6">
                         <div className="flex items-center gap-3 mb-4">
@@ -317,7 +296,7 @@ export default function TeamInsights({ repositoryId, branchName }: TeamInsightsP
                         </ResponsiveContainer>
                     </div>
                 )
-            }
+            } */}
 
             {/* Contributor Details List */}
             <div className="bg-card border rounded-lg p-6">
@@ -359,6 +338,6 @@ export default function TeamInsights({ repositoryId, branchName }: TeamInsightsP
                     ))}
                 </div>
             </div>
-        </div >
+        </div>
     );
 }

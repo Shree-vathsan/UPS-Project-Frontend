@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { GitCommit, User, Clock, FileText, ChevronDown, ChevronRight } from 'lucide-react';
 import BackButton from '../components/BackButton';
@@ -8,53 +8,22 @@ import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Separator } from '@/components/ui/separator';
+import { useCommit, useCommitGithubDetails } from '../hooks/useApiQueries';
 
 export default function CommitView() {
     const { commitId } = useParams<{ commitId: string }>();
-    const [commit, setCommit] = useState<any>(null);
-    const [loading, setLoading] = useState(true);
-    const [error, setError] = useState<string>('');
     const [expandedFiles, setExpandedFiles] = useState<Set<string>>(new Set());
     const [currentPage, setCurrentPage] = useState(1);
     const itemsPerPage = 10;
 
-    useEffect(() => {
-        loadCommit();
-    }, [commitId]);
+    // React Query hooks for commit data with caching
+    const { data: commitData, isLoading: commitLoading, error: commitError } = useCommit(commitId);
+    const { data: githubDetails } = useCommitGithubDetails(commitId);
 
-    const loadCommit = async () => {
-        try {
-            setLoading(true);
-            setError('');
-
-            const response = await fetch(`http://localhost:5000/commits/${commitId}`);
-            if (!response.ok) throw new Error('Commit not found');
-
-            const dbCommit = await response.json();
-            setCommit(dbCommit);
-
-            try {
-                const token = localStorage.getItem('token');
-                const headers: any = {};
-                if (token) {
-                    headers['Authorization'] = `Bearer ${token}`;
-                }
-                const githubResponse = await fetch(`http://localhost:5000/commits/${commitId}/github-details`, { headers });
-                if (githubResponse.ok) {
-                    const githubData = await githubResponse.json();
-                    setCommit((prev: any) => ({ ...prev, github: githubData }));
-                }
-            } catch (e) {
-                console.error('Failed to fetch GitHub details:', e);
-            }
-
-        } catch (err: any) {
-            console.error('Failed to load commit:', err);
-            setError(err.message || 'Failed to load commit');
-        } finally {
-            setLoading(false);
-        }
-    };
+    // Merge commit data with github details
+    const commit = commitData ? { ...commitData, github: githubDetails } : null;
+    const loading = commitLoading;
+    const error = commitError?.message || '';
 
     const toggleFile = (filename: string) => {
         const newExpanded = new Set(expandedFiles);

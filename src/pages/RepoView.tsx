@@ -1,7 +1,6 @@
-import { useEffect, useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
 import { GitCommit, GitPullRequest, FolderTree, BarChart, RefreshCw, GitBranch, Clock, ArrowRight } from 'lucide-react';
-import { api } from '../utils/api';
 import FileTree from '../components/FileTree';
 import BackButton from '../components/BackButton';
 import RepositoryAnalytics from '../components/RepositoryAnalytics';
@@ -18,6 +17,7 @@ import {
     DropdownMenuItem,
     DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
+import { useRepository, useBranches, useBranchCommits, usePullRequests, useBranchFiles } from '../hooks/useApiQueries';
 
 interface RepoViewProps {
     user: any;
@@ -38,14 +38,36 @@ export default function RepoView({ user: _user }: RepoViewProps) {
     };
 
     const [activeTab, setActiveTab] = useState<'commits' | 'prs' | 'files' | 'analytics'>(getInitialTab());
-    const [repository, setRepository] = useState<any>(null);
-    const [branches, setBranches] = useState<any[]>([]);
 
     // Get initial branch from URL or default to 'main'
     const getInitialBranch = (): string => {
         return searchParams.get('branch') || 'main';
     };
     const [selectedBranch, setSelectedBranchState] = useState<string>(getInitialBranch());
+
+    // PR filter state
+    const [prFilter, setPrFilter] = useState<'all' | 'open' | 'closed'>('all');
+
+    // Pagination state
+    const [commitsPage, setCommitsPage] = useState(1);
+    const [prsPage, setPrsPage] = useState(1);
+    const itemsPerPage = 10;
+
+    // Refresh state
+    const [isRefreshing, setIsRefreshing] = useState(false);
+    const [lastRefreshTime, setLastRefreshTime] = useState<string | null>(null);
+
+    // React Query hooks for data fetching with caching
+    const { data: repository, isLoading: loading, refetch: refetchRepository } = useRepository(repositoryId);
+    const { data: branches = [] } = useBranches(repositoryId);
+    const { data: commits = [] } = useBranchCommits(repositoryId, selectedBranch);
+    const { data: allPrs = [] } = usePullRequests(repositoryId);
+    const { data: files = [] } = useBranchFiles(repositoryId, selectedBranch);
+
+    // Filter PRs based on prFilter
+    const prs = prFilter === 'all'
+        ? allPrs
+        : allPrs.filter((pr: any) => pr.state === prFilter);
 
     // Helper to update branch and URL together
     const setSelectedBranch = (branch: string) => {
@@ -54,116 +76,21 @@ export default function RepoView({ user: _user }: RepoViewProps) {
         newParams.set('branch', branch);
         setSearchParams(newParams);
     };
-    const [commits, setCommits] = useState<any[]>([]);
-    const [prs, setPrs] = useState<any[]>([]);
-    const [allPrs, setAllPrs] = useState<any[]>([]);
-    const [prFilter, setPrFilter] = useState<'all' | 'open' | 'closed'>('all');
-    const [files, setFiles] = useState<any[]>([]);
-    const [loading, setLoading] = useState(true);
 
-    // Pagination state
-    const [commitsPage, setCommitsPage] = useState(1);
-    const [prsPage, setPrsPage] = useState(1);
-    const itemsPerPage = 10;
-
-    // Helper to reload all data
-    const loadRepoData = async () => {
-        await loadRepository();
-        await loadBranches();
-        await loadCommits();
-        await loadPRs();
-        await loadFiles();
-    };
-
+    // Set default branch when branches load
     useEffect(() => {
-        loadRepository();
-        loadBranches();
-    }, [repositoryId]);
-
-    useEffect(() => {
-        if (activeTab === 'commits') loadCommits();
-        else if (activeTab === 'prs') loadPRs();
-        else if (activeTab === 'files') loadFiles();
-    }, [activeTab, selectedBranch]);
-
-    useEffect(() => {
-        if (allPrs.length > 0) {
-            if (prFilter === 'all') {
-                setPrs(allPrs);
-            } else if (prFilter === 'open') {
-                setPrs(allPrs.filter((pr: any) => pr.state === 'open'));
-            } else if (prFilter === 'closed') {
-                setPrs(allPrs.filter((pr: any) => pr.state === 'closed'));
-            }
-        }
-    }, [prFilter, allPrs]);
-
-    const loadRepository = async () => {
-        try {
-            const data = await api.getRepository(repositoryId!);
-            setRepository(data);
-        } catch (error) {
-            console.error('Failed to load repository:', error);
-        } finally {
-            setLoading(false);
-        }
-    };
-
-    const loadBranches = async () => {
-        try {
-            const data = await fetch(`http://localhost:5000/api/repositories/${repositoryId}/branches`);
-            const branchList = await data.json();
-            setBranches(branchList);
-
-            // Check if there's a branch in URL params first
+        if (branches.length > 0) {
             const branchFromUrl = searchParams.get('branch');
-            if (branchFromUrl && branchList.some((b: any) => b.name === branchFromUrl)) {
-                // URL branch exists in the list, keep it
+            if (branchFromUrl && branches.some((b: any) => b.name === branchFromUrl)) {
                 setSelectedBranchState(branchFromUrl);
             } else {
-                // No URL branch or invalid, use default branch
-                const defaultBranch = branchList.find((b: any) => b.isDefault);
+                const defaultBranch = branches.find((b: any) => b.isDefault);
                 if (defaultBranch) {
                     setSelectedBranchState(defaultBranch.name);
                 }
             }
-        } catch (error) {
-            console.error('Failed to load branches:', error);
         }
-    };
-
-    const loadCommits = async () => {
-        try {
-            const data = await fetch(`http://localhost:5000/api/repositories/${repositoryId}/branches/${selectedBranch}/commits`);
-            const commits = await data.json();
-            setCommits(commits);
-        } catch (error) {
-            console.error('Failed to load commits:', error);
-        }
-    };
-
-    const loadPRs = async () => {
-        try {
-            const data = await api.getPullRequests(repositoryId!);
-            setAllPrs(data);
-            setPrs(data);
-        } catch (error) {
-            console.error('Failed to load PRs:', error);
-        }
-    };
-
-    const loadFiles = async () => {
-        try {
-            const data = await fetch(`http://localhost:5000/api/repositories/${repositoryId}/branches/${selectedBranch}/files`);
-            const files = await data.json();
-            setFiles(files);
-        } catch (error) {
-            console.error('Failed to load files:', error);
-        }
-    };
-
-    const [isRefreshing, setIsRefreshing] = useState(false);
-    const [lastRefreshTime, setLastRefreshTime] = useState<string | null>(null);
+    }, [branches, searchParams]);
 
     // Auto-refresh on load if stale (> 1 hour)
     useEffect(() => {
@@ -191,11 +118,10 @@ export default function RepoView({ user: _user }: RepoViewProps) {
 
                     // Check if timestamp updated
                     if (data.lastRefreshAt !== lastRefreshTime) {
-                        setRepository(data);
                         setLastRefreshTime(data.lastRefreshAt);
                         setIsRefreshing(false);
-                        // Re-fetch commits and files to show new data
-                        loadRepoData();
+                        // Refetch all data
+                        refetchRepository();
                     }
                 } catch (err) {
                     console.error("Polling error:", err);

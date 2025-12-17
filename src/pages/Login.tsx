@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Github, Code, AlertTriangle, CheckCircle, Files } from 'lucide-react';
+import { Github, Code, AlertTriangle, CheckCircle, Files, Download } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
@@ -21,6 +21,13 @@ export default function Login() {
             console.error('Login error:', err);
             setError('Backend is not responding. Make sure the backend is running on port 5000.');
         }
+    };
+
+    // Handle opening/downloading the user manual PDF
+    const handleOpenUserManual = () => {
+        // Using a sample PDF URL - replace with your actual user manual PDF path
+        const pdfUrl = '/user-manual.pdf';
+        window.open(pdfUrl, '_blank');
     };
 
     return (
@@ -49,7 +56,7 @@ export default function Login() {
                         <CardDescription className="text-center">
                             Sign in with your GitHub account to continue
                         </CardDescription>
-                        
+
                     </CardHeader>
                     <CardContent className="space-y-4">
                         {error && (
@@ -82,12 +89,12 @@ export default function Login() {
                             Know about us
                         </CardDescription>
                         <Button
-                            onClick={handleLogin}
-                            className="w-full gap-2 bg-black"
+                            onClick={handleOpenUserManual}
+                            className="w-full gap-2 bg-black text-white hover:bg-gray-800"
                             size="lg"
                         >
                             <Files className="h-5 w-5" />
-                            Click here
+                            User Manual
                         </Button>
 
                         {/* <div className="bg-muted/50 p-4 rounded-md border border-border">

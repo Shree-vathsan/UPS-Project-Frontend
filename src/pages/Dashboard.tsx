@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Package, BarChart, Plus, Loader, RefreshCw, AlertTriangle, Search, Info, ChevronDown, ChevronUp } from 'lucide-react';
 import { api } from '../utils/api';
@@ -10,6 +10,7 @@ import { Badge } from '@/components/ui/badge';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Skeleton } from '@/components/ui/skeleton';
 import Pagination from '../components/Pagination';
+import { useAllRepositories, useAnalyzedRepositories, useInvalidateRepositories } from '../hooks/useApiQueries';
 
 interface DashboardProps {
     user: any;
@@ -26,10 +27,31 @@ export default function Dashboard({ user, token }: DashboardProps) {
     // Tab state
     const [activeTab, setActiveTab] = useState<TabType>('your');
 
-    // Your repositories tab state
-    const [repos, setRepos] = useState<any[]>([]);
-    const [loading, setLoading] = useState(true);
-    const [error, setError] = useState<string>('');
+    // React Query hooks for data fetching with caching
+    const {
+        data: reposData,
+        isLoading: loading,
+        error: reposError,
+        refetch: refetchRepos
+    } = useAllRepositories(token, user?.id);
+
+    const repos = reposData?.data || [];
+    const error = reposError?.message || '';
+
+    // Analyzed repositories filter state
+    const [analyzedFilter, setAnalyzedFilter] = useState<FilterType>('all');
+
+    const {
+        data: analyzedReposData,
+        isLoading: loadingAnalyzed,
+        error: analyzedReposError,
+        refetch: refetchAnalyzed
+    } = useAnalyzedRepositories(user?.id, analyzedFilter);
+
+    const analyzedRepos = Array.isArray(analyzedReposData) ? analyzedReposData : [];
+    const analyzedError = analyzedReposError?.message || '';
+
+    // UI state (not data fetching)
     const [analyzing, setAnalyzing] = useState<Set<string>>(new Set());
     const [checkingStatus, setCheckingStatus] = useState<Set<string>>(new Set());
 
@@ -39,6 +61,10 @@ export default function Dashboard({ user, token }: DashboardProps) {
 
     // Search state
     const [searchQuery, setSearchQuery] = useState('');
+    const [analyzedSearchQuery, setAnalyzedSearchQuery] = useState('');
+
+    // Pagination state for analyzed repos
+    const [analyzedCurrentPage, setAnalyzedCurrentPage] = useState(1);
 
     // Repository filter state (for Your Repositories tab)
     const [repoFilter, setRepoFilter] = useState<RepoFilterType>('all');
@@ -46,66 +72,22 @@ export default function Dashboard({ user, token }: DashboardProps) {
     // Quick guide visibility
     const [showQuickGuide, setShowQuickGuide] = useState(false);
 
-    // Analyzed repositories tab state
-    const [analyzedRepos, setAnalyzedRepos] = useState<any[]>([]);
-    const [analyzedFilter, setAnalyzedFilter] = useState<FilterType>('all');
-    const [loadingAnalyzed, setLoadingAnalyzed] = useState(false);
-    const [analyzedError, setAnalyzedError] = useState<string>('');
-
     // Add repository tab state
     const [repoUrl, setRepoUrl] = useState('');
     const [addingRepo, setAddingRepo] = useState(false);
     const [addError, setAddError] = useState<string>('');
     const [addSuccess, setAddSuccess] = useState<string>('');
 
-    useEffect(() => {
-        loadRepositories();
-    }, [user?.id]);
+    // Cache invalidation helper
+    const { invalidateAll } = useInvalidateRepositories();
 
-    // Remove dependency on currentPage for fetching
-    // useEffect(() => {
-    //    loadRepositories();
-    // }, [currentPage]);
-
-    useEffect(() => {
-        if (activeTab === 'analyzed') {
-            loadAnalyzedRepositories();
-        }
-    }, [activeTab, analyzedFilter, user?.id]);
-
-    const loadRepositories = async () => {
-        setLoading(true);
-        try {
-            // Fetch ALL repositories by paginating through all pages
-            const { data } = await api.getAllRepositories(token, user.id);
-            console.log('Repositories from GitHub:', data);
-
-            setRepos(Array.isArray(data) ? data : []);
-            // setTotalPages is no longer needed as we calculate it from repos.length
-
-            setError('');
-        } catch (err: any) {
-            console.error('Failed to load repositories:', err);
-            setError(err.message || 'Failed to load repositories from GitHub');
-            setRepos([]);
-        } finally {
-            setLoading(false);
-        }
+    // Wrapper function for backward compatibility
+    const loadRepositories = () => {
+        refetchRepos();
     };
 
-    const loadAnalyzedRepositories = async () => {
-        setLoadingAnalyzed(true);
-        setAnalyzedError('');
-        try {
-            const data = await api.getAnalyzedRepositories(user.id, analyzedFilter);
-            setAnalyzedRepos(Array.isArray(data) ? data : []);
-        } catch (err: any) {
-            console.error('Failed to load analyzed repositories:', err);
-            setAnalyzedError(err.message || 'Failed to load analyzed repositories');
-            setAnalyzedRepos([]);
-        } finally {
-            setLoadingAnalyzed(false);
-        }
+    const loadAnalyzedRepositories = () => {
+        refetchAnalyzed();
     };
 
     const handleAnalyze = async (owner: string, name: string) => {
@@ -113,7 +95,7 @@ export default function Dashboard({ user, token }: DashboardProps) {
         setAnalyzing(prev => new Set(prev).add(key));
 
         try {
-            const result = await api.analyzeRepository(owner, name, user.id);
+            const result = await api.analyzeRepository(owner, name, user.id, token);
             console.log('Analysis result:', result);
 
             // Handle different response types
@@ -193,7 +175,7 @@ export default function Dashboard({ user, token }: DashboardProps) {
         setAddSuccess('');
 
         try {
-            const result = await api.analyzeRepositoryByUrl(repoUrl.trim(), user.id);
+            const result = await api.analyzeRepositoryByUrl(repoUrl.trim(), user.id, token);
 
             // Handle different response types
             if (result.alreadyHasAccess) {
@@ -548,11 +530,29 @@ export default function Dashboard({ user, token }: DashboardProps) {
                 {/* Analyzed Repositories Tab */}
                 <TabsContent value="analyzed" className="mt-6 space-y-4">
                     <div className="flex items-center justify-between mb-4">
-                        <h2 className="font-heading text-xl font-semibold">Analyzed Repositories</h2>
-                        <Button onClick={loadAnalyzedRepositories} variant="outline" size="sm">
-                            <RefreshCw className="h-4 w-4 mr-2" />
-                            Refresh
-                        </Button>
+                        <div className="flex items-center gap-2">
+                            <h2 className="font-heading text-xl font-semibold">Analyzed Repositories</h2>
+                            <Badge>{analyzedRepos.length}</Badge>
+                        </div>
+                        <div className="flex items-center gap-2">
+                            <div className="relative">
+                                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                                <input
+                                    type="text"
+                                    placeholder="Search repositories..."
+                                    value={analyzedSearchQuery}
+                                    onChange={(e) => {
+                                        setAnalyzedSearchQuery(e.target.value);
+                                        setAnalyzedCurrentPage(1); // Reset to first page on search
+                                    }}
+                                    className="pl-9 pr-4 py-2 text-sm border border-border rounded-md bg-background text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring transition-all duration-200 hover:shadow-[0_0_10px_rgba(255,255,255,0.3)] w-[200px]"
+                                />
+                            </div>
+                            <Button onClick={loadAnalyzedRepositories} variant="outline" size="sm">
+                                <RefreshCw className="h-4 w-4 mr-2" />
+                                Refresh
+                            </Button>
+                        </div>
                     </div>
 
                     <div className="flex gap-2 mb-4">
@@ -615,51 +615,77 @@ export default function Dashboard({ user, token }: DashboardProps) {
                                 </p>
                             </CardContent>
                         </Card>
-                    ) : (
-                        <div className="grid gap-4">
-                            {analyzedRepos.map((repo: any) => (
-                                <Card key={repo.id} className="hover-lift">
-                                    <CardHeader>
-                                        <div className="flex items-start justify-between">
-                                            <div className="space-y-2 flex-1">
-                                                <CardTitle className="text-lg">
-                                                    {repo.ownerUsername}/{repo.name}
-                                                </CardTitle>
-                                                <div className="flex gap-2">
-                                                    <Badge variant={repo.isMine ? 'success' : 'info'}>
-                                                        {repo.label}
-                                                    </Badge>
-                                                    <Badge variant={
-                                                        repo.status === 'ready' ? 'success' :
-                                                            repo.status === 'analyzing' ? 'warning' : 'secondary'
-                                                    }>
-                                                        {repo.status === 'ready' ? 'Ready' :
-                                                            repo.status === 'analyzing' ? 'Analyzing' : repo.status}
-                                                    </Badge>
+                    ) : (() => {
+                        // Filter analyzed repos by search query
+                        const filteredAnalyzedRepos = analyzedRepos.filter((repo: any) => {
+                            if (!analyzedSearchQuery.trim()) return true;
+                            const query = analyzedSearchQuery.toLowerCase();
+                            const repoName = `${repo.ownerUsername}/${repo.name}`.toLowerCase();
+                            return repoName.includes(query);
+                        });
+
+                        // Paginate filtered results
+                        const paginatedRepos = filteredAnalyzedRepos.slice(
+                            (analyzedCurrentPage - 1) * itemsPerPage,
+                            analyzedCurrentPage * itemsPerPage
+                        );
+
+                        return (
+                            <>
+                                <div className="grid gap-4">
+                                    {paginatedRepos.map((repo: any) => (
+                                        <Card key={repo.id} className="hover-lift">
+                                            <CardHeader>
+                                                <div className="flex items-start justify-between">
+                                                    <div className="space-y-2 flex-1">
+                                                        <CardTitle className="text-lg">
+                                                            {repo.ownerUsername}/{repo.name}
+                                                        </CardTitle>
+                                                        <div className="flex gap-2">
+                                                            <Badge variant={repo.isMine ? 'success' : 'info'}>
+                                                                {repo.label}
+                                                            </Badge>
+                                                            <Badge variant={
+                                                                repo.status === 'ready' ? 'success' :
+                                                                    repo.status === 'analyzing' ? 'warning' : 'secondary'
+                                                            }>
+                                                                {repo.status === 'ready' ? 'Ready' :
+                                                                    repo.status === 'analyzing' ? 'Analyzing' : repo.status}
+                                                            </Badge>
+                                                        </div>
+                                                    </div>
+                                                    <Button
+                                                        onClick={() => {
+                                                            if (repo.status === 'ready') {
+                                                                navigate(`/repo/${repo.id}`);
+                                                            } else if (repo.status === 'analyzing') {
+                                                                alert('Analysis in Progress\n\nThis repository is still being analyzed. Please check back in a few minutes.');
+                                                            } else {
+                                                                alert(`Repository Status\n\nCurrent status: ${repo.status}`);
+                                                            }
+                                                        }}
+                                                        disabled={repo.status !== 'ready'}
+                                                        size="sm"
+                                                    >
+                                                        {repo.status === 'ready' ? 'View Details' :
+                                                            repo.status === 'analyzing' ? 'Analyzing...' : 'Pending'}
+                                                    </Button>
                                                 </div>
-                                            </div>
-                                            <Button
-                                                onClick={() => {
-                                                    if (repo.status === 'ready') {
-                                                        navigate(`/repo/${repo.id}`);
-                                                    } else if (repo.status === 'analyzing') {
-                                                        alert('Analysis in Progress\n\nThis repository is still being analyzed. Please check back in a few minutes.');
-                                                    } else {
-                                                        alert(`Repository Status\n\nCurrent status: ${repo.status}`);
-                                                    }
-                                                }}
-                                                disabled={repo.status !== 'ready'}
-                                                size="sm"
-                                            >
-                                                {repo.status === 'ready' ? 'View Details' :
-                                                    repo.status === 'analyzing' ? 'Analyzing...' : 'Pending'}
-                                            </Button>
-                                        </div>
-                                    </CardHeader>
-                                </Card>
-                            ))}
-                        </div>
-                    )}
+                                            </CardHeader>
+                                        </Card>
+                                    ))}
+                                </div>
+                                {filteredAnalyzedRepos.length > 0 && (
+                                    <Pagination
+                                        currentPage={analyzedCurrentPage}
+                                        onPageChange={setAnalyzedCurrentPage}
+                                        totalPages={Math.ceil(filteredAnalyzedRepos.length / itemsPerPage)}
+                                        disabled={loadingAnalyzed}
+                                    />
+                                )}
+                            </>
+                        );
+                    })()}
                 </TabsContent>
 
                 {/* Add Repository Tab */}

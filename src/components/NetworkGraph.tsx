@@ -1,4 +1,5 @@
-import { useRef } from 'react';
+import { useRef, useState } from 'react';
+import { ChevronDown } from 'lucide-react';
 
 interface Node {
     id: string;
@@ -23,6 +24,7 @@ interface NetworkGraphProps {
 
 export default function NetworkGraph({ centerFile, dependencies = [], dependents = [], neighbors = [] }: NetworkGraphProps) {
     const svgRef = useRef<SVGSVGElement>(null);
+    const [legendExpanded, setLegendExpanded] = useState(false);
 
     const width = 1200;
     const height = 800;
@@ -205,30 +207,55 @@ export default function NetworkGraph({ centerFile, dependencies = [], dependents
                 })}
             </svg>
 
-            {/* Legend */}
-            <div className="absolute top-5 right-5 bg-card/90 backdrop-blur-lg border rounded-xl p-4 text-xs shadow-lg">
-                <div className="mb-3 font-bold text-primary text-sm">
-                    📌 Legend
-                </div>
-                <div className="grid gap-2.5">
-                    <div className="flex items-center gap-2.5">
-                        <div className="w-5 h-5 rounded-full bg-gradient-to-br from-[#58a6ff] to-[#1f6feb] shadow-lg"></div>
-                        <span className="text-foreground font-medium">Current File</span>
-                    </div>
-                    <div className="flex items-center gap-2.5">
-                        <div className="w-5 h-5 rounded-full bg-gradient-to-br from-[#56d364] to-[#2ea043] shadow-lg"></div>
-                        <span className="text-foreground font-medium">Dependencies (Left)</span>
-                    </div>
-                    <div className="flex items-center gap-2.5">
-                        <div className="w-5 h-5 rounded-full bg-gradient-to-br from-[#f0883e] to-[#d15704] shadow-lg"></div>
-                        <span className="text-foreground font-medium">Dependents (Right)</span>
-                    </div>
-                    <div className="flex items-center gap-2.5">
-                        <div className="w-5 h-5 rounded-full bg-gradient-to-br from-[#e5b9ff] to-[#bc8cff] shadow-lg"></div>
-                        <span className="text-foreground font-medium">Similar Files (Top)</span>
+            {/* Collapsible Legend */}
+            <div className="absolute top-5 right-5">
+                {/* Toggle Button */}
+                <button
+                    onClick={() => setLegendExpanded(!legendExpanded)}
+                    className="bg-card/90 backdrop-blur-lg border rounded-xl px-4 py-2 text-sm font-bold text-primary shadow-lg hover:bg-card transition-all duration-300 flex items-center gap-2"
+                >
+                    <span>Legend</span>
+                    <ChevronDown
+                        size={16}
+                        className="transition-transform duration-300"
+                        style={{
+                            transform: legendExpanded ? 'rotate(180deg)' : 'rotate(0deg)'
+                        }}
+                    />
+                </button>
+
+                {/* Expandable Legend Content */}
+                <div
+                    className="overflow-hidden transition-all duration-300 ease-in-out"
+                    style={{
+                        maxHeight: legendExpanded ? '200px' : '0px',
+                        opacity: legendExpanded ? 1 : 0,
+                        marginTop: legendExpanded ? '8px' : '0px'
+                    }}
+                >
+                    <div className="bg-card/90 backdrop-blur-lg border rounded-xl p-4 text-xs shadow-lg">
+                        <div className="grid gap-2.5">
+                            <div className="flex items-center gap-2.5">
+                                <div className="w-5 h-5 rounded-full bg-gradient-to-br from-[#58a6ff] to-[#1f6feb] shadow-lg"></div>
+                                <span className="text-foreground font-medium">Current File</span>
+                            </div>
+                            <div className="flex items-center gap-2.5">
+                                <div className="w-5 h-5 rounded-full bg-gradient-to-br from-[#56d364] to-[#2ea043] shadow-lg"></div>
+                                <span className="text-foreground font-medium">Dependencies (Left)</span>
+                            </div>
+                            <div className="flex items-center gap-2.5">
+                                <div className="w-5 h-5 rounded-full bg-gradient-to-br from-[#f0883e] to-[#d15704] shadow-lg"></div>
+                                <span className="text-foreground font-medium">Dependents (Right)</span>
+                            </div>
+                            <div className="flex items-center gap-2.5">
+                                <div className="w-5 h-5 rounded-full bg-gradient-to-br from-[#e5b9ff] to-[#bc8cff] shadow-lg"></div>
+                                <span className="text-foreground font-medium">Similar Files (Top)</span>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
         </div>
     );
 }
+

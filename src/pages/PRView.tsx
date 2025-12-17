@@ -109,20 +109,20 @@ export default function PRView() {
                     </h2>
 
                     <Card className={`border-2 ${riskVariant === 'destructive' ? 'border-destructive bg-destructive/5' :
-                            riskVariant === 'warning' ? 'border-orange-500 bg-orange-500/5' :
-                                'border-green-500 bg-green-500/5'
+                        riskVariant === 'warning' ? 'border-orange-500 bg-orange-500/5' :
+                            'border-green-500 bg-green-500/5'
                         }`}>
                         <CardHeader>
                             <div className="flex items-center justify-between">
                                 <CardTitle className={`text-2xl ${riskVariant === 'destructive' ? 'text-destructive' :
-                                        riskVariant === 'warning' ? 'text-orange-600 dark:text-orange-400' :
-                                            'text-green-600 dark:text-green-400'
+                                    riskVariant === 'warning' ? 'text-orange-600 dark:text-orange-400' :
+                                        'text-green-600 dark:text-green-400'
                                     }`}>
                                     {getRiskLabel(riskAnalysis.riskScore)}
                                 </CardTitle>
                                 <div className={`text-5xl font-bold ${riskVariant === 'destructive' ? 'text-destructive' :
-                                        riskVariant === 'warning' ? 'text-orange-600 dark:text-orange-400' :
-                                            'text-green-600 dark:text-green-400'
+                                    riskVariant === 'warning' ? 'text-orange-600 dark:text-orange-400' :
+                                        'text-green-600 dark:text-green-400'
                                     }`}>
                                     {(riskAnalysis.riskScore * 100).toFixed(0)}%
                                 </div>

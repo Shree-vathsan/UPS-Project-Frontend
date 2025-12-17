@@ -1,4 +1,4 @@
-import { useEffect, useState, useRef } from 'react';
+import { useMemo } from 'react';
 import {
     BarChart, Bar, PieChart, Pie, Cell,
     XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
@@ -7,6 +7,7 @@ import {
 import { BarChart as BarChartIcon, FileText, Users, Zap, Bot, Heart, TrendingUp, Folder, Flame, PieChart as PieChartIcon } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
 import MetricCard from './MetricCard';
+import { useRepositoryAnalytics, useRepositorySummary } from '../hooks/useApiQueries';
 
 interface RepositoryAnalyticsProps {
     repositoryId: string;
@@ -14,95 +15,55 @@ interface RepositoryAnalyticsProps {
 }
 
 export default function RepositoryAnalytics({ repositoryId, branchName }: RepositoryAnalyticsProps) {
-    const [loading, setLoading] = useState(true);
-    const [activityData, setActivityData] = useState<any[]>([]);
-    const [fileTypeData, setFileTypeData] = useState<any[]>([]);
-    const [hotspots, setHotspots] = useState<any[]>([]);
-    const [metrics, setMetrics] = useState<any>(null);
-    const [summary, setSummary] = useState<string>('');
+    // React Query hooks for data fetching with caching
+    const { data: analyticsData, isLoading: analyticsLoading } = useRepositoryAnalytics(repositoryId, branchName);
+    const { data: summaryData } = useRepositorySummary(repositoryId, branchName);
 
-    // Track previous values to prevent duplicate calls
-    const prevBranchRef = useRef<string | null>(null);
+    const loading = analyticsLoading;
+    const summary = summaryData?.summary || '';
 
-    useEffect(() => {
-        // Skip if branchName is empty or same as previous
-        if (!branchName || branchName === prevBranchRef.current) return;
-
-        prevBranchRef.current = branchName;
-        setLoading(true); // Show skeleton when branch changes
-
-        loadAnalyticsData();
-        loadRepositorySummary();
-    }, [repositoryId, branchName]);
-
-    const loadRepositorySummary = async () => {
-        try {
-            const response = await fetch(`http://localhost:5000/repositories/${repositoryId}/summary?branchName=${encodeURIComponent(branchName)}`);
-            if (response.ok) {
-                const data = await response.json();
-                setSummary(data.summary || 'No summary available');
-            }
-        } catch (error) {
-            console.error('Failed to load summary:', error);
+    // Process data with useMemo for performance
+    const { activityData, fileTypeData, hotspots, metrics } = useMemo(() => {
+        if (!analyticsData) {
+            return { activityData: [], fileTypeData: [], hotspots: [], metrics: null };
         }
-    };
 
-    const loadAnalyticsData = async () => {
-        try {
-            // Fetch analytics from backend API
-            const response = await fetch(`http://localhost:5000/repositories/${repositoryId}/analytics?branchName=${encodeURIComponent(branchName)}`);
-            if (!response.ok) {
-                throw new Error('Failed to fetch analytics');
-            }
+        // Process activity data for chart
+        const activityData = (analyticsData.activityTimeline || []).map((item: any) => ({
+            date: item.date,
+            commits: item.commits
+        }));
 
-            const data = await response.json();
+        // Process file type data
+        const fileTypeData = (analyticsData.fileTypes || []).map((item: any) => ({
+            name: item.name,
+            value: item.value
+        }));
 
-            // Process activity data for chart
-            const activityData = (data.activityTimeline || []).map((item: any) => ({
-                date: item.date,
-                commits: item.commits
-            }));
+        // Process hotspots
+        const hotspots = (analyticsData.hotspots || []).map((item: any) => ({
+            filePath: item.filePath,
+            changes: item.changes
+        }));
 
-            setActivityData(activityData);
+        // Calculate metrics
+        const avgCommitsPerDay = activityData.length > 0
+            ? (analyticsData.recentCommits / 7).toFixed(1)
+            : '0';
 
-            // Process file type data
-            const fileTypes = (data.fileTypes || []).map((item: any) => ({
-                name: item.name,
-                value: item.value
-            }));
+        const codeHealth = Math.min(100, Math.floor((analyticsData.recentCommits / 7) * 20 + 50));
 
-            setFileTypeData(fileTypes);
+        const metrics = {
+            totalFiles: analyticsData.totalFiles || 0,
+            totalCommits: analyticsData.totalCommits || 0,
+            contributors: analyticsData.contributors || 0,
+            recentCommits: analyticsData.recentCommits || 0,
+            avgCommitsPerDay,
+            codeHealth
+        };
 
-            // Process hotspots
-            const hotspots = (data.hotspots || []).map((item: any) => ({
-                filePath: item.filePath,
-                changes: item.changes
-            }));
-
-            setHotspots(hotspots);
-
-            // Calculate metrics
-            const avgCommitsPerDay = activityData.length > 0
-                ? (data.recentCommits / 7).toFixed(1)
-                : '0';
-
-            const codeHealth = Math.min(100, Math.floor((data.recentCommits / 7) * 20 + 50));
-
-            setMetrics({
-                totalFiles: data.totalFiles || 0,
-                totalCommits: data.totalCommits || 0,
-                contributors: data.contributors || 0,
-                recentCommits: data.recentCommits || 0,
-                avgCommitsPerDay,
-                codeHealth
-            });
-
-        } catch (error) {
-            console.error('Failed to load analytics:', error);
-        } finally {
-            setLoading(false);
-        }
-    };
+        return { activityData, fileTypeData, hotspots, metrics };
+    }, [analyticsData]);
 
     const COLORS = ['#58a6ff', '#3fb950', '#d29922', '#f85149', '#bc8cff', '#f0883e', '#56d4dd', '#db6d28'];
 

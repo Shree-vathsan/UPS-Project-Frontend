@@ -1,7 +1,6 @@
-import { useEffect, useState } from 'react';
-import { useParams } from 'react-router-dom';
+import { useState, useEffect } from 'react';
+import { useParams, useSearchParams } from 'react-router-dom';
 import { Code, BarChart, FileText, ChevronLeft, ChevronRight, Clock } from 'lucide-react';
-import { api } from '../utils/api';
 import BackButton from '../components/BackButton';
 import FileAnalysis from '../components/FileAnalysis';
 import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
@@ -13,18 +12,36 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Alert, AlertDescription } from '@/components/ui/alert';
+import { useFile, useFileAnalysis, useFileContent, useFileCommits } from '../hooks/useApiQueries';
 
 export default function FileView() {
     const { fileId } = useParams<{ fileId: string }>();
+    const [searchParams] = useSearchParams();
     const { theme } = useTheme();
-    const [file, setFile] = useState<any>(null);
-    const [content, setContent] = useState<string>('');
-    const [analysis, setAnalysis] = useState<any>(null);
     const [activeTab, setActiveTab] = useState<'code' | 'analysis'>('code');
-    const [loading, setLoading] = useState(true);
-    const [error, setError] = useState<string>('');
-    const [commitHistory, setCommitHistory] = useState<any[]>([]);
     const [currentCommitSha, setCurrentCommitSha] = useState<string | null>(null);
+
+    // Get branch from URL params
+    const branch = searchParams.get('branch') || undefined;
+
+    // React Query hooks for data fetching with caching
+    const { data: file, isLoading: fileLoading, error: fileError } = useFile(fileId);
+    const { data: analysis } = useFileAnalysis(fileId);
+    const { data: commitHistory = [] } = useFileCommits(fileId);
+    const { data: contentData, isLoading: contentLoading } = useFileContent(fileId, currentCommitSha || undefined, branch);
+
+    const content = contentData?.content || '';
+    const loading = fileLoading || contentLoading;
+    const error = fileError?.message || '';
+
+    // Set initial commit sha from content response or history
+    useEffect(() => {
+        if (contentData?.commitSha && !currentCommitSha) {
+            setCurrentCommitSha(contentData.commitSha);
+        } else if (commitHistory.length > 0 && !currentCommitSha) {
+            setCurrentCommitSha(commitHistory[0].sha);
+        }
+    }, [contentData, commitHistory, currentCommitSha]);
 
     // Determine if current theme is light (includes black-beige which has light background)
     const isLightTheme = theme === 'light' || theme === 'light-pallete' || theme === 'black-beige';
@@ -42,96 +59,24 @@ export default function FileView() {
         return languageMap[extension || ''] || 'javascript';
     };
 
-    useEffect(() => {
-        loadFile();
-    }, [fileId]);
-
-    const loadFile = async () => {
-        try {
-            setLoading(true);
-            setError('');
-
-            const fileData = await fetch(`http://localhost:5000/files/${fileId}`);
-            if (!fileData.ok) throw new Error('File not found');
-
-            const file = await fileData.json();
-            setFile(file);
-
-            const analysisData = await api.getFileAnalysis(fileId!);
-            setAnalysis(analysisData);
-
-            try {
-                const historyRes = await fetch(`http://localhost:5000/files/${fileId}/commits`);
-                if (historyRes.ok) {
-                    const history = await historyRes.json();
-                    setCommitHistory(history);
-                    if (history.length > 0 && !currentCommitSha) {
-                        setCurrentCommitSha(history[0].sha);
-                    }
-                }
-            } catch (e) {
-                console.error('Failed to load history:', e);
-            }
-
-            await fetchContent();
-        } catch (err: any) {
-            console.error('Failed to load file:', err);
-            setError(err.message || 'Failed to load file');
-        } finally {
-            setLoading(false);
-        }
-    };
-
-    const fetchContent = async (sha?: string) => {
-        setLoading(true);
-        try {
-            const params = new URLSearchParams(window.location.search);
-            const branch = params.get('branch');
-
-            let contentUrl = `http://localhost:5000/files/${fileId}/content`;
-
-            if (sha) {
-                contentUrl += `?commitSha=${sha}`;
-            } else if (branch) {
-                contentUrl += `?branchName=${encodeURIComponent(branch)}`;
-            }
-
-            const contentResponse = await fetch(contentUrl);
-            if (contentResponse.ok) {
-                const contentData = await contentResponse.json();
-                setContent(contentData.content);
-                if (contentData.commitSha) {
-                    setCurrentCommitSha(contentData.commitSha);
-                }
-            } else {
-                setContent('// Failed to load file content');
-            }
-        } catch (e) {
-            console.error('Failed to fetch content:', e);
-            setContent('// Failed to load file content');
-        } finally {
-            setLoading(false);
-        }
-    };
-
     const handlePreviousCommit = () => {
         if (!commitHistory.length) return;
-        const currentIndex = currentCommitSha ? commitHistory.findIndex(c => c.sha === currentCommitSha) : -1;
+        const currentIndex = currentCommitSha ? commitHistory.findIndex((c: { sha: string }) => c.sha === currentCommitSha) : -1;
 
         if (currentIndex === -1) {
-            fetchContent(commitHistory[0].sha);
+            setCurrentCommitSha(commitHistory[0].sha);
         } else if (currentIndex < commitHistory.length - 1) {
             const prevCommit = commitHistory[currentIndex + 1];
-            fetchContent(prevCommit.sha);
+            setCurrentCommitSha(prevCommit.sha);
         }
     };
 
     const handleNextCommit = () => {
         if (!commitHistory.length || !currentCommitSha) return;
-        const currentIndex = commitHistory.findIndex(c => c.sha === currentCommitSha);
+        const currentIndex = commitHistory.findIndex((c: { sha: string }) => c.sha === currentCommitSha);
         if (currentIndex > 0) {
             const nextCommit = commitHistory[currentIndex - 1];
-            fetchContent(nextCommit.sha);
+            setCurrentCommitSha(nextCommit.sha);
         }
     };
 
@@ -169,7 +114,7 @@ export default function FileView() {
         );
     }
 
-    const currentIndex = currentCommitSha ? commitHistory.findIndex(c => c.sha === currentCommitSha) : -1;
+    const currentIndex = currentCommitSha ? commitHistory.findIndex((c: { sha: string }) => c.sha === currentCommitSha) : -1;
     const canGoPrevious = (currentIndex !== -1 && currentIndex < commitHistory.length - 1) || (currentIndex === -1 && commitHistory.length > 0);
     const canGoNext = currentIndex !== -1 && currentIndex > 0;
 
@@ -198,13 +143,13 @@ export default function FileView() {
                             <div className="flex items-center gap-3 text-sm">
                                 <Clock className="h-4 w-4 text-muted-foreground" />
                                 <code className="text-primary font-mono">{currentCommitSha.substring(0, 7)}</code>
-                                {commitHistory.find(c => c.sha === currentCommitSha) && (
+                                {commitHistory.find((c: { sha: string }) => c.sha === currentCommitSha) && (
                                     <>
                                         <span className="text-muted-foreground">•</span>
-                                        <span>{commitHistory.find(c => c.sha === currentCommitSha)?.message}</span>
+                                        <span>{commitHistory.find((c: { sha: string; message: string }) => c.sha === currentCommitSha)?.message}</span>
                                         <span className="text-muted-foreground">•</span>
                                         <span className="text-muted-foreground">
-                                            {new Date(commitHistory.find(c => c.sha === currentCommitSha)?.committedAt || '').toLocaleDateString()}
+                                            {new Date(commitHistory.find((c: { sha: string; committedAt: string }) => c.sha === currentCommitSha)?.committedAt || '').toLocaleDateString()}
                                         </span>
                                     </>
                                 )}

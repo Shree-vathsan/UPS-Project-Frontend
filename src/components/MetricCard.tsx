@@ -72,7 +72,7 @@ export default function MetricCard({
                     )}
                     {trend !== undefined && trend !== 0 && (
                         <div className={`text-xs font-semibold ${trend > 0 ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'}`}>
-                            {trend > 0 ? '↗' : '↘'} {Math.abs(trend)}% from last week
+                            {/* {trend > 0 ? '↗' : '↘'} {Math.abs(trend)}% from last week */}
                         </div>
                     )}
                 </div>
