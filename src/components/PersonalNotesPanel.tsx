@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useRef } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
@@ -14,6 +14,7 @@ import { formatDistanceToNow } from 'date-fns';
 interface PersonalNotesPanelProps {
     fileId: string;
     repositoryId?: string;
+    totalLines?: number;
     onLineClick?: (lineNumber: number) => void;
 }
 
@@ -39,7 +40,7 @@ interface SharedNote {
 // MAIN PANEL - Renders both sections
 // ============================================
 
-export function PersonalNotesPanel({ fileId, repositoryId, onLineClick }: PersonalNotesPanelProps) {
+export function PersonalNotesPanel({ fileId, repositoryId, totalLines, onLineClick }: PersonalNotesPanelProps) {
     const user = JSON.parse(localStorage.getItem('user') || '{}');
     const userId = user?.id;
 
@@ -49,6 +50,7 @@ export function PersonalNotesPanel({ fileId, repositoryId, onLineClick }: Person
             <PersonalNotesSection
                 fileId={fileId}
                 userId={userId}
+                totalLines={totalLines}
                 onLineClick={onLineClick}
             />
 
@@ -57,6 +59,7 @@ export function PersonalNotesPanel({ fileId, repositoryId, onLineClick }: Person
                 fileId={fileId}
                 repositoryId={repositoryId}
                 userId={userId}
+                totalLines={totalLines}
                 onLineClick={onLineClick}
             />
         </div>
@@ -70,10 +73,12 @@ export function PersonalNotesPanel({ fileId, repositoryId, onLineClick }: Person
 function PersonalNotesSection({
     fileId,
     userId,
+    totalLines,
     onLineClick
 }: {
     fileId: string;
     userId: string;
+    totalLines?: number;
     onLineClick?: (lineNumber: number) => void;
 }) {
     // Independent state for Personal Notes
@@ -86,6 +91,9 @@ function PersonalNotesSection({
     const [editingId, setEditingId] = useState<string | null>(null);
     const [editContent, setEditContent] = useState('');
     const [editLineNumber, setEditLineNumber] = useState('');
+
+    // Ref for textarea to focus after line number entry
+    const textareaRef = useRef<HTMLTextAreaElement>(null);
 
     // Personal notes data hooks
     const { data: notes, isLoading } = useFilePersonalNotes(fileId, userId);
@@ -174,15 +182,15 @@ function PersonalNotesSection({
     };
 
     return (
-        <Card className="w-full bg-gradient-to-br from-purple-900/30 via-slate-800/60 to-slate-900/80 border-purple-500/40 backdrop-blur-sm shadow-xl shadow-purple-500/10">
-            <CardHeader className="pb-3 bg-gradient-to-r from-purple-500/15 to-transparent border-b border-purple-500/20">
-                <CardTitle className="flex items-center justify-between text-base text-white">
+        <Card className="w-full bg-card border rounded-lg shadow-sm">
+            <CardHeader className="pb-3 bg-muted/50 border-b">
+                <CardTitle className="flex items-center justify-between text-base text-card-foreground">
                     <div className="flex items-center gap-2">
-                        <div className="p-1.5 rounded-lg bg-purple-500/20 backdrop-blur-sm">
-                            <BookMarked className="h-4 w-4 text-purple-400" />
+                        <div className="p-1.5 rounded-lg bg-primary/10">
+                            <BookMarked className="h-4 w-4 text-primary" />
                         </div>
                         <span className="font-semibold tracking-tight">Personal Notes</span>
-                        <span className="text-xs text-slate-400">({notesData.length})</span>
+                        <span className="text-xs text-muted-foreground">({notesData.length})</span>
                     </div>
                     <div className="flex items-center gap-2">
                         {/* Search Toggle */}
@@ -193,7 +201,7 @@ function PersonalNotesSection({
                             }}
                             size="sm"
                             variant="ghost"
-                            className={`h-8 w-8 p-0 ${isSearching ? 'text-purple-400 bg-purple-500/20' : 'text-slate-400 hover:text-purple-300'}`}
+                            className={`h-8 w-8 p-0 ${isSearching ? 'text-primary bg-primary/10' : 'text-muted-foreground hover:text-primary'}`}
                         >
                             <Search className="h-4 w-4" />
                         </Button>
@@ -202,7 +210,7 @@ function PersonalNotesSection({
                             <Button
                                 onClick={() => setIsAdding(true)}
                                 size="sm"
-                                className="h-8 px-3 bg-purple-500/20 hover:bg-purple-500/30 text-purple-300 hover:text-purple-200 border border-purple-500/30 hover:border-purple-500/50 transition-all duration-200"
+                                className="h-8 px-3 bg-primary/10 hover:bg-primary/20 text-primary border border-primary/30 hover:border-primary/50 transition-all duration-200"
                             >
                                 <Plus className="h-3 w-3 mr-1" />
                                 Add Note
@@ -215,14 +223,14 @@ function PersonalNotesSection({
             <CardContent className="p-4 space-y-3">
                 {/* Search Input */}
                 {isSearching && (
-                    <div className="flex items-center gap-2 p-2 rounded-lg bg-slate-800/50 border border-purple-500/30">
-                        <Hash className="h-4 w-4 text-purple-400" />
+                    <div className="flex items-center gap-2 p-2 rounded-lg bg-muted/50 border">
+                        <Hash className="h-4 w-4 text-primary" />
                         <Input
                             type="text"
                             placeholder="Search by line number (e.g., 3 shows L3, L30, L31...)"
                             value={searchLineNumber}
                             onChange={(e) => setSearchLineNumber(e.target.value)}
-                            className="flex-1 h-7 bg-transparent border-0 text-white text-sm focus:ring-0 placeholder:text-slate-400"
+                            className="flex-1 h-7 bg-transparent border-0 text-foreground text-sm focus:ring-0 placeholder:text-muted-foreground"
                             autoFocus
                         />
                         {searchLineNumber && (
@@ -230,7 +238,7 @@ function PersonalNotesSection({
                                 onClick={() => setSearchLineNumber('')}
                                 size="sm"
                                 variant="ghost"
-                                className="h-6 w-6 p-0 text-slate-400 hover:text-slate-200"
+                                className="h-6 w-6 p-0 text-muted-foreground hover:text-foreground"
                             >
                                 <X className="h-3 w-3" />
                             </Button>
@@ -240,49 +248,72 @@ function PersonalNotesSection({
 
                 {/* Add Note Form */}
                 {isAdding && (
-                    <div className="p-3 rounded-xl bg-gradient-to-br from-purple-500/15 to-purple-900/10 border border-purple-500/30 space-y-3 animate-in slide-in-from-top-2 duration-200">
-                        <Textarea
-                            placeholder="Write your private note..."
-                            value={newContent}
-                            onChange={(e) => setNewContent(e.target.value)}
-                            className="min-h-[70px] bg-slate-800/60 border-purple-500/30 text-white placeholder:text-slate-400 text-sm focus:border-purple-400 focus:ring-purple-400/20 rounded-lg"
-                            autoFocus
-                        />
+                    <div className="p-3 rounded-lg bg-primary/5 border border-primary/20 space-y-3 animate-in slide-in-from-top-2 duration-200">
+                        {/* Line Number Field - First */}
                         <div className="space-y-1">
                             <div className="flex items-center gap-2">
-                                <div className="p-1.5 rounded-md bg-slate-700/50">
-                                    <Hash className="h-3.5 w-3.5 text-purple-400" />
+                                <div className="p-1.5 rounded-md bg-muted">
+                                    <Hash className="h-3.5 w-3.5 text-primary" />
                                 </div>
                                 <Input
                                     type="number"
-                                    placeholder="Line # (required)"
+                                    placeholder={totalLines ? `Line # (1-${totalLines})` : "Line # (required)"}
                                     value={newLineNumber}
                                     onChange={(e) => {
-                                        setNewLineNumber(e.target.value);
-                                        setLineNumberError('');
+                                        const value = e.target.value;
+                                        setNewLineNumber(value);
+                                        const lineNum = parseInt(value);
+                                        if (totalLines && totalLines > 0 && lineNum > totalLines) {
+                                            setLineNumberError(`Line number exceeds file length (max: ${totalLines})`);
+                                        } else if (lineNum < 1 && value) {
+                                            setLineNumberError('Line number must be at least 1');
+                                        } else {
+                                            setLineNumberError('');
+                                        }
                                     }}
-                                    className={`flex-1 h-8 bg-slate-800/60 text-white text-sm rounded-lg ${lineNumberError ? 'border-red-500/50' : 'border-slate-600/50'}`}
+                                    onKeyDown={(e) => {
+                                        if (e.key === 'Enter') {
+                                            e.preventDefault();
+                                            textareaRef.current?.focus();
+                                        }
+                                    }}
+                                    className={`flex-1 h-8 bg-background text-foreground text-sm rounded-lg ${lineNumberError ? 'border-destructive' : 'border'}`}
+                                    autoFocus
                                 />
                             </div>
                             {lineNumberError && (
-                                <p className="text-xs text-red-400 ml-9">{lineNumberError}</p>
+                                <p className="text-xs text-destructive ml-9">{lineNumberError}</p>
                             )}
                         </div>
+                        {/* Notes Textarea - Second */}
+                        <Textarea
+                            ref={textareaRef}
+                            placeholder="Write your private note... (Enter to save, Shift+Enter for new line)"
+                            value={newContent}
+                            onChange={(e) => setNewContent(e.target.value)}
+                            onKeyDown={(e) => {
+                                if (e.key === 'Enter' && !e.shiftKey) {
+                                    e.preventDefault();
+                                    handleCreate();
+                                }
+                            }}
+                            className="min-h-[70px] bg-background border text-foreground placeholder:text-muted-foreground text-sm focus:border-primary focus:ring-primary/20 rounded-lg"
+                        />
                         <div className="flex justify-end gap-2">
                             <Button
                                 onClick={handleCancelAdd}
                                 size="sm"
                                 variant="ghost"
-                                className="h-7 px-3 text-slate-400 hover:text-slate-200"
+                                className="h-7 px-3 text-muted-foreground hover:text-foreground"
                             >
                                 <X className="h-3 w-3 mr-1" />
                                 Cancel
                             </Button>
                             <Button
                                 onClick={handleCreate}
-                                disabled={!newContent.trim() || createNote.isPending}
+                                disabled={!newContent.trim() || createNote.isPending || !!lineNumberError || !newLineNumber.trim()}
                                 size="sm"
-                                className="h-7 px-4 bg-purple-500 hover:bg-purple-600 shadow-lg shadow-purple-500/25 transition-all duration-200"
+                                className="h-7 px-4 bg-primary hover:bg-primary/90 text-primary-foreground shadow-sm transition-all duration-200"
                             >
                                 <Check className="h-3 w-3 mr-1" />
                                 Save
@@ -292,15 +323,15 @@ function PersonalNotesSection({
                 )}
 
                 {/* Notes List */}
-                <div className="space-y-2 max-h-[300px] overflow-y-auto pr-1 scrollbar-thin scrollbar-thumb-purple-500/40 scrollbar-track-transparent hover:scrollbar-thumb-purple-400/60">
+                <div className="space-y-2 max-h-[300px] overflow-y-auto pr-1 scrollbar-thin">
                     {isLoading ? (
-                        <div className="text-center py-6 text-slate-400 text-sm">
+                        <div className="text-center py-6 text-muted-foreground text-sm">
                             <div className="animate-pulse">Loading...</div>
                         </div>
                     ) : filteredNotes.length === 0 ? (
-                        <div className="text-center py-8 text-slate-400 text-sm">
-                            <div className="p-3 rounded-full bg-slate-800/50 w-fit mx-auto mb-3">
-                                <BookMarked className="h-6 w-6 text-slate-500" />
+                        <div className="text-center py-8 text-muted-foreground text-sm">
+                            <div className="p-3 rounded-full bg-muted/50 w-fit mx-auto mb-3">
+                                <BookMarked className="h-6 w-6 text-muted-foreground" />
                             </div>
                             {searchLineNumber ? (
                                 <p>No notes found matching line "{searchLineNumber}"</p>
@@ -309,7 +340,7 @@ function PersonalNotesSection({
                                     <p>No personal notes yet.</p>
                                     <button
                                         onClick={() => setIsAdding(true)}
-                                        className="text-purple-400 hover:text-purple-300 mt-2 font-medium transition-colors"
+                                        className="text-primary hover:text-primary/80 mt-2 font-medium transition-colors"
                                     >
                                         Add your first note
                                     </button>
@@ -320,9 +351,9 @@ function PersonalNotesSection({
                         filteredNotes.map((note) => (
                             <div
                                 key={note.id}
-                                className={`p-3 rounded-xl bg-gradient-to-br from-slate-800/70 to-slate-900/50 border transition-all duration-200 hover:shadow-lg hover:shadow-purple-500/5 group ${searchLineNumber && note.lineNumber?.toString().startsWith(searchLineNumber.trim())
-                                    ? 'border-purple-500/60 ring-1 ring-purple-500/30'
-                                    : 'border-slate-700/50 hover:border-purple-500/30'
+                                className={`p-3 rounded-lg bg-muted/30 border transition-all duration-200 hover:shadow-sm group ${searchLineNumber && note.lineNumber?.toString().startsWith(searchLineNumber.trim())
+                                    ? 'border-primary/50 ring-1 ring-primary/20'
+                                    : 'hover:border-primary/30'
                                     }`}
                             >
                                 {editingId === note.id ? (
@@ -330,16 +361,16 @@ function PersonalNotesSection({
                                         <Textarea
                                             value={editContent}
                                             onChange={(e) => setEditContent(e.target.value)}
-                                            className="min-h-[50px] bg-slate-700/50 border-slate-600/50 text-white text-sm rounded-lg"
+                                            className="min-h-[50px] bg-background border text-foreground text-sm rounded-lg"
                                         />
                                         <div className="flex items-center gap-2">
-                                            <Hash className="h-3 w-3 text-slate-400" />
+                                            <Hash className="h-3 w-3 text-muted-foreground" />
                                             <Input
                                                 type="number"
                                                 placeholder="Line #"
                                                 value={editLineNumber}
                                                 onChange={(e) => setEditLineNumber(e.target.value)}
-                                                className="flex-1 h-6 bg-slate-700/50 border-slate-600/50 text-white text-xs rounded-lg"
+                                                className="flex-1 h-6 bg-background border text-foreground text-xs rounded-lg"
                                             />
                                         </div>
                                         <div className="flex justify-end gap-1">
@@ -347,7 +378,7 @@ function PersonalNotesSection({
                                                 onClick={() => setEditingId(null)}
                                                 size="sm"
                                                 variant="ghost"
-                                                className="h-6 text-xs text-slate-400"
+                                                className="h-6 text-xs text-muted-foreground"
                                             >
                                                 Cancel
                                             </Button>
@@ -355,7 +386,7 @@ function PersonalNotesSection({
                                                 onClick={handleSaveEdit}
                                                 disabled={!editContent.trim() || updateNote.isPending}
                                                 size="sm"
-                                                className="h-6 text-xs bg-purple-500 hover:bg-purple-600"
+                                                className="h-6 text-xs bg-primary hover:bg-primary/90 text-primary-foreground"
                                             >
                                                 Save
                                             </Button>
@@ -367,7 +398,7 @@ function PersonalNotesSection({
                                             {note.lineNumber && (
                                                 <button
                                                     onClick={() => onLineClick?.(note.lineNumber!)}
-                                                    className="px-2 py-0.5 text-xs rounded-md bg-purple-500/25 text-purple-300 hover:bg-purple-500/40 transition-colors font-mono"
+                                                    className="px-2 py-0.5 text-xs rounded-md bg-primary/20 text-primary hover:bg-primary/30 transition-colors font-mono"
                                                 >
                                                     L{note.lineNumber}
                                                 </button>
@@ -378,7 +409,7 @@ function PersonalNotesSection({
                                                     variant="ghost"
                                                     size="sm"
                                                     onClick={() => handleStartEdit(note)}
-                                                    className="h-6 w-6 p-0 text-slate-400 hover:text-purple-300 hover:bg-purple-500/20"
+                                                    className="h-6 w-6 p-0 text-muted-foreground hover:text-primary hover:bg-primary/10"
                                                 >
                                                     <Edit2 className="h-3 w-3" />
                                                 </Button>
@@ -386,14 +417,14 @@ function PersonalNotesSection({
                                                     variant="ghost"
                                                     size="sm"
                                                     onClick={() => handleDelete(note.id)}
-                                                    className="h-6 w-6 p-0 text-slate-400 hover:text-red-400 hover:bg-red-500/20"
+                                                    className="h-6 w-6 p-0 text-muted-foreground hover:text-destructive hover:bg-destructive/10"
                                                 >
                                                     <Trash2 className="h-3 w-3" />
                                                 </Button>
                                             </div>
                                         </div>
-                                        <p className="mt-2 text-sm text-slate-200 whitespace-pre-wrap leading-relaxed">{note.content}</p>
-                                        <p className="mt-2 text-xs text-slate-500">
+                                        <p className="mt-2 text-sm text-foreground whitespace-pre-wrap leading-relaxed">{note.content}</p>
+                                        <p className="mt-2 text-xs text-muted-foreground">
                                             {formatDistanceToNow(new Date(note.updatedAt), { addSuffix: true })}
                                         </p>
                                     </>
@@ -415,11 +446,13 @@ function SharedNotesSection({
     fileId,
     repositoryId,
     userId,
+    totalLines,
     onLineClick
 }: {
     fileId: string;
     repositoryId?: string;
     userId: string;
+    totalLines?: number;
     onLineClick?: (lineNumber: number) => void;
 }) {
     // Independent state for Shared Notes
@@ -430,6 +463,9 @@ function SharedNotesSection({
     const [newContent, setNewContent] = useState('');
     const [newLineNumber, setNewLineNumber] = useState('');
     const [lineNumberError, setLineNumberError] = useState('');
+
+    // Ref for textarea to focus after line number entry
+    const textareaRef = useRef<HTMLTextAreaElement>(null);
 
     // Shared notes data hooks
     const { data: lineComments, isLoading } = useLineCommentsForFile(fileId, userId);
@@ -504,15 +540,15 @@ function SharedNotesSection({
     };
 
     return (
-        <Card className="w-full bg-gradient-to-br from-blue-900/30 via-slate-800/60 to-slate-900/80 border-blue-500/40 backdrop-blur-sm shadow-xl shadow-blue-500/10">
-            <CardHeader className="pb-3 bg-gradient-to-r from-blue-500/15 to-transparent border-b border-blue-500/20">
-                <CardTitle className="flex items-center justify-between text-base text-white">
+        <Card className="w-full bg-card border rounded-lg shadow-sm">
+            <CardHeader className="pb-3 bg-muted/50 border-b">
+                <CardTitle className="flex items-center justify-between text-base text-card-foreground">
                     <div className="flex items-center gap-2">
-                        <div className="p-1.5 rounded-lg bg-blue-500/20 backdrop-blur-sm">
-                            <Users className="h-4 w-4 text-blue-400" />
+                        <div className="p-1.5 rounded-lg bg-accent/10">
+                            <Users className="h-4 w-4 text-accent" />
                         </div>
                         <span className="font-semibold tracking-tight">Shared Notes</span>
-                        <span className="text-xs text-slate-400">({sharedNotesData.length})</span>
+                        <span className="text-xs text-muted-foreground">({sharedNotesData.length})</span>
                     </div>
 
                     <div className="flex items-center gap-2">
@@ -524,7 +560,7 @@ function SharedNotesSection({
                             }}
                             size="sm"
                             variant="ghost"
-                            className={`h-8 w-8 p-0 ${isSearching ? 'text-blue-400 bg-blue-500/20' : 'text-slate-400 hover:text-blue-300'}`}
+                            className={`h-8 w-8 p-0 ${isSearching ? 'text-accent bg-accent/10' : 'text-muted-foreground hover:text-accent'}`}
                         >
                             <Search className="h-4 w-4" />
                         </Button>
@@ -533,11 +569,11 @@ function SharedNotesSection({
                         <select
                             value={filter}
                             onChange={(e) => setFilter(e.target.value as 'all' | 'you' | 'others')}
-                            className="h-8 px-1 bg-slate-800/70 border border-slate-700/50 rounded-md text-xs text-white focus:outline-none focus:ring-2 focus:ring-blue-500/40 cursor-pointer"
+                            className="h-8 px-2 bg-muted border rounded-md text-xs text-foreground focus:outline-none focus:ring-2 focus:ring-ring cursor-pointer"
                         >
-                            <option value="all" className="bg-slate-800">All</option>
-                            <option value="you" className="bg-slate-800">You</option>
-                            <option value="others" className="bg-slate-800">Others</option>
+                            <option value="all">All</option>
+                            <option value="you">You</option>
+                            <option value="others">Others</option>
                         </select>
 
                         {/* Add Note Button */}
@@ -545,7 +581,7 @@ function SharedNotesSection({
                             <Button
                                 onClick={() => setIsAdding(true)}
                                 size="sm"
-                                className="h-8 px-3 bg-blue-500/20 hover:bg-blue-500/30 text-blue-300 hover:text-blue-200 border border-blue-500/30 hover:border-blue-500/50 transition-all duration-200"
+                                className="h-8 px-3 bg-accent/10 hover:bg-accent/20 text-accent border border-accent/30 hover:border-accent/50 transition-all duration-200"
                             >
                                 <Plus className="h-3 w-3 mr-1" />
                                 Add Note
@@ -558,14 +594,14 @@ function SharedNotesSection({
             <CardContent className="p-4 space-y-3">
                 {/* Search Input */}
                 {isSearching && (
-                    <div className="flex items-center gap-2 p-2 rounded-lg bg-slate-800/50 border border-blue-500/30">
-                        <Hash className="h-4 w-4 text-blue-400" />
+                    <div className="flex items-center gap-2 p-2 rounded-lg bg-muted/50 border">
+                        <Hash className="h-4 w-4 text-accent" />
                         <Input
                             type="text"
                             placeholder="Search by line number (e.g., 3 shows L3, L30, L31...)"
                             value={searchLineNumber}
                             onChange={(e) => setSearchLineNumber(e.target.value)}
-                            className="flex-1 h-7 bg-transparent border-0 text-white text-sm focus:ring-0 placeholder:text-slate-400"
+                            className="flex-1 h-7 bg-transparent border-0 text-foreground text-sm focus:ring-0 placeholder:text-muted-foreground"
                             autoFocus
                         />
                         {searchLineNumber && (
@@ -573,7 +609,7 @@ function SharedNotesSection({
                                 onClick={() => setSearchLineNumber('')}
                                 size="sm"
                                 variant="ghost"
-                                className="h-6 w-6 p-0 text-slate-400 hover:text-slate-200"
+                                className="h-6 w-6 p-0 text-muted-foreground hover:text-foreground"
                             >
                                 <X className="h-3 w-3" />
                             </Button>
@@ -583,49 +619,72 @@ function SharedNotesSection({
 
                 {/* Add Shared Note Form */}
                 {isAdding && (
-                    <div className="p-3 rounded-xl bg-gradient-to-br from-blue-500/15 to-blue-900/10 border border-blue-500/30 space-y-3 animate-in slide-in-from-top-2 duration-200">
-                        <Textarea
-                            placeholder="Share a note with your team..."
-                            value={newContent}
-                            onChange={(e) => setNewContent(e.target.value)}
-                            className="min-h-[70px] bg-slate-800/60 border-blue-500/30 text-white placeholder:text-slate-400 text-sm focus:border-blue-400 focus:ring-blue-400/20 rounded-lg"
-                            autoFocus
-                        />
+                    <div className="p-3 rounded-lg bg-accent/5 border border-accent/20 space-y-3 animate-in slide-in-from-top-2 duration-200">
+                        {/* Line Number Field - First */}
                         <div className="space-y-1">
                             <div className="flex items-center gap-2">
-                                <div className="p-1.5 rounded-md bg-slate-700/50">
-                                    <Hash className="h-3.5 w-3.5 text-blue-400" />
+                                <div className="p-1.5 rounded-md bg-muted">
+                                    <Hash className="h-3.5 w-3.5 text-accent" />
                                 </div>
                                 <Input
                                     type="number"
-                                    placeholder="Line # (required)"
+                                    placeholder={totalLines ? `Line # (1-${totalLines})` : "Line # (required)"}
                                     value={newLineNumber}
                                     onChange={(e) => {
-                                        setNewLineNumber(e.target.value);
-                                        setLineNumberError('');
+                                        const value = e.target.value;
+                                        setNewLineNumber(value);
+                                        const lineNum = parseInt(value);
+                                        if (totalLines && totalLines > 0 && lineNum > totalLines) {
+                                            setLineNumberError(`Line number exceeds file length (max: ${totalLines})`);
+                                        } else if (lineNum < 1 && value) {
+                                            setLineNumberError('Line number must be at least 1');
+                                        } else {
+                                            setLineNumberError('');
+                                        }
                                     }}
-                                    className={`flex-1 h-8 bg-slate-800/60 text-white text-sm rounded-lg ${lineNumberError ? 'border-red-500/50' : 'border-slate-600/50'}`}
+                                    onKeyDown={(e) => {
+                                        if (e.key === 'Enter') {
+                                            e.preventDefault();
+                                            textareaRef.current?.focus();
+                                        }
+                                    }}
+                                    className={`flex-1 h-8 bg-background text-foreground text-sm rounded-lg ${lineNumberError ? 'border-destructive' : 'border'}`}
+                                    autoFocus
                                 />
                             </div>
                             {lineNumberError && (
-                                <p className="text-xs text-red-400 ml-9">{lineNumberError}</p>
+                                <p className="text-xs text-destructive ml-9">{lineNumberError}</p>
                             )}
                         </div>
+                        {/* Notes Textarea - Second */}
+                        <Textarea
+                            ref={textareaRef}
+                            placeholder="Share a note with your team... (Enter to share, Shift+Enter for new line)"
+                            value={newContent}
+                            onChange={(e) => setNewContent(e.target.value)}
+                            onKeyDown={(e) => {
+                                if (e.key === 'Enter' && !e.shiftKey) {
+                                    e.preventDefault();
+                                    handleCreate();
+                                }
+                            }}
+                            className="min-h-[70px] bg-background border text-foreground placeholder:text-muted-foreground text-sm focus:border-accent focus:ring-accent/20 rounded-lg"
+                        />
                         <div className="flex justify-end gap-2">
                             <Button
                                 onClick={handleCancelAdd}
                                 size="sm"
                                 variant="ghost"
-                                className="h-7 px-3 text-slate-400 hover:text-slate-200"
+                                className="h-7 px-3 text-muted-foreground hover:text-foreground"
                             >
                                 <X className="h-3 w-3 mr-1" />
                                 Cancel
                             </Button>
                             <Button
                                 onClick={handleCreate}
-                                disabled={!newContent.trim() || createLineComment.isPending}
+                                disabled={!newContent.trim() || createLineComment.isPending || !!lineNumberError || !newLineNumber.trim()}
                                 size="sm"
-                                className="h-7 px-4 bg-blue-500 hover:bg-blue-600 shadow-lg shadow-blue-500/25 transition-all duration-200"
+                                className="h-7 px-4 bg-accent hover:bg-accent/90 text-accent-foreground shadow-sm transition-all duration-200"
                             >
                                 <Check className="h-3 w-3 mr-1" />
                                 Share
@@ -635,15 +694,15 @@ function SharedNotesSection({
                 )}
 
                 {/* Shared Notes List */}
-                <div className="space-y-3 max-h-[300px] overflow-y-auto pr-1 scrollbar-thin scrollbar-thumb-blue-500/40 scrollbar-track-transparent hover:scrollbar-thumb-blue-400/60">
+                <div className="space-y-3 max-h-[300px] overflow-y-auto pr-1 scrollbar-thin">
                     {isLoading ? (
-                        <div className="text-center py-6 text-slate-400 text-sm">
+                        <div className="text-center py-6 text-muted-foreground text-sm">
                             <div className="animate-pulse">Loading...</div>
                         </div>
                     ) : filteredAndSortedNotes.length === 0 ? (
-                        <div className="text-center py-8 text-slate-400 text-sm">
-                            <div className="p-3 rounded-full bg-slate-800/50 w-fit mx-auto mb-3">
-                                <Users className="h-6 w-6 text-slate-500" />
+                        <div className="text-center py-8 text-muted-foreground text-sm">
+                            <div className="p-3 rounded-full bg-muted/50 w-fit mx-auto mb-3">
+                                <Users className="h-6 w-6 text-muted-foreground" />
                             </div>
                             <p>
                                 {searchLineNumber
@@ -655,7 +714,7 @@ function SharedNotesSection({
                             {!searchLineNumber && filter !== 'others' && (
                                 <button
                                     onClick={() => setIsAdding(true)}
-                                    className="text-blue-400 hover:text-blue-300 mt-2 font-medium transition-colors"
+                                    className="text-accent hover:text-accent/80 mt-2 font-medium transition-colors"
                                 >
                                     Share your first note
                                 </button>
@@ -669,9 +728,9 @@ function SharedNotesSection({
                             return (
                                 <div
                                     key={note.id}
-                                    className={`p-3 rounded-xl border transition-all duration-200 hover:shadow-lg ${matchesSearch ? 'ring-1 ring-blue-500/30' : ''} ${isMyNote
-                                        ? 'bg-gradient-to-br from-blue-900/30 to-blue-950/20 border-blue-600/40 hover:border-blue-500/60 hover:shadow-blue-500/10'
-                                        : 'bg-gradient-to-br from-slate-800/70 to-slate-900/50 border-slate-700/50 hover:border-slate-600/70 hover:shadow-slate-500/5'
+                                    className={`p-3 rounded-lg border transition-all duration-200 hover:shadow-sm ${matchesSearch ? 'ring-1 ring-accent/20' : ''} ${isMyNote
+                                        ? 'bg-primary/5 border-primary/20 hover:border-primary/40'
+                                        : 'bg-muted/30 hover:border-accent/30'
                                         }`}
                                 >
                                     {/* Header with author and line number */}
@@ -679,11 +738,11 @@ function SharedNotesSection({
                                         <div className="flex items-center gap-2">
                                             {/* Author badge */}
                                             {isMyNote ? (
-                                                <Badge variant="default" className="text-xs bg-blue-500 text-white border-0 shadow-sm">
+                                                <Badge variant="default" className="text-xs bg-primary text-primary-foreground border-0 shadow-sm">
                                                     You
                                                 </Badge>
                                             ) : (
-                                                <Badge variant="secondary" className="text-xs bg-purple-500/25 text-purple-300 border-purple-500/40">
+                                                <Badge variant="secondary" className="text-xs bg-accent/20 text-accent border-accent/30">
                                                     {note.createdByUsername}
                                                 </Badge>
                                             )}
@@ -692,7 +751,7 @@ function SharedNotesSection({
                                             {note.lineNumber && note.lineNumber > 0 && (
                                                 <button
                                                     onClick={() => onLineClick?.(note.lineNumber!)}
-                                                    className="px-2 py-0.5 text-xs rounded-md bg-slate-700/60 text-slate-300 hover:bg-slate-600/60 transition-colors font-mono"
+                                                    className="px-2 py-0.5 text-xs rounded-md bg-muted text-foreground hover:bg-muted/80 transition-colors font-mono"
                                                 >
                                                     L{note.lineNumber}
                                                 </button>
@@ -700,13 +759,13 @@ function SharedNotesSection({
                                         </div>
 
                                         {/* Timestamp */}
-                                        <span className="text-xs text-slate-500">
+                                        <span className="text-xs text-muted-foreground">
                                             {formatDistanceToNow(new Date(note.createdAt), { addSuffix: true })}
                                         </span>
                                     </div>
 
                                     {/* Message content */}
-                                    <p className="text-sm text-slate-200 whitespace-pre-wrap leading-relaxed">
+                                    <p className="text-sm text-foreground whitespace-pre-wrap leading-relaxed">
                                         {note.commentText}
                                     </p>
                                 </div>

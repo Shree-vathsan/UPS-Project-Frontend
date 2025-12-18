@@ -22,7 +22,10 @@ export default function FileView() {
     const { fileId } = useParams<{ fileId: string }>();
     const [searchParams] = useSearchParams();
     const { theme } = useTheme();
-    const [activeTab, setActiveTab] = useState<'code' | 'analysis' | 'notes'>('code');
+
+    // Get tab from URL params (default to 'code')
+    const tabParam = searchParams.get('tab') as 'code' | 'analysis' | 'notes' | null;
+    const [activeTab, setActiveTab] = useState<'code' | 'analysis' | 'notes'>(tabParam || 'code');
     const [currentCommitSha, setCurrentCommitSha] = useState<string | null>(null);
 
     // Get branch from URL params
@@ -35,6 +38,7 @@ export default function FileView() {
     const { data: contentData, isLoading: contentLoading } = useFileContent(fileId, currentCommitSha || undefined, branch);
 
     const content = contentData?.content || '';
+    const totalLinesCount = content ? content.split('\n').length : 0;
     const loading = fileLoading || contentLoading;
     const error = fileError?.message || '';
 
@@ -257,7 +261,7 @@ export default function FileView() {
                         </div>
 
                         <div className="pl-2 overflow-auto">
-                            <PersonalNotesPanel fileId={fileId!} repositoryId={file?.repositoryId} />
+                            <PersonalNotesPanel fileId={fileId!} repositoryId={file?.repositoryId} totalLines={totalLinesCount} />
                         </div>
                     </Split>
                 </TabsContent>

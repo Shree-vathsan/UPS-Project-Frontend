@@ -59,7 +59,7 @@ export function NotesTab({ fileId, file }: NotesTabProps) {
 
     if (!repositoryId) {
         return (
-            <div className="p-8 text-center text-slate-400">
+            <div className="p-8 text-center text-muted-foreground">
                 <p>Unable to load notes - repository ID not found</p>
                 <p className="text-xs mt-2">Please refresh the page</p>
             </div>
@@ -126,28 +126,36 @@ function StickyNotesSection({ fileId, repositoryId, userId }: { fileId: string; 
     };
 
     return (
-        <Card className="bg-gradient-to-br from-slate-900/50 to-slate-800/50 border-slate-700/50">
-            <CardHeader className="pb-4">
-                <CardTitle className="flex items-center gap-2 text-lg text-white">
-                    <StickyNote className="h-5 w-5 text-yellow-400" />
+        <Card className="bg-card border rounded-lg shadow-sm">
+            <CardHeader className="pb-4 bg-muted/50 border-b">
+                <CardTitle className="flex items-center gap-2 text-lg text-card-foreground">
+                    <div className="p-1.5 rounded-lg bg-primary/10">
+                        <StickyNote className="h-5 w-5 text-primary" />
+                    </div>
                     Sticky Notes
                 </CardTitle>
             </CardHeader>
-            <CardContent className="space-y-4">
+            <CardContent className="space-y-4 p-4">
                 {/* Create Note Form */}
                 <div className="space-y-3">
                     <Textarea
-                        placeholder="Add a note about this file..."
+                        placeholder="Add a note about this file... (Enter to save, Shift+Enter for new line)"
                         value={newNote}
                         onChange={(e) => setNewNote(e.target.value)}
-                        className="min-h-[80px] bg-slate-800/50 border-slate-600/50 text-white placeholder:text-slate-400"
+                        onKeyDown={(e) => {
+                            if (e.key === 'Enter' && !e.shiftKey) {
+                                e.preventDefault();
+                                handleCreateNote();
+                            }
+                        }}
+                        className="min-h-[80px] bg-background border text-foreground placeholder:text-muted-foreground"
                     />
                     <div className="flex gap-2">
                         <Button
                             onClick={handleCreateNote}
                             disabled={!newNote.trim() || createNote.isPending}
                             size="sm"
-                            className="bg-yellow-500 hover:bg-yellow-600 text-black"
+                            className="bg-primary hover:bg-primary/90 text-primary-foreground"
                         >
                             <StickyNote className="h-4 w-4 mr-1" />
                             Add Note
@@ -164,7 +172,7 @@ function StickyNotesSection({ fileId, repositoryId, userId }: { fileId: string; 
                             disabled={uploadDocument.isPending}
                             size="sm"
                             variant="outline"
-                            className="border-slate-600 text-slate-300 hover:bg-slate-700"
+                            className="border text-foreground hover:bg-muted"
                         >
                             <Upload className="h-4 w-4 mr-1" />
                             Upload Document
@@ -175,20 +183,20 @@ function StickyNotesSection({ fileId, repositoryId, userId }: { fileId: string; 
                 {/* Notes List */}
                 <div className="space-y-3 max-h-[400px] overflow-y-auto">
                     {isLoading ? (
-                        <div className="text-center py-4 text-slate-400">Loading notes...</div>
+                        <div className="text-center py-4 text-muted-foreground">Loading notes...</div>
                     ) : (notes as StickyNoteData[] || []).length === 0 ? (
-                        <div className="text-center py-4 text-slate-400">No notes yet. Add the first one!</div>
+                        <div className="text-center py-4 text-muted-foreground">No notes yet. Add the first one!</div>
                     ) : (
                         (notes as StickyNoteData[] || []).map((note) => (
-                            <div key={note.id} className="p-3 rounded-lg bg-slate-800/50 border border-slate-700/50">
+                            <div key={note.id} className="p-3 rounded-lg bg-muted/30 border group">
                                 <div className="flex items-start justify-between gap-2">
-                                    <div className="flex items-center gap-2 text-sm text-slate-400">
+                                    <div className="flex items-center gap-2 text-sm text-muted-foreground">
                                         {note.createdByAvatarUrl ? (
                                             <img src={note.createdByAvatarUrl} alt="" className="h-5 w-5 rounded-full" />
                                         ) : (
                                             <User className="h-4 w-4" />
                                         )}
-                                        <span className="font-medium text-slate-300">{note.createdByUsername}</span>
+                                        <span className="font-medium text-foreground">{note.createdByUsername}</span>
                                         <span>•</span>
                                         <span>{formatDistanceToNow(new Date(note.createdAt), { addSuffix: true })}</span>
                                     </div>
@@ -197,7 +205,7 @@ function StickyNotesSection({ fileId, repositoryId, userId }: { fileId: string; 
                                             variant="ghost"
                                             size="sm"
                                             onClick={() => handleDeleteNote(note.id)}
-                                            className="h-6 w-6 p-0 text-slate-400 hover:text-red-400"
+                                            className="h-6 w-6 p-0 text-muted-foreground hover:text-destructive opacity-0 group-hover:opacity-100 transition-opacity"
                                         >
                                             <Trash2 className="h-3 w-3" />
                                         </Button>
@@ -205,21 +213,21 @@ function StickyNotesSection({ fileId, repositoryId, userId }: { fileId: string; 
                                 </div>
 
                                 {note.noteType === 'text' ? (
-                                    <p className="mt-2 text-sm text-slate-200 whitespace-pre-wrap">{note.content}</p>
+                                    <p className="mt-2 text-sm text-foreground whitespace-pre-wrap">{note.content}</p>
                                 ) : (
-                                    <div className="mt-2 flex items-center gap-2 p-2 rounded bg-slate-700/50">
-                                        <FileText className="h-5 w-5 text-blue-400" />
+                                    <div className="mt-2 flex items-center gap-2 p-2 rounded bg-muted/50">
+                                        <FileText className="h-5 w-5 text-accent" />
                                         <div className="flex-1 min-w-0">
-                                            <p className="text-sm text-slate-200 truncate">{note.documentName}</p>
-                                            <p className="text-xs text-slate-400">{formatFileSize(note.documentSize)}</p>
+                                            <p className="text-sm text-foreground truncate">{note.documentName}</p>
+                                            <p className="text-xs text-muted-foreground">{formatFileSize(note.documentSize)}</p>
                                         </div>
                                         <a
                                             href={note.documentUrl}
                                             target="_blank"
                                             rel="noopener noreferrer"
-                                            className="p-1 rounded hover:bg-slate-600"
+                                            className="p-1 rounded hover:bg-muted"
                                         >
-                                            <Download className="h-4 w-4 text-blue-400" />
+                                            <Download className="h-4 w-4 text-accent" />
                                         </a>
                                     </div>
                                 )}
@@ -241,6 +249,7 @@ function DiscussionSection({ fileId, repositoryId, userId }: { fileId: string; r
     const [showMentionDropdown, setShowMentionDropdown] = useState(false);
     const [mentionSearch, setMentionSearch] = useState('');
     const [mentionPosition, setMentionPosition] = useState({ top: 0, left: 0 });
+    const [selectedMentionIndex, setSelectedMentionIndex] = useState(0);
     const textareaRef = useRef<HTMLTextAreaElement>(null);
 
     const { data: thread, isLoading } = useFileDiscussion(fileId);
@@ -262,6 +271,7 @@ function DiscussionSection({ fileId, repositoryId, userId }: { fileId: string; r
         if (atMatch && atMatch[1] !== undefined) {
             setMentionSearch(atMatch[1]);
             setShowMentionDropdown(true);
+            setSelectedMentionIndex(0); // Reset selection when search changes
 
             // Calculate dropdown position
             const textarea = e.target;
@@ -269,6 +279,7 @@ function DiscussionSection({ fileId, repositoryId, userId }: { fileId: string; r
             setMentionPosition({ top: coordinates.top + 20, left: coordinates.left });
         } else {
             setShowMentionDropdown(false);
+            setSelectedMentionIndex(0);
         }
     };
 
@@ -282,9 +293,16 @@ function DiscussionSection({ fileId, repositoryId, userId }: { fileId: string; r
 
         setNewMessage(newText);
         setShowMentionDropdown(false);
+        setSelectedMentionIndex(0);
 
-        // Focus back on textarea
-        setTimeout(() => textareaRef.current?.focus(), 0);
+        // Focus back on textarea and position cursor after the mention
+        setTimeout(() => {
+            if (textareaRef.current) {
+                textareaRef.current.focus();
+                const newCursorPos = textBeforeCursor.substring(0, atIndex).length + username.length + 2; // +2 for @ and space
+                textareaRef.current.setSelectionRange(newCursorPos, newCursorPos);
+            }
+        }, 0);
     };
 
     const filteredUsers = users.filter(u =>
@@ -310,37 +328,39 @@ function DiscussionSection({ fileId, repositoryId, userId }: { fileId: string; r
     const threadData = thread as DiscussionThread | null;
 
     return (
-        <Card className="bg-gradient-to-br from-slate-900/50 to-slate-800/50 border-slate-700/50">
-            <CardHeader className="pb-4">
-                <CardTitle className="flex items-center gap-2 text-lg text-white">
-                    <MessageSquare className="h-5 w-5 text-blue-400" />
+        <Card className="bg-card border rounded-lg shadow-sm">
+            <CardHeader className="pb-4 bg-muted/50 border-b">
+                <CardTitle className="flex items-center gap-2 text-lg text-card-foreground">
+                    <div className="p-1.5 rounded-lg bg-accent/10">
+                        <MessageSquare className="h-5 w-5 text-accent" />
+                    </div>
                     Discussion
-                    <span className="text-sm font-normal text-slate-400">
+                    <span className="text-sm font-normal text-muted-foreground">
                         ({(threadData?.messages || []).length} messages)
                     </span>
                 </CardTitle>
             </CardHeader>
-            <CardContent className="space-y-4">
+            <CardContent className="space-y-4 p-4">
                 {/* Messages List */}
                 <div className="space-y-3 max-h-[300px] overflow-y-auto">
                     {isLoading ? (
-                        <div className="text-center py-4 text-slate-400">Loading discussion...</div>
+                        <div className="text-center py-4 text-muted-foreground">Loading discussion...</div>
                     ) : (threadData?.messages || []).length === 0 ? (
-                        <div className="text-center py-4 text-slate-400">
+                        <div className="text-center py-4 text-muted-foreground">
                             No discussion yet. Start the conversation!
                             <p className="text-xs mt-1">Use @username to mention someone, #L42 to reference a line</p>
                         </div>
                     ) : (
                         (threadData?.messages || []).map((msg) => (
-                            <div key={msg.id} className="p-3 rounded-lg bg-slate-800/50 border border-slate-700/50">
+                            <div key={msg.id} className="p-3 rounded-lg bg-muted/30 border group">
                                 <div className="flex items-start justify-between gap-2">
-                                    <div className="flex items-center gap-2 text-sm text-slate-400">
+                                    <div className="flex items-center gap-2 text-sm text-muted-foreground">
                                         {msg.avatarUrl ? (
                                             <img src={msg.avatarUrl} alt="" className="h-5 w-5 rounded-full" />
                                         ) : (
                                             <User className="h-4 w-4" />
                                         )}
-                                        <span className="font-medium text-slate-300">{msg.username}</span>
+                                        <span className="font-medium text-foreground">{msg.username}</span>
                                         <span>•</span>
                                         <span>{formatDistanceToNow(new Date(msg.createdAt), { addSuffix: true })}</span>
                                     </div>
@@ -349,17 +369,17 @@ function DiscussionSection({ fileId, repositoryId, userId }: { fileId: string; r
                                             variant="ghost"
                                             size="sm"
                                             onClick={() => handleDeleteMessage(msg.id)}
-                                            className="h-6 w-6 p-0 text-slate-400 hover:text-red-400"
+                                            className="h-6 w-6 p-0 text-muted-foreground hover:text-destructive opacity-0 group-hover:opacity-100 transition-opacity"
                                         >
                                             <Trash2 className="h-3 w-3" />
                                         </Button>
                                     )}
                                 </div>
-                                <p className="mt-2 text-sm text-slate-200 whitespace-pre-wrap">{msg.message}</p>
+                                <p className="mt-2 text-sm text-foreground whitespace-pre-wrap">{msg.message}</p>
                                 {msg.referencedLineNumbers && msg.referencedLineNumbers.length > 0 && (
                                     <div className="mt-2 flex flex-wrap gap-1">
                                         {msg.referencedLineNumbers.map((line) => (
-                                            <span key={line} className="px-2 py-0.5 text-xs rounded bg-blue-500/20 text-blue-300">
+                                            <span key={line} className="px-2 py-0.5 text-xs rounded bg-accent/20 text-accent">
                                                 Line {line}
                                             </span>
                                         ))}
@@ -371,33 +391,68 @@ function DiscussionSection({ fileId, repositoryId, userId }: { fileId: string; r
                 </div>
 
                 {/* Post Message Form */}
-                <div className="relative space-y-3 pt-3 border-t border-slate-700/50">
+                <div className="relative space-y-3 pt-3 border-t">
                     <Textarea
                         ref={textareaRef}
-                        placeholder="Write a message... Use @username to mention, #L42 to reference lines"
+                        placeholder="Write a message... (Enter to send, Shift+Enter for new line)"
                         value={newMessage}
                         onChange={handleMessageChange}
-                        className="min-h-[60px] bg-slate-800/50 border-slate-600/50 text-white placeholder:text-slate-400"
+                        onKeyDown={(e) => {
+                            // Handle mention dropdown navigation when it's visible with users
+                            if (showMentionDropdown && filteredUsers.length > 0) {
+                                if (e.key === 'ArrowDown') {
+                                    e.preventDefault();
+                                    setSelectedMentionIndex(prev =>
+                                        prev < filteredUsers.length - 1 ? prev + 1 : 0
+                                    );
+                                    return;
+                                } else if (e.key === 'ArrowUp') {
+                                    e.preventDefault();
+                                    setSelectedMentionIndex(prev =>
+                                        prev > 0 ? prev - 1 : filteredUsers.length - 1
+                                    );
+                                    return;
+                                } else if (e.key === 'Enter' && !e.shiftKey) {
+                                    e.preventDefault();
+                                    insertMention(filteredUsers[selectedMentionIndex].username);
+                                    return;
+                                } else if (e.key === 'Escape') {
+                                    e.preventDefault();
+                                    setShowMentionDropdown(false);
+                                    setSelectedMentionIndex(0);
+                                    return;
+                                }
+                            }
+                            // Send message on Enter (when dropdown is not active)
+                            if (e.key === 'Enter' && !e.shiftKey) {
+                                e.preventDefault();
+                                handlePostMessage();
+                            }
+                        }}
+                        className="min-h-[60px] bg-background border text-foreground placeholder:text-muted-foreground"
                     />
 
                     {/* @Mention Dropdown */}
                     {showMentionDropdown && filteredUsers.length > 0 && (
                         <div
-                            className="absolute z-50 bg-slate-800 border border-slate-600 rounded-lg shadow-xl max-h-48 overflow-y-auto"
+                            className="absolute z-50 bg-card border rounded-lg shadow-xl max-h-48 overflow-y-auto"
                             style={{ top: `${mentionPosition.top}px`, left: `${mentionPosition.left}px` }}
                         >
-                            {filteredUsers.map((user) => (
+                            {filteredUsers.map((user, index) => (
                                 <button
                                     key={user.id}
                                     onClick={() => insertMention(user.username)}
-                                    className="w-full px-3 py-2 text-left hover:bg-slate-700 flex items-center gap-2 text-sm transition-colors"
+                                    className={`w-full px-3 py-2 text-left flex items-center gap-2 text-sm transition-colors ${index === selectedMentionIndex
+                                        ? 'bg-accent/20 text-accent'
+                                        : 'hover:bg-muted text-foreground'
+                                        }`}
                                 >
                                     {user.avatarUrl ? (
                                         <img src={user.avatarUrl} alt="" className="h-6 w-6 rounded-full" />
                                     ) : (
-                                        <User className="h-5 w-5 text-slate-400" />
+                                        <User className="h-5 w-5 text-muted-foreground" />
                                     )}
-                                    <span className="text-slate-200">{user.username}</span>
+                                    <span>{user.username}</span>
                                 </button>
                             ))}
                         </div>
@@ -407,7 +462,7 @@ function DiscussionSection({ fileId, repositoryId, userId }: { fileId: string; r
                         onClick={handlePostMessage}
                         disabled={!newMessage.trim() || postMessage.isPending}
                         size="sm"
-                        className="bg-blue-500 hover:bg-blue-600"
+                        className="bg-accent hover:bg-accent/90 text-accent-foreground"
                     >
                         <MessageSquare className="h-4 w-4 mr-1" />
                         Post Message
