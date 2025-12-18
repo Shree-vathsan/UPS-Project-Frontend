@@ -1,6 +1,7 @@
-import { useState } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Package, BarChart, Plus, Loader, RefreshCw, AlertTriangle, Search, Info, ChevronDown, ChevronUp } from 'lucide-react';
+import { formatDistanceToNow } from 'date-fns';
 import { api } from '../utils/api';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -77,6 +78,29 @@ export default function Dashboard({ user, token }: DashboardProps) {
     const [addingRepo, setAddingRepo] = useState(false);
     const [addError, setAddError] = useState<string>('');
     const [addSuccess, setAddSuccess] = useState<string>('');
+
+    // Sub-tab state for Add Repository section
+    const [addSubTab, setAddSubTab] = useState<'url' | 'find'>('url');
+
+    // Find Repository state
+    const [findFilters, setFindFilters] = useState({
+        language: 'TypeScript',
+        stars: 10,
+        forks: 0,
+        watchers: 0,
+        hasGoodFirstIssues: false,
+        pushedAfter: '',
+        excludeForks: true,
+        excludeArchived: true
+    });
+    const [findRepositories, setFindRepositories] = useState<any[]>([]);
+    const [findLoading, setFindLoading] = useState(false);
+    const [findError, setFindError] = useState<string>('');
+    const [findResultsPerPage, setFindResultsPerPage] = useState(10);
+    const [findSortBy, setFindSortBy] = useState<'stars' | 'forks' | 'updated' | 'watchers'>('stars');
+    const [lastFetchedCount, setLastFetchedCount] = useState(0);
+    const [findCurrentPage, setFindCurrentPage] = useState(1);
+    const [findItemsPerPage] = useState(10);
 
     // Cache invalidation helper
     const { invalidateAll } = useInvalidateRepositories();
@@ -217,6 +241,110 @@ export default function Dashboard({ user, token }: DashboardProps) {
         } finally {
             setAddingRepo(false);
         }
+    };
+
+    // GitHub Repository Search Handler
+    const buildGitHubQuery = useCallback(() => {
+        const parts: string[] = [];
+
+        if (findFilters.language) {
+            parts.push(`language:${findFilters.language}`);
+        }
+        if (findFilters.stars > 0) {
+            parts.push(`stars:>${findFilters.stars}`);
+        }
+        if (findFilters.forks > 0) {
+            parts.push(`forks:>${findFilters.forks}`);
+        }
+        if (findFilters.watchers > 0) {
+            parts.push(`watchers:>${findFilters.watchers}`);
+        }
+        if (findFilters.hasGoodFirstIssues) {
+            parts.push(`good-first-issues:>0`);
+        }
+        if (findFilters.pushedAfter && findFilters.pushedAfter.trim()) {
+            parts.push(`pushed:>${findFilters.pushedAfter}`);
+        }
+        if (findFilters.excludeForks) {
+            parts.push(`fork:false`);
+        }
+        if (findFilters.excludeArchived) {
+            parts.push(`archived:false`);
+        }
+
+        return parts.join(' ');
+    }, [findFilters]);
+
+    const handleSearchRepositories = async () => {
+        setFindLoading(true);
+        setFindError('');
+        setFindCurrentPage(1); // Reset to first page on new search
+        try {
+            const query = buildGitHubQuery();
+            const githubToken = token; // Use the token from props (localStorage)
+            const url = `https://api.github.com/search/repositories?q=${encodeURIComponent(query)}&per_page=${findResultsPerPage}&sort=stars&order=desc`;
+
+            // DEBUG: Log the query and URL
+            console.log('🔍 Search Query:', query);
+            console.log('🔗 Full URL:', url);
+            console.log('🔑 Has Token:', !!githubToken);
+
+            const response = await fetch(url, {
+                headers: {
+                    'Accept': 'application/vnd.github.v3+json',
+                    ...(githubToken && { 'Authorization': `Bearer ${githubToken}` })
+                }
+            });
+
+            console.log('📡 Response Status:', response.status);
+
+            if (!response.ok) {
+                if (response.status === 403) {
+                    throw new Error('GitHub API rate limit exceeded. Please try again later.');
+                }
+                throw new Error(`GitHub API error: ${response.statusText}`);
+            }
+
+            const data = await response.json();
+            console.log('📊 Response Data:', data);
+            console.log('📦 Items Count:', data.items?.length || 0);
+            console.log('🔢 Total Count:', data.total_count);
+
+            setFindRepositories(data.items || []);
+            setLastFetchedCount(findResultsPerPage);
+        } catch (error: any) {
+            console.error('❌ Failed to search repositories:', error);
+            setFindError(error.message || 'Failed to search repositories');
+        } finally {
+            setFindLoading(false);
+        }
+    };
+
+    const getSortedRepositories = () => {
+        const sorted = [...findRepositories];
+
+        let sortedArray;
+        switch (findSortBy) {
+            case 'stars':
+                sortedArray = sorted.sort((a, b) => b.stargazers_count - a.stargazers_count);
+                break;
+            case 'forks':
+                sortedArray = sorted.sort((a, b) => b.forks_count - a.forks_count);
+                break;
+            case 'watchers':
+                sortedArray = sorted.sort((a, b) => b.watchers_count - a.watchers_count);
+                break;
+            case 'updated':
+                sortedArray = sorted.sort((a, b) => new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime());
+                break;
+            default:
+                sortedArray = sorted;
+        }
+
+        // Paginate the sorted results
+        const startIndex = (findCurrentPage - 1) * findItemsPerPage;
+        const endIndex = startIndex + findItemsPerPage;
+        return sortedArray.slice(startIndex, endIndex);
     };
 
     return (
@@ -690,79 +818,349 @@ export default function Dashboard({ user, token }: DashboardProps) {
 
                 {/* Add Repository Tab */}
                 <TabsContent value="add" className="mt-6">
-                    <div className="max-w-2xl mx-auto">
-                        <Card>
-                            <CardHeader className="text-center">
-                                <Plus className="h-12 w-12 mx-auto mb-4 text-primary" />
-                                <CardTitle>Add Repository to Analyze</CardTitle>
-                                <CardDescription>
-                                    Add any public GitHub repository to analyze, even if the owner hasn't logged in to this platform.
-                                </CardDescription>
-                            </CardHeader>
-                            <CardContent className="space-y-4">
-                                <div>
-                                    <label className="text-sm font-medium mb-2 block">
-                                        GitHub Repository URL
-                                    </label>
-                                    <Input
-                                        value={repoUrl}
-                                        onChange={(e) => setRepoUrl(e.target.value)}
-                                        placeholder="https://github.com/owner/repo"
-                                        onKeyPress={(e) => {
-                                            if (e.key === 'Enter' && !addingRepo) {
-                                                handleAddRepository();
-                                            }
-                                        }}
-                                    />
-                                </div>
+                    <div className="max-w-7xl mx-auto">
+                        {/* Sub-tab switcher */}
+                        <div className="flex gap-2 mb-6 max-w-md mx-auto">
+                            <Button
+                                onClick={() => setAddSubTab('url')}
+                                variant={addSubTab === 'url' ? 'default' : 'outline'}
+                                className="flex-1"
+                            >
+                                Add by URL
+                            </Button>
+                            <Button
+                                onClick={() => setAddSubTab('find')}
+                                variant={addSubTab === 'find' ? 'default' : 'outline'}
+                                className="flex-1"
+                            >
+                                <Search className="h-4 w-4 mr-2" />
+                                Find Repository
+                            </Button>
+                        </div>
 
-                                <Button
-                                    onClick={handleAddRepository}
-                                    disabled={addingRepo || !repoUrl.trim()}
-                                    className="w-full"
-                                    size="lg"
-                                >
-                                    {addingRepo ? (
-                                        <>
-                                            <Loader className="h-4 w-4 mr-2 animate-spin" />
-                                            Analyzing...
-                                        </>
-                                    ) : (
-                                        'Analyze Repository'
-                                    )}
-                                </Button>
+                        {/* Add by URL Section */}
+                        {addSubTab === 'url' && (
+                            <div className="max-w-2xl mx-auto">
+                                <Card>
+                                    <CardHeader className="text-center">
+                                        <Plus className="h-12 w-12 mx-auto mb-4 text-primary" />
+                                        <CardTitle>Add Repository to Analyze</CardTitle>
+                                        <CardDescription>
+                                            Add any public GitHub repository to analyze, even if the owner hasn't logged in to this platform.
+                                        </CardDescription>
+                                    </CardHeader>
+                                    <CardContent className="space-y-4">
+                                        <div>
+                                            <label className="text-sm font-medium mb-2 block">
+                                                GitHub Repository URL
+                                            </label>
+                                            <Input
+                                                value={repoUrl}
+                                                onChange={(e) => setRepoUrl(e.target.value)}
+                                                placeholder="https://github.com/owner/repo"
+                                                onKeyPress={(e) => {
+                                                    if (e.key === 'Enter' && !addingRepo) {
+                                                        handleAddRepository();
+                                                    }
+                                                }}
+                                            />
+                                        </div>
 
-                                {addError && (
-                                    <Alert variant="destructive">
-                                        <AlertTriangle className="h-4 w-4" />
-                                        <AlertTitle>Error</AlertTitle>
-                                        <AlertDescription>{addError}</AlertDescription>
-                                    </Alert>
+                                        <Button
+                                            onClick={handleAddRepository}
+                                            disabled={addingRepo || !repoUrl.trim()}
+                                            className="w-full"
+                                            size="lg"
+                                        >
+                                            {addingRepo ? (
+                                                <>
+                                                    <Loader className="h-4 w-4 mr-2 animate-spin" />
+                                                    Analyzing...
+                                                </>
+                                            ) : (
+                                                'Analyze Repository'
+                                            )}
+                                        </Button>
+
+                                        {addError && (
+                                            <Alert variant="destructive">
+                                                <AlertTriangle className="h-4 w-4" />
+                                                <AlertTitle>Error</AlertTitle>
+                                                <AlertDescription>{addError}</AlertDescription>
+                                            </Alert>
+                                        )}
+
+                                        {addSuccess && (
+                                            <Alert variant="success">
+                                                <AlertTitle>Success</AlertTitle>
+                                                <AlertDescription>{addSuccess}</AlertDescription>
+                                            </Alert>
+                                        )}
+
+                                        <Alert className="border-foreground/30 text-foreground [&>svg]:text-foreground">
+                                            <AlertTitle className="text-foreground">Supported URL Formats:</AlertTitle>
+                                            <AlertDescription className="text-foreground/80">
+                                                <ul className="text-xs space-y-1 list-disc list-inside mt-2">
+                                                    <li><code className="text-foreground">https://github.com/owner/repo</code></li>
+                                                    <li><code className="text-foreground">https://github.com/owner/repo.git</code></li>
+                                                    <li><code className="text-foreground">github.com/owner/repo</code></li>
+                                                    <li><code className="text-foreground">owner/repo</code></li>
+                                                </ul>
+                                            </AlertDescription>
+                                        </Alert>
+                                    </CardContent>
+                                </Card>
+                            </div>
+                        )}
+
+                        {/* Find Repository Section */}
+                        {addSubTab === 'find' && (
+                            <div className="space-y-6">
+                                <Card>
+                                    <CardHeader>
+                                        <CardTitle>Search GitHub Repositories</CardTitle>
+                                        <CardDescription>
+                                            Find repositories using filters and add them for analysis
+                                        </CardDescription>
+                                    </CardHeader>
+                                    <CardContent className="space-y-6">
+                                        {/* Filters */}
+                                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                                            {/* Language */}
+                                            <div>
+                                                <label className="text-sm font-medium mb-2 block">Programming Language</label>
+                                                <select
+                                                    value={findFilters.language}
+                                                    onChange={(e) => setFindFilters(prev => ({ ...prev, language: e.target.value }))}
+                                                    className="w-full px-3 py-2 text-sm border border-border rounded-md bg-background text-foreground"
+                                                >
+                                                    <option value="">All Languages</option>
+                                                    <option value="TypeScript">TypeScript</option>
+                                                    <option value="JavaScript">JavaScript</option>
+                                                    <option value="Python">Python</option>
+                                                    <option value="Java">Java</option>
+                                                    <option value="Go">Go</option>
+                                                    <option value="Rust">Rust</option>
+                                                    <option value="C++">C++</option>
+                                                    <option value="C#">C#</option>
+                                                    <option value="Ruby">Ruby</option>
+                                                    <option value="PHP">PHP</option>
+                                                </select>
+                                            </div>
+
+                                            {/* Stars */}
+                                            <div>
+                                                <label className="text-sm font-medium mb-2 block">Minimum Stars</label>
+                                                <Input
+                                                    type="number"
+                                                    min="0"
+                                                    value={findFilters.stars}
+                                                    onChange={(e) => setFindFilters(prev => ({ ...prev, stars: parseInt(e.target.value) || 0 }))}
+                                                    placeholder="e.g., 200"
+                                                />
+                                            </div>
+
+                                            {/* Forks */}
+                                            <div>
+                                                <label className="text-sm font-medium mb-2 block">Minimum Forks</label>
+                                                <Input
+                                                    type="number"
+                                                    min="0"
+                                                    value={findFilters.forks}
+                                                    onChange={(e) => setFindFilters(prev => ({ ...prev, forks: parseInt(e.target.value) || 0 }))}
+                                                    placeholder="e.g., 30"
+                                                />
+                                            </div>
+
+                                            {/* Watchers */}
+                                            <div>
+                                                <label className="text-sm font-medium mb-2 block">Minimum Watchers</label>
+                                                <Input
+                                                    type="number"
+                                                    min="0"
+                                                    value={findFilters.watchers}
+                                                    onChange={(e) => setFindFilters(prev => ({ ...prev, watchers: parseInt(e.target.value) || 0 }))}
+                                                    placeholder="e.g., 20"
+                                                />
+                                            </div>
+
+                                            {/* Last Updated */}
+                                            <div>
+                                                <label className="text-sm font-medium mb-2 block">Last Updated After</label>
+                                                <Input
+                                                    type="date"
+                                                    value={findFilters.pushedAfter}
+                                                    onChange={(e) => setFindFilters(prev => ({ ...prev, pushedAfter: e.target.value }))}
+                                                />
+                                            </div>
+                                        </div>
+
+                                        {/* Checkboxes */}
+                                        <div className="space-y-2">
+                                            <label className="flex items-center gap-2 cursor-pointer">
+                                                <input
+                                                    type="checkbox"
+                                                    checked={findFilters.hasGoodFirstIssues}
+                                                    onChange={(e) => setFindFilters(prev => ({ ...prev, hasGoodFirstIssues: e.target.checked }))}
+                                                    className="w-4 h-4"
+                                                />
+                                                <span className="text-sm">Has Good First Issues (Contribution Friendly)</span>
+                                            </label>
+                                            <label className="flex items-center gap-2 cursor-pointer">
+                                                <input
+                                                    type="checkbox"
+                                                    checked={findFilters.excludeForks}
+                                                    onChange={(e) => setFindFilters(prev => ({ ...prev, excludeForks: e.target.checked }))}
+                                                    className="w-4 h-4"
+                                                />
+                                                <span className="text-sm">Exclude Forks</span>
+                                            </label>
+                                            <label className="flex items-center gap-2 cursor-pointer">
+                                                <input
+                                                    type="checkbox"
+                                                    checked={findFilters.excludeArchived}
+                                                    onChange={(e) => setFindFilters(prev => ({ ...prev, excludeArchived: e.target.checked }))}
+                                                    className="w-4 h-4"
+                                                />
+                                                <span className="text-sm">Exclude Archived</span>
+                                            </label>
+                                        </div>
+
+                                        {/* Results per fetch & Sort */}
+                                        <div className="flex gap-4 items-end">
+                                            <div className="flex-1">
+                                                <label className="text-sm font-medium mb-2 block">Results per Fetch</label>
+                                                <select
+                                                    value={findResultsPerPage}
+                                                    onChange={(e) => setFindResultsPerPage(parseInt(e.target.value))}
+                                                    className="w-full px-3 py-2 text-sm border border-border rounded-md bg-background text-foreground"
+                                                >
+                                                    <option value="10">10</option>
+                                                    <option value="20">20</option>
+                                                    <option value="30">30</option>
+                                                    <option value="40">40</option>
+                                                    <option value="50">50</option>
+                                                </select>
+                                            </div>
+                                            <div className="flex-1">
+                                                <label className="text-sm font-medium mb-2 block">Sort By</label>
+                                                <select
+                                                    value={findSortBy}
+                                                    onChange={(e) => setFindSortBy(e.target.value as any)}
+                                                    className="w-full px-3 py-2 text-sm border border-border rounded-md bg-background text-foreground"
+                                                >
+                                                    <option value="stars">Stars (High → Low)</option>
+                                                    <option value="forks">Forks (High → Low)</option>
+                                                    <option value="updated">Recently Updated</option>
+                                                    <option value="watchers">Watchers (High → Low)</option>
+                                                </select>
+                                            </div>
+                                            <Button onClick={handleSearchRepositories} disabled={findLoading} size="lg">
+                                                {findLoading ? (
+                                                    <>
+                                                        <Loader className="h-4 w-4 mr-2 animate-spin" />
+                                                        Searching...
+                                                    </>
+                                                ) : (
+                                                    <>
+                                                        <Search className="h-4 w-4 mr-2" />
+                                                        Search
+                                                    </>
+                                                )}
+                                            </Button>
+                                        </div>
+
+                                        {/* Error Display */}
+                                        {findError && (
+                                            <Alert variant="destructive">
+                                                <AlertTriangle className="h-4 w-4" />
+                                                <AlertTitle>Error</AlertTitle>
+                                                <AlertDescription>{findError}</AlertDescription>
+                                            </Alert>
+                                        )}
+                                    </CardContent>
+                                </Card>
+
+                                {/* Results */}
+                                {findRepositories.length > 0 && (
+                                    <div className="space-y-4">
+                                        <div className="flex items-center justify-between">
+                                            <h3 className="font-heading text-xl font-semibold">
+                                                Found {findRepositories.length} repositories
+                                            </h3>
+                                        </div>
+
+                                        <div className="grid gap-4">
+                                            {getSortedRepositories().map((repo: any) => (
+                                                <Card key={repo.id} className="hover-lift cursor-pointer" onClick={() => window.open(repo.html_url, '_blank')}>
+                                                    <CardHeader>
+                                                        <div className="flex items-start justify-between gap-4">
+                                                            <div className="flex-1 space-y-2">
+                                                                <CardTitle className="text-lg">
+                                                                    {repo.full_name}
+                                                                </CardTitle>
+                                                                <CardDescription>
+                                                                    {repo.description || 'No description'}
+                                                                </CardDescription>
+                                                                <div className="flex flex-wrap gap-4 text-sm text-muted-foreground">
+                                                                    {repo.language && (
+                                                                        <div className="flex items-center gap-1">
+                                                                            <div className="w-3 h-3 rounded-full bg-primary"></div>
+                                                                            <span>{repo.language}</span>
+                                                                        </div>
+                                                                    )}
+                                                                    <div className="flex items-center gap-1">
+                                                                        ⭐ {repo.stargazers_count.toLocaleString()}
+                                                                    </div>
+                                                                    <div className="flex items-center gap-1">
+                                                                        🍴 {repo.forks_count.toLocaleString()}
+                                                                    </div>
+                                                                    <div className="flex items-center gap-1">
+                                                                        👁️ {repo.watchers_count.toLocaleString()}
+                                                                    </div>
+                                                                    <div className="flex items-center gap-1">
+                                                                        <span className="font-medium">Open Issues:</span> {repo.open_issues_count.toLocaleString()}
+                                                                    </div>
+                                                                    <div className="flex items-center gap-1">
+                                                                        🕒 Updated {formatDistanceToNow(new Date(repo.updated_at))} ago
+                                                                    </div>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                    </CardHeader>
+                                                </Card>
+                                            ))}
+                                        </div>
+
+                                        {/* Pagination */}
+                                        {findRepositories.length > findItemsPerPage && (
+                                            <Pagination
+                                                currentPage={findCurrentPage}
+                                                onPageChange={setFindCurrentPage}
+                                                totalPages={Math.ceil(findRepositories.length / findItemsPerPage)}
+                                                disabled={findLoading}
+                                            />
+                                        )}
+                                    </div>
                                 )}
 
-                                {addSuccess && (
-                                    <Alert variant="success">
-                                        <AlertTitle>Success</AlertTitle>
-                                        <AlertDescription>{addSuccess}</AlertDescription>
-                                    </Alert>
+                                {/* Empty State */}
+                                {!findLoading && findRepositories.length === 0 && !findError && (
+                                    <Card>
+                                        <CardContent className="py-12 text-center">
+                                            <Search className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
+                                            <h3 className="font-heading text-lg font-semibold mb-2">No repositories found</h3>
+                                            <p className="text-muted-foreground text-sm">
+                                                Adjust your filters and click Search to find repositories
+                                            </p>
+                                        </CardContent>
+                                    </Card>
                                 )}
-
-                                <Alert className="border-foreground/30 text-foreground [&>svg]:text-foreground">
-                                    <AlertTitle className="text-foreground">Supported URL Formats:</AlertTitle>
-                                    <AlertDescription className="text-foreground/80">
-                                        <ul className="text-xs space-y-1 list-disc list-inside mt-2">
-                                            <li><code className="text-foreground">https://github.com/owner/repo</code></li>
-                                            <li><code className="text-foreground">https://github.com/owner/repo.git</code></li>
-                                            <li><code className="text-foreground">github.com/owner/repo</code></li>
-                                            <li><code className="text-foreground">owner/repo</code></li>
-                                        </ul>
-                                    </AlertDescription>
-                                </Alert>
-                            </CardContent>
-                        </Card>
+                            </div>
+                        )}
                     </div>
                 </TabsContent>
             </Tabs>
-        </div>
+        </div >
     );
 }
