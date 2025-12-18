@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useParams, useSearchParams } from 'react-router-dom';
-import { Code, BarChart, FileText, ChevronLeft, ChevronRight, Clock, MessageSquare } from 'lucide-react';
+import { Code, BarChart, FileText, ChevronLeft, ChevronRight, Clock, MessageSquare, Bookmark } from 'lucide-react';
 import BackButton from '../components/BackButton';
 import FileAnalysis from '../components/FileAnalysis';
 import NotesTab from '../components/NotesTab';
@@ -16,7 +16,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import Split from 'react-split';
 import '../split.css';
-import { useFile, useFileAnalysis, useFileContent, useFileCommits } from '../hooks/useApiQueries';
+import { useFile, useFileAnalysis, useFileContent, useFileCommits, useTrackFileView, useIsBookmarked, useAddBookmark, useRemoveBookmark } from '../hooks/useApiQueries';
 
 export default function FileView() {
     const { fileId } = useParams<{ fileId: string }>();
@@ -42,6 +42,17 @@ export default function FileView() {
     const loading = fileLoading || contentLoading;
     const error = fileError?.message || '';
 
+    // Get user from localStorage
+    const storedUser = localStorage.getItem('user');
+    const userId = storedUser ? JSON.parse(storedUser).id : undefined;
+
+    // Dashboard tracking hooks
+    const trackFileView = useTrackFileView();
+    const { data: bookmarkData } = useIsBookmarked(userId, fileId);
+    const addBookmark = useAddBookmark();
+    const removeBookmark = useRemoveBookmark();
+    const isBookmarked = bookmarkData?.isBookmarked || false;
+
     // Set initial commit sha from content response or history
     useEffect(() => {
         if (contentData?.commitSha && !currentCommitSha) {
@@ -50,6 +61,14 @@ export default function FileView() {
             setCurrentCommitSha(commitHistory[0].sha);
         }
     }, [contentData, commitHistory, currentCommitSha]);
+
+    // Track file view when component mounts
+    useEffect(() => {
+        if (userId && fileId) {
+            trackFileView.mutate({ userId, fileId });
+        }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [userId, fileId]);
 
     // Determine if current theme is light (includes black-beige which has light background)
     const isLightTheme = theme === 'light' || theme === 'light-pallete' || theme === 'black-beige';
@@ -134,9 +153,27 @@ export default function FileView() {
             <div className="mb-8">
                 <div className="flex items-start justify-between mb-3">
                     <div className="flex-1">
-                        <h1 className="font-heading text-3xl font-bold mb-2 font-mono">
-                            {file?.filePath || 'Unknown file'}
-                        </h1>
+                        <div className="flex items-center gap-3">
+                            <h1 className="font-heading text-3xl font-bold mb-2 font-mono">
+                                {file?.filePath || 'Unknown file'}
+                            </h1>
+                            {userId && (
+                                <Button
+                                    variant="ghost"
+                                    size="icon"
+                                    onClick={() => {
+                                        if (isBookmarked) {
+                                            removeBookmark.mutate({ userId, fileId: fileId! });
+                                        } else {
+                                            addBookmark.mutate({ userId, fileId: fileId! });
+                                        }
+                                    }}
+                                    title={isBookmarked ? 'Remove bookmark' : 'Add bookmark'}
+                                >
+                                    <Bookmark className={`h-5 w-5 ${isBookmarked ? 'fill-yellow-500 text-yellow-500' : 'text-muted-foreground'}`} />
+                                </Button>
+                            )}
+                        </div>
                         {file?.totalLines && (
                             <p className="text-muted-foreground text-sm">
                                 {file.totalLines} lines

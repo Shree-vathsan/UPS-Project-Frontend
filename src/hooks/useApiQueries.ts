@@ -36,6 +36,14 @@ export const queryKeys = {
     usersWithRepoAccess: (repositoryId: string) => ['usersWithRepoAccess', repositoryId] as const,
     notifications: (userId: string, page: number) => ['notifications', userId, page] as const,
     unreadNotificationCount: (userId: string) => ['unreadNotificationCount', userId] as const,
+    // Personalized Dashboard
+    dashboardData: (userId: string) => ['dashboardData', userId] as const,
+    recentFiles: (userId: string) => ['recentFiles', userId] as const,
+    bookmarks: (userId: string) => ['bookmarks', userId] as const,
+    isBookmarked: (userId: string, fileId: string) => ['isBookmarked', userId, fileId] as const,
+    teamActivity: (userId: string) => ['teamActivity', userId] as const,
+    quickStats: (userId: string) => ['quickStats', userId] as const,
+    pendingReviews: (userId: string) => ['pendingReviews', userId] as const,
 };
 
 // API base URL
@@ -698,5 +706,106 @@ export function useDeleteLineComment() {
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['lineComments'] });
         },
+    });
+}
+
+// ==================== Personalized Dashboard Hooks ====================
+
+export function useDashboardData(userId: string | undefined) {
+    return useQuery({
+        queryKey: queryKeys.dashboardData(userId || ''),
+        queryFn: () => api.getDashboardData(userId!),
+        enabled: !!userId,
+        staleTime: 30 * 1000, // 30 seconds
+    });
+}
+
+export function useRecentFiles(userId: string | undefined) {
+    return useQuery({
+        queryKey: queryKeys.recentFiles(userId || ''),
+        queryFn: () => api.getRecentFiles(userId!),
+        enabled: !!userId,
+        staleTime: 30 * 1000,
+    });
+}
+
+export function useBookmarks(userId: string | undefined) {
+    return useQuery({
+        queryKey: queryKeys.bookmarks(userId || ''),
+        queryFn: () => api.getBookmarks(userId!),
+        enabled: !!userId,
+    });
+}
+
+export function useIsBookmarked(userId: string | undefined, fileId: string | undefined) {
+    return useQuery({
+        queryKey: queryKeys.isBookmarked(userId || '', fileId || ''),
+        queryFn: () => api.checkBookmark(userId!, fileId!),
+        enabled: !!userId && !!fileId,
+    });
+}
+
+export function useTeamActivity(userId: string | undefined) {
+    return useQuery({
+        queryKey: queryKeys.teamActivity(userId || ''),
+        queryFn: () => api.getTeamActivity(userId!),
+        enabled: !!userId,
+        staleTime: 60 * 1000, // 1 minute
+    });
+}
+
+export function useQuickStats(userId: string | undefined) {
+    return useQuery({
+        queryKey: queryKeys.quickStats(userId || ''),
+        queryFn: () => api.getQuickStats(userId!),
+        enabled: !!userId,
+        staleTime: 60 * 1000,
+    });
+}
+
+export function useTrackFileView() {
+    const queryClient = useQueryClient();
+    return useMutation({
+        mutationFn: ({ userId, fileId }: { userId: string; fileId: string }) =>
+            api.trackFileView(userId, fileId),
+        onSuccess: (_, { userId }) => {
+            queryClient.invalidateQueries({ queryKey: queryKeys.recentFiles(userId) });
+            queryClient.invalidateQueries({ queryKey: queryKeys.dashboardData(userId) });
+        },
+    });
+}
+
+export function useAddBookmark() {
+    const queryClient = useQueryClient();
+    return useMutation({
+        mutationFn: ({ userId, fileId, category }: { userId: string; fileId: string; category?: string }) =>
+            api.addBookmark(userId, fileId, category),
+        onSuccess: (_, { userId, fileId }) => {
+            queryClient.invalidateQueries({ queryKey: queryKeys.bookmarks(userId) });
+            queryClient.invalidateQueries({ queryKey: queryKeys.isBookmarked(userId, fileId) });
+            queryClient.invalidateQueries({ queryKey: queryKeys.dashboardData(userId) });
+        },
+    });
+}
+
+export function useRemoveBookmark() {
+    const queryClient = useQueryClient();
+    return useMutation({
+        mutationFn: ({ userId, fileId }: { userId: string; fileId: string }) =>
+            api.removeBookmark(userId, fileId),
+        onSuccess: (_, { userId, fileId }) => {
+            queryClient.invalidateQueries({ queryKey: queryKeys.bookmarks(userId) });
+            queryClient.invalidateQueries({ queryKey: queryKeys.isBookmarked(userId, fileId) });
+            queryClient.invalidateQueries({ queryKey: queryKeys.dashboardData(userId) });
+        },
+    });
+}
+
+export function usePendingReviews(userId: string | undefined, limit: number = 10) {
+    return useQuery({
+        queryKey: queryKeys.pendingReviews(userId || ''),
+        queryFn: () => api.getPendingReviews(userId!, limit),
+        enabled: !!userId,
+        staleTime: 1000 * 60 * 3, // 3 minutes
     });
 }
