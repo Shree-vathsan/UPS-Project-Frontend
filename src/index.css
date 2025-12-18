@@ -465,6 +465,43 @@
   background: hsl(var(--muted-foreground));
 }
 
+/* Notes Panel Custom Scrollbars */
+.scrollbar-thin::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+.scrollbar-thin::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.scrollbar-thin::-webkit-scrollbar-thumb {
+  border-radius: 3px;
+  border: none;
+}
+
+.scrollbar-thumb-purple-500\/40::-webkit-scrollbar-thumb {
+  background: rgba(168, 85, 247, 0.4);
+}
+
+.scrollbar-thumb-purple-500\/40:hover::-webkit-scrollbar-thumb,
+.hover\:scrollbar-thumb-purple-400\/60:hover::-webkit-scrollbar-thumb {
+  background: rgba(192, 132, 252, 0.6);
+}
+
+.scrollbar-thumb-blue-500\/40::-webkit-scrollbar-thumb {
+  background: rgba(59, 130, 246, 0.4);
+}
+
+.scrollbar-thumb-blue-500\/40:hover::-webkit-scrollbar-thumb,
+.hover\:scrollbar-thumb-blue-400\/60:hover::-webkit-scrollbar-thumb {
+  background: rgba(96, 165, 250, 0.6);
+}
+
+.scrollbar-track-transparent::-webkit-scrollbar-track {
+  background: transparent;
+}
+
 /* ============================================ */
 /* FOCUS STYLES */
 /* ============================================ */
