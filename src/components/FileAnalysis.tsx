@@ -244,7 +244,8 @@ export default function FileAnalysis({ file, analysis }: FileAnalysisProps) {
                             {depCount}
                         </div>
                         <BarProgress label="Direct imports" value={depCount} maxValue={20} color="#3fb950" />
-                        <BarProgress label="Indirect dependencies" value={enhancedData?.indirectDependencies?.length || 0} maxValue={30} color="#56d364" />
+                        {/* COMMENTED OUT - Backend optimization removed this feature */}
+                        {/* <BarProgress label="Indirect dependencies" value={enhancedData?.indirectDependencies?.length || 0} maxValue={30} color="#56d364" /> */}
 
                         {enhancedData?.dependencies && enhancedData.dependencies.length > 0 && (
                             <div className="mt-4 border-t pt-3">
@@ -263,7 +264,8 @@ export default function FileAnalysis({ file, analysis }: FileAnalysisProps) {
                             </div>
                         )}
 
-                        {enhancedData?.indirectDependencies && enhancedData.indirectDependencies.length > 0 && (
+                        {/* COMMENTED OUT - Backend optimization removed this feature */}
+                        {/* {enhancedData?.indirectDependencies && enhancedData.indirectDependencies.length > 0 && (
                             <div className="mt-4 border-t pt-3">
                                 <div className="text-xs text-muted-foreground mb-2 font-semibold">Indirect Dependencies Files:</div>
                                 <div className="max-h-[150px] overflow-y-auto flex flex-col gap-1">
@@ -278,7 +280,7 @@ export default function FileAnalysis({ file, analysis }: FileAnalysisProps) {
                                     ))}
                                 </div>
                             </div>
-                        )}
+                        )} */}
 
                         <div style={{ marginTop: '16px', padding: '12px', background: '#3fb95010', border: '1px solid #3fb95030', borderRadius: '8px' }}>
                             <div style={{ fontSize: '12px', color: '#3fb950', fontWeight: 600, marginBottom: '4px' }}>
@@ -304,7 +306,8 @@ export default function FileAnalysis({ file, analysis }: FileAnalysisProps) {
                             {dptCount}
                         </div>
                         <BarProgress label="Direct dependents" value={dptCount} maxValue={20} color="#d29922" />
-                        <BarProgress label="Blast radius" value={enhancedData?.blastRadius?.length || 0} maxValue={50} color="#f0883e" />
+                        {/* COMMENTED OUT - Backend optimization removed this feature */}
+                        {/* <BarProgress label="Blast radius" value={enhancedData?.blastRadius?.length || 0} maxValue={50} color="#f0883e" /> */}
 
                         {enhancedData?.dependents && enhancedData.dependents.length > 0 && (
                             <div className="mt-4 border-t pt-3">
@@ -323,7 +326,8 @@ export default function FileAnalysis({ file, analysis }: FileAnalysisProps) {
                             </div>
                         )}
 
-                        {enhancedData?.blastRadius && enhancedData.blastRadius.length > 0 && (
+                        {/* COMMENTED OUT - Backend optimization removed this feature */}
+                        {/* {enhancedData?.blastRadius && enhancedData.blastRadius.length > 0 && (
                             <div className="mt-4 border-t pt-3">
                                 <div className="text-xs text-muted-foreground mb-2 font-semibold">Blast Radius Files:</div>
                                 <div className="max-h-[150px] overflow-y-auto flex flex-col gap-1">
@@ -338,7 +342,7 @@ export default function FileAnalysis({ file, analysis }: FileAnalysisProps) {
                                     ))}
                                 </div>
                             </div>
-                        )}
+                        )} */}
 
                         <div className={`mt-4 p-3 rounded-lg border ${impactScore > 70 ? 'bg-destructive/10 border-destructive' : 'bg-accent/10 border-accent'}`}>
                             <div className={`text-xs font-semibold mb-1 ${impactScore > 70 ? 'text-destructive' : 'text-accent'}`}>
