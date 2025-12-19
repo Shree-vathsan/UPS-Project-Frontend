@@ -1,8 +1,16 @@
 import { useNavigate } from 'react-router-dom';
-import { Bookmark, FileText, Trash2 } from 'lucide-react';
+import { useState } from 'react';
+import { Bookmark, FileText, ExternalLink, MoreVertical } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
+import {
+    DropdownMenu,
+    DropdownMenuContent,
+    DropdownMenuItem,
+    DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
+import { useTheme } from '@/components/theme-provider';
 import { useBookmarks, useRemoveBookmark } from '../../hooks/useApiQueries';
 
 interface BookmarksWidgetProps {
@@ -24,6 +32,8 @@ export default function BookmarksWidget({ userId }: BookmarksWidgetProps) {
     const navigate = useNavigate();
     const { data: bookmarks, isLoading } = useBookmarks(userId);
     const removeBookmark = useRemoveBookmark();
+    const [openDropdownId, setOpenDropdownId] = useState<string | null>(null);
+    const { theme } = useTheme();
 
     const handleFileClick = (file: BookmarkedFile) => {
         navigate(`/file/${file.fileId}`);
@@ -32,6 +42,7 @@ export default function BookmarksWidget({ userId }: BookmarksWidgetProps) {
     const handleRemove = (e: React.MouseEvent, fileId: string) => {
         e.stopPropagation();
         removeBookmark.mutate({ userId, fileId });
+        setOpenDropdownId(null);
     };
 
     if (isLoading) {
@@ -71,31 +82,59 @@ export default function BookmarksWidget({ userId }: BookmarksWidgetProps) {
                     </p>
                 ) : (
                     <div className="space-y-1 h-64 overflow-y-auto pr-1">
-                        {files.slice(0, 30).map((file) => (
-                            <div
-                                key={file.fileId}
-                                onClick={() => handleFileClick(file)}
-                                className="flex items-center gap-3 p-2 rounded-md hover:bg-muted cursor-pointer transition-colors group"
-                            >
-                                <FileText className="h-4 w-4 text-muted-foreground flex-shrink-0" />
-                                <div className="flex-1 min-w-0">
-                                    <p className="text-sm font-medium truncate">
-                                        {file.fileName}
-                                    </p>
-                                    <p className="text-xs text-muted-foreground truncate">
-                                        {file.repositoryName}
-                                    </p>
-                                </div>
-                                <Button
-                                    variant="ghost"
-                                    size="icon"
-                                    className="h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0"
-                                    onClick={(e) => handleRemove(e, file.fileId)}
+                        {files.slice(0, 30).map((file) => {
+                            const isDropdownOpen = openDropdownId === file.fileId;
+                            return (
+                                <div
+                                    key={file.fileId}
+                                    className={`flex items-center gap-3 p-2 rounded-md transition-colors group ${isDropdownOpen ? 'bg-muted' : 'hover:bg-muted'
+                                        }`}
                                 >
-                                    <Trash2 className="h-3 w-3 text-destructive" />
-                                </Button>
-                            </div>
-                        ))}
+                                    <FileText className="h-4 w-4 text-muted-foreground flex-shrink-0" />
+                                    <div className="flex-1 min-w-0">
+                                        <p className="text-sm font-medium truncate">
+                                            {file.fileName}
+                                        </p>
+                                        <p className="text-xs text-muted-foreground truncate">
+                                            {file.repositoryName}
+                                        </p>
+                                    </div>
+                                    <Button
+                                        variant="ghost"
+                                        size="icon"
+                                        className={`h-6 w-6 transition-opacity flex-shrink-0 ${theme === 'night' ? 'hover:bg-primary/40' : theme === 'dark' ? 'hover:bg-blue-500/30' : theme === 'light' ? 'hover:bg-blue-100' : ''} ${isDropdownOpen ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'
+                                            }`}
+                                        onClick={() => handleFileClick(file)}
+                                    >
+                                        <ExternalLink className="h-3 w-3 text-muted-foreground" />
+                                    </Button>
+                                    <DropdownMenu
+                                        modal={false}
+                                        onOpenChange={(open) => setOpenDropdownId(open ? file.fileId : null)}
+                                    >
+                                        <DropdownMenuTrigger asChild>
+                                            <Button
+                                                variant="ghost"
+                                                size="icon"
+                                                className={`h-6 w-6 transition-opacity flex-shrink-0 ${theme === 'night' ? 'hover:bg-primary/40' : theme === 'dark' ? 'hover:bg-blue-500/30' : theme === 'light' ? 'hover:bg-blue-100' : ''} ${isDropdownOpen ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'
+                                                    }`}
+                                                onClick={(e) => e.stopPropagation()}
+                                            >
+                                                <MoreVertical className="h-3 w-3" />
+                                            </Button>
+                                        </DropdownMenuTrigger>
+                                        <DropdownMenuContent align="end">
+                                            <DropdownMenuItem
+                                                className="text-red-600 focus:text-red-600 focus:bg-red-50 cursor-pointer"
+                                                onClick={(e) => handleRemove(e, file.fileId)}
+                                            >
+                                                Delete
+                                            </DropdownMenuItem>
+                                        </DropdownMenuContent>
+                                    </DropdownMenu>
+                                </div>
+                            );
+                        })}
                     </div>
                 )}
             </CardContent>

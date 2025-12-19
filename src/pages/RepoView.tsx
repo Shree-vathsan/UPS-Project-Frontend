@@ -19,6 +19,7 @@ import {
     DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { useRepository, useBranches, useBranchCommits, usePullRequests, useBranchFiles } from '../hooks/useApiQueries';
+import { useTheme } from '@/components/theme-provider';
 
 interface RepoViewProps {
     user: any;
@@ -28,6 +29,7 @@ export default function RepoView({ user: _user }: RepoViewProps) {
     const navigate = useNavigate();
     const { repositoryId } = useParams<{ repositoryId: string }>();
     const [searchParams, setSearchParams] = useSearchParams();
+    const { theme } = useTheme();
 
     // Get initial tab from URL or default to 'commits'
     const getInitialTab = (): 'commits' | 'prs' | 'files' | 'analytics' | 'notes' => {
@@ -187,7 +189,7 @@ export default function RepoView({ user: _user }: RepoViewProps) {
                                 disabled={isRefreshing}
                                 variant="outline"
                                 size="sm"
-                                className="gap-2"
+                                className={`gap-2 ${theme === 'night' ? 'hover:bg-primary/40' : theme === 'dark' ? 'hover:bg-blue-500/30' : theme === 'light' ? 'hover:bg-blue-100' : ''}`}
                             >
                                 <RefreshCw className={`h-4 w-4 ${isRefreshing ? 'animate-spin' : ''}`} />
                                 {isRefreshing ? 'Refreshing...' : 'Refresh'}
@@ -211,7 +213,7 @@ export default function RepoView({ user: _user }: RepoViewProps) {
                     {branches.length > 0 && (
                         <DropdownMenu>
                             <DropdownMenuTrigger asChild>
-                                <Button variant="outline" className="gap-2">
+                                <Button variant="outline" className={`gap-2 ${theme === 'night' ? 'hover:bg-primary/40' : theme === 'dark' ? 'hover:bg-blue-500/30' : theme === 'light' ? 'hover:bg-blue-100' : ''}`}>
                                     <GitBranch className="h-4 w-4" />
                                     {selectedBranch}
                                 </Button>
@@ -332,6 +334,7 @@ export default function RepoView({ user: _user }: RepoViewProps) {
                                 onClick={() => setPrFilter('all')}
                                 variant={prFilter === 'all' ? 'default' : 'outline'}
                                 size="sm"
+                                className={prFilter !== 'all' && (theme === 'night' ? 'hover:bg-primary/40' : theme === 'dark' ? 'hover:bg-blue-500/30' : theme === 'light' ? 'hover:bg-blue-100' : '') || ''}
                             >
                                 All
                             </Button>
@@ -339,6 +342,7 @@ export default function RepoView({ user: _user }: RepoViewProps) {
                                 onClick={() => setPrFilter('open')}
                                 variant={prFilter === 'open' ? 'default' : 'outline'}
                                 size="sm"
+                                className={prFilter !== 'open' && (theme === 'night' ? 'hover:bg-primary/40' : theme === 'dark' ? 'hover:bg-blue-500/30' : theme === 'light' ? 'hover:bg-blue-100' : '') || ''}
                             >
                                 Open
                             </Button>
@@ -346,6 +350,7 @@ export default function RepoView({ user: _user }: RepoViewProps) {
                                 onClick={() => setPrFilter('closed')}
                                 variant={prFilter === 'closed' ? 'default' : 'outline'}
                                 size="sm"
+                                className={prFilter !== 'closed' && (theme === 'night' ? 'hover:bg-primary/40' : theme === 'dark' ? 'hover:bg-blue-500/30' : theme === 'light' ? 'hover:bg-blue-100' : '') || ''}
                             >
                                 Closed
                             </Button>

@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect } from 'react';
 import { Bell, CheckCheck, Trash2, ExternalLink } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { useTheme } from '@/components/theme-provider';
 import { useNotifications, useUnreadNotificationCount, useMarkNotificationAsRead, useMarkAllNotificationsAsRead, useDeleteNotification } from '@/hooks/useApiQueries';
 import { formatDistanceToNow } from 'date-fns';
 import { useNavigate } from 'react-router-dom';
@@ -27,6 +28,7 @@ export function NotificationBell() {
     const [isOpen, setIsOpen] = useState(false);
     const dropdownRef = useRef<HTMLDivElement>(null);
     const navigate = useNavigate();
+    const { theme } = useTheme();
 
     const user = JSON.parse(localStorage.getItem('user') || '{}');
     const userId = user?.id;
@@ -40,7 +42,7 @@ export function NotificationBell() {
     const unreadCount = (countData as { count: number })?.count || 0;
     const notifications = (notificationsData as NotificationsResponse)?.notifications || [];
 
-    // Close dropdown when clicking outside
+    // Close dropdown when clicking outside or on other interactive elements
     useEffect(() => {
         const handleClickOutside = (event: MouseEvent) => {
             if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
@@ -48,9 +50,16 @@ export function NotificationBell() {
             }
         };
 
-        document.addEventListener('mousedown', handleClickOutside);
-        return () => document.removeEventListener('mousedown', handleClickOutside);
-    }, []);
+        if (isOpen) {
+            // Listen to both events to ensure dropdown closes
+            document.addEventListener('mousedown', handleClickOutside);
+            document.addEventListener('click', handleClickOutside);
+            return () => {
+                document.removeEventListener('mousedown', handleClickOutside);
+                document.removeEventListener('click', handleClickOutside);
+            };
+        }
+    }, [isOpen]);
 
     const handleNotificationClick = async (notification: Notification) => {
         if (!notification.isRead && userId) {
@@ -87,8 +96,11 @@ export function NotificationBell() {
             <Button
                 variant="ghost"
                 size="sm"
-                onClick={() => setIsOpen(!isOpen)}
-                className="relative text-muted-foreground hover:text-foreground hover:bg-muted"
+                onClick={() => {
+                    // Don't stop propagation - let other dropdowns detect the click and close
+                    setIsOpen(!isOpen);
+                }}
+                className={`relative text-muted-foreground hover:text-foreground ${theme === 'night' ? 'hover:bg-primary/40' : theme === 'dark' ? 'hover:bg-blue-500/30' : theme === 'light' ? 'hover:bg-blue-100' : 'hover:bg-muted'}`}
             >
                 <Bell className="h-5 w-5" />
                 {unreadCount > 0 && (
@@ -110,7 +122,7 @@ export function NotificationBell() {
                                 size="sm"
                                 onClick={handleMarkAllAsRead}
                                 disabled={markAllAsRead.isPending}
-                                className="text-xs text-primary hover:text-primary/80 h-6"
+                                className={`text-xs text-primary hover:text-primary/80 h-6 ${theme === 'night' ? 'hover:bg-primary/40' : theme === 'dark' ? 'hover:bg-blue-500/30' : theme === 'light' ? 'hover:bg-blue-100' : ''}`}
                             >
                                 <CheckCheck className="h-3 w-3 mr-1" />
                                 Mark all read

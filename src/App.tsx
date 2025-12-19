@@ -11,8 +11,9 @@ import FileTreeView from './pages/FileTreeView.tsx';
 import FileView from './pages/FileView.tsx';
 import Login from './pages/Login.tsx';
 import ThemeSelector from './components/ThemeSelector.tsx';
+import SnowfallToggle from './components/SnowfallToggle.tsx';
 import NotificationBell from './components/NotificationBell.tsx';
-import { ThemeProvider } from './components/theme-provider.tsx';
+import { ThemeProvider, useTheme } from './components/theme-provider.tsx';
 import { api } from './utils/api';
 
 // Capture OAuth code IMMEDIATELY and persist in sessionStorage
@@ -30,9 +31,15 @@ if (codeFromUrl) {
 const capturedOAuthCode = sessionStorage.getItem('oauth_code');
 
 
+interface AppContentProps {
+    snowfallEnabled: boolean;
+    toggleSnowfall: () => void;
+}
+
 // Inner component that can use useNavigate (must be inside BrowserRouter)
-function AppContent() {
+function AppContent({ snowfallEnabled, toggleSnowfall }: AppContentProps) {
     const navigate = useNavigate();
+    const { theme: currentTheme } = useTheme();
     const [user, setUser] = useState<any>(null);
     const [token, setToken] = useState<string>('');
     // Initialize isAuthenticating to true if there's a captured OAuth code
@@ -130,8 +137,9 @@ function AppContent() {
                         </span>
                     </Link>
 
-                    {/* User Info + Theme Selector + Notifications */}
+                    {/* User Info + Snowfall Toggle + Theme Selector + Notifications */}
                     <div className="flex items-center gap-4">
+                        <SnowfallToggle isActive={snowfallEnabled} onToggle={toggleSnowfall} />
                         <ThemeSelector />
 
                         {user && <NotificationBell />}
@@ -150,7 +158,14 @@ function AppContent() {
                                 </span>
                                 <button
                                     onClick={handleLogout}
-                                    className="ml-2 px-2 py-1 text-xs font-medium text-red-600 bg-red-50 border border-red-200 rounded-md hover:bg-red-100 hover:border-red-300 transition-all flex items-center gap-1"
+                                    className={`ml-2 px-2 py-1 text-xs font-medium rounded-md transition-all flex items-center gap-1 ${currentTheme === 'light'
+                                        ? 'text-red-600 bg-red-50 border border-red-200 hover:bg-red-100 hover:border-red-300'
+                                        : currentTheme === 'dark'
+                                            ? 'text-red-400 bg-red-950/30 border border-red-800/50 hover:bg-red-950/50 hover:border-red-700'
+                                            : currentTheme === 'night'
+                                                ? 'text-orange-400 bg-orange-950/20 border border-orange-800/40 hover:bg-orange-950/40 hover:border-orange-700'
+                                                : 'text-red-600 bg-red-50 border border-red-200 hover:bg-red-100 hover:border-red-300'
+                                        }`}
                                 >
                                     <LogOut className="h-3 w-3" />
                                     Logout
@@ -197,23 +212,39 @@ function AppContent() {
 }
 
 function App() {
+    // Snowfall state - persisted in localStorage, default to true (on)
+    const [snowfallEnabled, setSnowfallEnabled] = useState<boolean>(() => {
+        const saved = localStorage.getItem('snowfall-enabled');
+        return saved !== null ? saved === 'true' : true;
+    });
+
+    const toggleSnowfall = () => {
+        setSnowfallEnabled(prev => {
+            const newValue = !prev;
+            localStorage.setItem('snowfall-enabled', String(newValue));
+            return newValue;
+        });
+    };
+
     return (
         <ThemeProvider defaultTheme="black-beige">
-            <Snowfall
-                snowflakeCount={200}
-                speed={[0.5, 3.0]}
-                wind={[-0.5, 2.0]}
-                radius={[0.5, 3.0]}
-                style={{
-                    position: 'fixed',
-                    width: '100vw',
-                    height: '100vh',
-                    zIndex: 9999,
-                    pointerEvents: 'none'
-                }}
-            />
+            {snowfallEnabled && (
+                <Snowfall
+                    snowflakeCount={200}
+                    speed={[0.5, 3.0]}
+                    wind={[-0.5, 2.0]}
+                    radius={[0.5, 3.0]}
+                    style={{
+                        position: 'fixed',
+                        width: '100vw',
+                        height: '100vh',
+                        zIndex: 9999,
+                        pointerEvents: 'none'
+                    }}
+                />
+            )}
             <BrowserRouter>
-                <AppContent />
+                <AppContent snowfallEnabled={snowfallEnabled} toggleSnowfall={toggleSnowfall} />
             </BrowserRouter>
         </ThemeProvider>
     );

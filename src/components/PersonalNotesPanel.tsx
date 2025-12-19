@@ -3,8 +3,14 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Input } from '@/components/ui/input';
-import { BookMarked, Plus, Trash2, Edit2, X, Check, Hash, Users, Search } from 'lucide-react';
+import { BookMarked, Plus, Trash2, Edit2, X, Check, Hash, Users, Search, ChevronDown } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
+import {
+    DropdownMenu,
+    DropdownMenuContent,
+    DropdownMenuItem,
+    DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 import {
     useFilePersonalNotes, useCreateFilePersonalNote, useUpdatePersonalNote, useDeletePersonalNote,
     useLineCommentsForFile, useCreateLineComment
@@ -573,15 +579,28 @@ function SharedNotesSection({
                         </Button>
 
                         {/* Filter Dropdown */}
-                        <select
-                            value={filter}
-                            onChange={(e) => setFilter(e.target.value as 'all' | 'you' | 'others')}
-                            className="h-8 px-2 bg-muted border rounded-md text-xs text-foreground focus:outline-none focus:ring-2 focus:ring-ring cursor-pointer"
-                        >
-                            <option value="all">All</option>
-                            <option value="you">You</option>
-                            <option value="others">Others</option>
-                        </select>
+                        <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                                <Button variant="outline" size="sm" className="h-8 px-3 text-xs">
+                                    {filter === 'all' ? 'All' : filter === 'you' ? 'You' : 'Others'}
+                                    <ChevronDown className="ml-1 h-3 w-3" />
+                                </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end">
+                                <DropdownMenuItem onClick={() => setFilter('all')}>
+                                    All
+                                    {filter === 'all' && <span className="ml-auto">✓</span>}
+                                </DropdownMenuItem>
+                                <DropdownMenuItem onClick={() => setFilter('you')}>
+                                    You
+                                    {filter === 'you' && <span className="ml-auto">✓</span>}
+                                </DropdownMenuItem>
+                                <DropdownMenuItem onClick={() => setFilter('others')}>
+                                    Others
+                                    {filter === 'others' && <span className="ml-auto">✓</span>}
+                                </DropdownMenuItem>
+                            </DropdownMenuContent>
+                        </DropdownMenu>
 
                         {/* Add Note Button */}
                         {!isAdding && (

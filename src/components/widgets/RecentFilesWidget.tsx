@@ -1,7 +1,9 @@
 import { useNavigate } from 'react-router-dom';
 import { Clock, FileText, ExternalLink } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
+import { useTheme } from '@/components/theme-provider';
 import { useRecentFiles } from '../../hooks/useApiQueries';
 
 interface RecentFilesWidgetProps {
@@ -21,6 +23,7 @@ interface RecentFile {
 export default function RecentFilesWidget({ userId }: RecentFilesWidgetProps) {
     const navigate = useNavigate();
     const { data: recentFiles, isLoading } = useRecentFiles(userId);
+    const { theme } = useTheme();
 
     const handleFileClick = (file: RecentFile) => {
         navigate(`/file/${file.fileId}`);
@@ -77,8 +80,7 @@ export default function RecentFilesWidget({ userId }: RecentFilesWidgetProps) {
                         {files.slice(0, 10).map((file) => (
                             <div
                                 key={file.fileId}
-                                onClick={() => handleFileClick(file)}
-                                className="flex items-center gap-3 p-2 rounded-md hover:bg-muted cursor-pointer transition-colors group"
+                                className="flex items-center gap-3 p-2 rounded-md hover:bg-muted transition-colors group"
                             >
                                 <FileText className="h-4 w-4 text-muted-foreground flex-shrink-0" />
                                 <div className="flex-1 min-w-0">
@@ -89,7 +91,14 @@ export default function RecentFilesWidget({ userId }: RecentFilesWidgetProps) {
                                         {file.repositoryName} • {formatTimeAgo(file.viewedAt)}
                                     </p>
                                 </div>
-                                <ExternalLink className="h-3 w-3 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0" />
+                                <Button
+                                    variant="ghost"
+                                    size="icon"
+                                    className={`h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0 ${theme === 'night' ? 'hover:bg-primary/40' : theme === 'dark' ? 'hover:bg-blue-500/30' : theme === 'light' ? 'hover:bg-blue-100' : ''}`}
+                                    onClick={() => handleFileClick(file)}
+                                >
+                                    <ExternalLink className="h-3 w-3 text-muted-foreground" />
+                                </Button>
                             </div>
                         ))}
                     </div>
