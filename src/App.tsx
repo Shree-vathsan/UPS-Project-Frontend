@@ -1,6 +1,7 @@
 import { BrowserRouter, Routes, Route, useNavigate, Link } from 'react-router-dom';
 import { useState, useEffect, useRef } from 'react';
 import { Code, LogOut } from 'lucide-react';
+import Snowfall from 'react-snowfall';
 import Dashboard from './pages/Dashboard.tsx';
 import RepoView from './pages/RepoView.tsx';
 import CommitView from './pages/CommitView.tsx';
@@ -198,6 +199,19 @@ function AppContent() {
 function App() {
     return (
         <ThemeProvider defaultTheme="black-beige">
+            <Snowfall
+                snowflakeCount={200}
+                speed={[0.5, 3.0]}
+                wind={[-0.5, 2.0]}
+                radius={[0.5, 3.0]}
+                style={{
+                    position: 'fixed',
+                    width: '100vw',
+                    height: '100vh',
+                    zIndex: 9999,
+                    pointerEvents: 'none'
+                }}
+            />
             <BrowserRouter>
                 <AppContent />
             </BrowserRouter>

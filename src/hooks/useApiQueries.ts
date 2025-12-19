@@ -176,6 +176,14 @@ export function useFiles(repositoryId: string | undefined) {
     });
 }
 
+export function useFileBranches(fileId: string | undefined) {
+    return useQuery({
+        queryKey: ['fileBranches', fileId],
+        queryFn: () => api.getFileBranches(fileId!),
+        enabled: !!fileId,
+    });
+}
+
 export function useBranchFiles(repositoryId: string | undefined, branch: string) {
     return useQuery({
         queryKey: queryKeys.branchFiles(repositoryId || '', branch),
@@ -550,7 +558,7 @@ export function useRepoStickyNotes(repositoryId: string | undefined) {
 export function useCreateRepoStickyNote() {
     const queryClient = useQueryClient();
     return useMutation({
-        mutationFn: ({ userId, data }: { userId: string; data: { repositoryId: string; content: string; taggedFileIds?: string[] } }) =>
+        mutationFn: ({ userId, data }: { userId: string; data: { repositoryId: string; content: string; taggedFileIds?: string[]; taggedBranchIds?: string[] } }) =>
             api.createRepoStickyNote(userId, data),
         onSuccess: (_, variables) => {
             queryClient.invalidateQueries({ queryKey: ['repoStickyNotes', variables.data.repositoryId] });
@@ -570,8 +578,8 @@ export function useRepoDiscussion(repositoryId: string | undefined) {
 export function usePostRepoMessage() {
     const queryClient = useQueryClient();
     return useMutation({
-        mutationFn: ({ repositoryId, userId, message }: { repositoryId: string; userId: string; message: string }) =>
-            api.postRepoMessage(repositoryId, userId, message),
+        mutationFn: ({ repositoryId, userId, message, taggedFileIds, taggedBranchIds }: { repositoryId: string; userId: string; message: string; taggedFileIds?: string[]; taggedBranchIds?: string[] }) =>
+            api.postRepoMessage(repositoryId, userId, message, taggedFileIds, taggedBranchIds),
         onSuccess: (_, variables) => {
             queryClient.invalidateQueries({ queryKey: ['repoDiscussion', variables.repositoryId] });
         },
@@ -590,7 +598,7 @@ export function useRepoPersonalNotes(repositoryId: string | undefined, userId: s
 export function useCreateRepoPersonalNote() {
     const queryClient = useQueryClient();
     return useMutation({
-        mutationFn: ({ userId, data }: { userId: string; data: { repositoryId: string; content: string; taggedFileIds?: string[] } }) =>
+        mutationFn: ({ userId, data }: { userId: string; data: { repositoryId: string; content: string; taggedFileIds?: string[]; taggedBranchIds?: string[] } }) =>
             api.createRepoPersonalNote(userId, data),
         onSuccess: (_, variables) => {
             queryClient.invalidateQueries({ queryKey: ['repoPersonalNotes', variables.data.repositoryId, variables.userId] });

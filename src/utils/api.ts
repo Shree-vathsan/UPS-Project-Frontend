@@ -124,6 +124,11 @@ export const api = {
         return handleResponse(res);
     },
 
+    async getFileBranches(fileId: string) {
+        const res = await fetch(`${API_BASE}/files/${fileId}/branches`);
+        return handleResponse(res);
+    },
+
     async getPullRequests(repositoryId: string) {
         const res = await fetch(`${API_BASE}/pullrequests/repository/${repositoryId}`);
         return handleResponse(res);
@@ -290,7 +295,7 @@ export const api = {
         return handleResponse(res);
     },
 
-    async createRepoStickyNote(userId: string, data: { repositoryId: string; content: string; taggedFileIds?: string[] }) {
+    async createRepoStickyNote(userId: string, data: { repositoryId: string; content: string; taggedFileIds?: string[]; taggedBranchIds?: string[] }) {
         const res = await fetch(`${API_BASE}/api/notes/repo/sticky/text?userId=${userId}`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -316,11 +321,11 @@ export const api = {
         return handleResponse(res);
     },
 
-    async postRepoMessage(repositoryId: string, userId: string, message: string) {
+    async postRepoMessage(repositoryId: string, userId: string, message: string, taggedFileIds?: string[], taggedBranchIds?: string[]) {
         const res = await fetch(`${API_BASE}/api/notes/repo/discussion/${repositoryId}/messages?userId=${userId}`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ message })
+            body: JSON.stringify({ message, taggedFileIds, taggedBranchIds })
         });
         return handleResponse(res);
     },
@@ -331,7 +336,7 @@ export const api = {
         return handleResponse(res);
     },
 
-    async createRepoPersonalNote(userId: string, data: { repositoryId: string; content: string; taggedFileIds?: string[] }) {
+    async createRepoPersonalNote(userId: string, data: { repositoryId: string; content: string; taggedFileIds?: string[]; taggedBranchIds?: string[] }) {
         const res = await fetch(`${API_BASE}/api/notes/repo/personal?userId=${userId}`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },

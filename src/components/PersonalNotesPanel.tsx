@@ -105,14 +105,21 @@ function PersonalNotesSection({
 
     // Filter notes by line number search - PREFIX MATCH (like phone search)
     const filteredNotes = useMemo(() => {
-        if (!searchLineNumber.trim()) return notesData;
+        let filtered = notesData;
 
-        // Prefix match: line number must START WITH the search string
-        return notesData.filter(note => {
-            if (!note.lineNumber) return false;
-            // Convert line number to string and check if it starts with the search string
-            return note.lineNumber.toString().startsWith(searchLineNumber.trim());
-        });
+        if (searchLineNumber.trim()) {
+            // Prefix match: line number must START WITH the search string
+            filtered = notesData.filter(note => {
+                if (!note.lineNumber) return false;
+                // Convert line number to string and check if it starts with the search string
+                return note.lineNumber.toString().startsWith(searchLineNumber.trim());
+            });
+        }
+
+        // Sort by createdAt descending (most recent first)
+        return [...filtered].sort((a, b) =>
+            new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+        );
     }, [notesData, searchLineNumber]);
 
     // Create personal note with mandatory line number
