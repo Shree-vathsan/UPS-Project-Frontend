@@ -99,7 +99,7 @@ export default function PullRequestView({ user: _user }: PullRequestViewProps) {
                     <h1 className="font-heading text-3xl font-bold">PR #{prDetails.number}</h1>
                     <Badge variant={
                         prDetails.state === 'open' ? 'success' :
-                            prDetails.merged ? 'secondary' : 'destructive'
+                            prDetails.merged ? 'merged' : 'destructive'
                     }>
                         {prDetails.state === 'open' ? 'Open' : prDetails.merged ? 'Merged' : 'Closed'}
                     </Badge>

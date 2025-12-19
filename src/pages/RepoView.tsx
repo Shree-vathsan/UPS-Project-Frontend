@@ -383,8 +383,11 @@ export default function RepoView({ user: _user }: RepoViewProps) {
                                                         <code className="text-xs text-muted-foreground">
                                                             #{pr.prNumber}
                                                         </code>
-                                                        <Badge variant={pr.state === 'open' ? 'success' : 'secondary'}>
-                                                            {pr.state === 'open' ? 'Open' : 'Merged'}
+                                                        <Badge variant={
+                                                            pr.state === 'open' ? 'success' :
+                                                                pr.merged ? 'merged' : 'destructive'
+                                                        }>
+                                                            {pr.state === 'open' ? 'Open' : pr.merged ? 'Merged' : 'Closed'}
                                                         </Badge>
                                                     </div>
                                                 </div>
