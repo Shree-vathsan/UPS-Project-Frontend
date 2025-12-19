@@ -70,7 +70,7 @@ export default function BookmarksWidget({ userId }: BookmarksWidgetProps) {
                         No bookmarked files. Star files for quick access!
                     </p>
                 ) : (
-                    <div className="space-y-1 max-h-80 overflow-y-auto pr-1">
+                    <div className="space-y-1 h-64 overflow-y-auto pr-1">
                         {files.slice(0, 30).map((file) => (
                             <div
                                 key={file.fileId}

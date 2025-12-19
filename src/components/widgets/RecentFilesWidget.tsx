@@ -73,7 +73,7 @@ export default function RecentFilesWidget({ userId }: RecentFilesWidgetProps) {
                         No recent files. Start exploring repositories!
                     </p>
                 ) : (
-                    <div className="space-y-1 max-h-80 overflow-y-auto pr-1">
+                    <div className="space-y-1 h-64 overflow-y-auto pr-1">
                         {files.slice(0, 10).map((file) => (
                             <div
                                 key={file.fileId}

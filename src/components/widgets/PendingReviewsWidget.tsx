@@ -2,7 +2,6 @@ import { useNavigate } from 'react-router-dom';
 import { Bell, GitPullRequest } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Badge } from '@/components/ui/badge';
 import { usePendingReviews } from '../../hooks/useApiQueries';
 
 interface PendingReviewsWidgetProps {
@@ -56,11 +55,6 @@ export default function PendingReviewsWidget({ userId }: PendingReviewsWidgetPro
                 <CardTitle className="flex items-center gap-2 text-sm font-medium">
                     <Bell className="h-4 w-4 text-red-500" />
                     Pending Reviews
-                    {reviews.length > 0 && (
-                        <Badge variant="secondary" className="ml-auto">
-                            {reviews.length}
-                        </Badge>
-                    )}
                 </CardTitle>
             </CardHeader>
             <CardContent className="pt-0">
@@ -69,7 +63,7 @@ export default function PendingReviewsWidget({ userId }: PendingReviewsWidgetPro
                         No PRs awaiting your review! 🎉
                     </p>
                 ) : (
-                    <div className="space-y-2 max-h-60 overflow-y-auto pr-1">
+                    <div className="space-y-2 h-64 overflow-y-auto pr-1">
                         {reviews.map((pr) => (
                             <div
                                 key={pr.prId}

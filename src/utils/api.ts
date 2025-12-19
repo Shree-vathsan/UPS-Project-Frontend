@@ -480,7 +480,14 @@ export const api = {
     },
 
     async getPendingReviews(userId: string, limit: number = 10) {
-        const res = await fetch(`${API_BASE}/dashboard/${userId}/pending-reviews?limit=${limit}`);
+        const token = localStorage.getItem('token');
+        const headers: Record<string, string> = {};
+        if (token) {
+            headers['Authorization'] = `Bearer ${token}`;
+        }
+        const res = await fetch(`${API_BASE}/dashboard/${userId}/pending-reviews?limit=${limit}`, {
+            headers
+        });
         return handleResponse(res);
     }
 };

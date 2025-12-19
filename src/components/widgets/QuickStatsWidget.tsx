@@ -1,7 +1,7 @@
 import { BarChart3, FolderOpen, Bookmark, Eye, GitCommit, MessageSquare } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
-import { useQuickStats } from '../../hooks/useApiQueries';
+import { useQuickStats, usePendingReviews } from '../../hooks/useApiQueries';
 
 interface QuickStatsWidgetProps {
     userId: string;
@@ -17,6 +17,7 @@ interface Stats {
 
 export default function QuickStatsWidget({ userId }: QuickStatsWidgetProps) {
     const { data: stats, isLoading } = useQuickStats(userId);
+    const { data: pendingReviews, isLoading: pendingLoading } = usePendingReviews(userId);
 
     if (isLoading) {
         return (
@@ -77,8 +78,8 @@ export default function QuickStatsWidget({ userId }: QuickStatsWidgetProps) {
             bgColor: 'bg-green-500/10'
         },
         {
-            label: 'PRs Reviewed',
-            value: data.prsReviewedThisWeek,
+            label: 'PRs Pending',
+            value: (pendingReviews as any[])?.length || 0,
             icon: MessageSquare,
             color: 'text-orange-500',
             bgColor: 'bg-orange-500/10'
