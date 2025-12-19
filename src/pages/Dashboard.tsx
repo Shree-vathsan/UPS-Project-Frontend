@@ -1,7 +1,8 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Package, BarChart, Plus, Loader, RefreshCw, AlertTriangle, Search, Info, ChevronDown, ChevronUp } from 'lucide-react';
+import { Package, BarChart, Plus, Loader, RefreshCw, AlertTriangle, Search, Info, ChevronDown, ChevronUp, Home } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
+import { RecentFilesWidget, BookmarksWidget, TeamActivityWidget, QuickStatsWidget, PendingReviewsWidget } from '../components/widgets';
 import { api } from '../utils/api';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -18,7 +19,7 @@ interface DashboardProps {
     token: string;
 }
 
-type TabType = 'your' | 'analyzed' | 'add';
+type TabType = 'home' | 'your' | 'analyzed' | 'add';
 type FilterType = 'your' | 'others' | 'all';
 type RepoFilterType = 'all' | 'public' | 'private' | 'contributor';
 
@@ -26,7 +27,7 @@ export default function Dashboard({ user, token }: DashboardProps) {
     const navigate = useNavigate();
 
     // Tab state
-    const [activeTab, setActiveTab] = useState<TabType>('your');
+    const [activeTab, setActiveTab] = useState<TabType>('home');
 
     // React Query hooks for data fetching with caching
     const {
@@ -399,7 +400,11 @@ export default function Dashboard({ user, token }: DashboardProps) {
             </div>
 
             <Tabs value={activeTab} onValueChange={(value) => setActiveTab(value as TabType)}>
-                <TabsList className="grid w-full max-w-md grid-cols-3">
+                <TabsList className="grid w-full max-w-2xl grid-cols-4">
+                    <TabsTrigger value="home" className="gap-2">
+                        <Home className="h-4 w-4" />
+                        <span className="hidden sm:inline">Home</span>
+                    </TabsTrigger>
                     <TabsTrigger value="your" className="gap-2">
                         <Package className="h-4 w-4" />
                         <span className="hidden sm:inline">Your Repositories</span>
@@ -416,6 +421,27 @@ export default function Dashboard({ user, token }: DashboardProps) {
                         <span className="sm:hidden">Add</span>
                     </TabsTrigger>
                 </TabsList>
+
+                {/* Home Tab - Personalized Dashboard */}
+                <TabsContent value="home" className="mt-6 space-y-6">
+                    {/* Quick Stats - Full Width at Top */}
+                    <QuickStatsWidget userId={user?.id} />
+
+                    {/* Widget Row: Recent Files, Bookmarks, Pending Reviews */}
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 items-start">
+                        {/* Recent Files */}
+                        <RecentFilesWidget userId={user?.id} />
+
+                        {/* Bookmarks */}
+                        <BookmarksWidget userId={user?.id} />
+
+                        {/* Pending Reviews */}
+                        <PendingReviewsWidget userId={user?.id} />
+                    </div>
+
+                    {/* Team Activity - Full Width at Bottom */}
+                    <TeamActivityWidget userId={user?.id} />
+                </TabsContent>
 
                 {/* Your Repositories Tab */}
                 <TabsContent value="your" className="mt-6 space-y-4">

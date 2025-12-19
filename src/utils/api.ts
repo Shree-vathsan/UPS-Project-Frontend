@@ -418,5 +418,76 @@ export const api = {
             method: 'DELETE'
         });
         return handleResponse(res);
+    },
+
+    // ==========================================
+    // PERSONALIZED DASHBOARD
+    // ==========================================
+
+    async getDashboardData(userId: string) {
+        const res = await fetch(`${API_BASE}/dashboard/${userId}`);
+        return handleResponse(res);
+    },
+
+    async getRecentFiles(userId: string, limit: number = 10) {
+        const res = await fetch(`${API_BASE}/dashboard/${userId}/recent-files?limit=${limit}`);
+        return handleResponse(res);
+    },
+
+    async trackFileView(userId: string, fileId: string) {
+        const res = await fetch(`${API_BASE}/dashboard/file-view`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ userId, fileId })
+        });
+        return handleResponse(res);
+    },
+
+    async getBookmarks(userId: string) {
+        const res = await fetch(`${API_BASE}/dashboard/${userId}/bookmarks`);
+        return handleResponse(res);
+    },
+
+    async checkBookmark(userId: string, fileId: string) {
+        const res = await fetch(`${API_BASE}/dashboard/${userId}/bookmarks/${fileId}/check`);
+        return handleResponse(res);
+    },
+
+    async addBookmark(userId: string, fileId: string, category?: string) {
+        const res = await fetch(`${API_BASE}/dashboard/bookmark`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ userId, fileId, category })
+        });
+        return handleResponse(res);
+    },
+
+    async removeBookmark(userId: string, fileId: string) {
+        const res = await fetch(`${API_BASE}/dashboard/bookmark?userId=${userId}&fileId=${fileId}`, {
+            method: 'DELETE'
+        });
+        return handleResponse(res);
+    },
+
+    async getTeamActivity(userId: string, limit: number = 20) {
+        const res = await fetch(`${API_BASE}/dashboard/${userId}/team-activity?limit=${limit}`);
+        return handleResponse(res);
+    },
+
+    async getQuickStats(userId: string) {
+        const res = await fetch(`${API_BASE}/dashboard/${userId}/stats`);
+        return handleResponse(res);
+    },
+
+    async getPendingReviews(userId: string, limit: number = 10) {
+        const token = localStorage.getItem('token');
+        const headers: Record<string, string> = {};
+        if (token) {
+            headers['Authorization'] = `Bearer ${token}`;
+        }
+        const res = await fetch(`${API_BASE}/dashboard/${userId}/pending-reviews?limit=${limit}`, {
+            headers
+        });
+        return handleResponse(res);
     }
 };
