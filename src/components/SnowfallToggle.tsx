@@ -15,7 +15,7 @@ export default function SnowfallToggle({ isActive, onToggle }: SnowfallTogglePro
             variant="outline"
             size="icon"
             onClick={onToggle}
-            className={`relative ${theme === 'night' ? 'hover:bg-primary/40' : theme === 'dark' ? 'hover:bg-blue-500/30' : theme === 'light' ? 'hover:bg-blue-100' : ''}`}
+            className={`relative ${theme === 'night' ? 'hover:bg-primary/40' : theme === 'dark' ? 'hover:bg-blue-500/30' : theme === 'light' ? 'hover:bg-blue-100 hover:text-blue-700' : ''}`}
             title={`Snowfall Effect - ${isActive ? 'On' : 'Off'}`}
         >
             <Snowflake

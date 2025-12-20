@@ -448,6 +448,13 @@ export const api = {
         return handleResponse(res);
     },
 
+    async clearRecentFiles(userId: string) {
+        const res = await fetch(`${API_BASE}/dashboard/${userId}/recent-files`, {
+            method: 'DELETE'
+        });
+        return handleResponse(res);
+    },
+
     async getBookmarks(userId: string) {
         const res = await fetch(`${API_BASE}/dashboard/${userId}/bookmarks`);
         return handleResponse(res);

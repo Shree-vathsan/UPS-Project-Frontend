@@ -189,7 +189,7 @@ export default function RepoView({ user: _user }: RepoViewProps) {
                                 disabled={isRefreshing}
                                 variant="outline"
                                 size="sm"
-                                className={`gap-2 ${theme === 'night' ? 'hover:bg-primary/40' : theme === 'dark' ? 'hover:bg-blue-500/30' : theme === 'light' ? 'hover:bg-blue-100' : ''}`}
+                                className={`gap-2 ${theme === 'night' ? 'hover:bg-primary/40' : theme === 'dark' ? 'hover:bg-blue-500/30' : theme === 'light' ? 'hover:bg-blue-100 hover:text-blue-700' : ''}`}
                             >
                                 <RefreshCw className={`h-4 w-4 ${isRefreshing ? 'animate-spin' : ''}`} />
                                 {isRefreshing ? 'Refreshing...' : 'Refresh'}
@@ -211,9 +211,9 @@ export default function RepoView({ user: _user }: RepoViewProps) {
 
                     {/* Branch Selector */}
                     {branches.length > 0 && (
-                        <DropdownMenu>
+                        <DropdownMenu modal={false}>
                             <DropdownMenuTrigger asChild>
-                                <Button variant="outline" className={`gap-2 ${theme === 'night' ? 'hover:bg-primary/40' : theme === 'dark' ? 'hover:bg-blue-500/30' : theme === 'light' ? 'hover:bg-blue-100' : ''}`}>
+                                <Button variant="outline" className={`gap-2 ${theme === 'night' ? 'hover:bg-primary/40' : theme === 'dark' ? 'hover:bg-blue-500/30' : theme === 'light' ? 'hover:bg-blue-100 hover:text-blue-700' : ''}`}>
                                     <GitBranch className="h-4 w-4" />
                                     {selectedBranch}
                                 </Button>
@@ -223,6 +223,7 @@ export default function RepoView({ user: _user }: RepoViewProps) {
                                     <DropdownMenuItem
                                         key={branch.id}
                                         onClick={() => setSelectedBranch(branch.name)}
+                                        className={theme === 'light' ? 'focus:bg-blue-100 focus:text-blue-700' : ''}
                                     >
                                         {branch.name} {branch.isDefault && '(default)'}
                                         {branch.name === selectedBranch && <span className="ml-auto">✓</span>}
@@ -334,7 +335,7 @@ export default function RepoView({ user: _user }: RepoViewProps) {
                                 onClick={() => setPrFilter('all')}
                                 variant={prFilter === 'all' ? 'default' : 'outline'}
                                 size="sm"
-                                className={prFilter !== 'all' && (theme === 'night' ? 'hover:bg-primary/40' : theme === 'dark' ? 'hover:bg-blue-500/30' : theme === 'light' ? 'hover:bg-blue-100' : '') || ''}
+                                className={prFilter !== 'all' && (theme === 'night' ? 'hover:bg-primary/40' : theme === 'dark' ? 'hover:bg-blue-500/30' : theme === 'light' ? 'hover:bg-blue-100 hover:text-blue-700' : '') || ''}
                             >
                                 All
                             </Button>
@@ -342,7 +343,7 @@ export default function RepoView({ user: _user }: RepoViewProps) {
                                 onClick={() => setPrFilter('open')}
                                 variant={prFilter === 'open' ? 'default' : 'outline'}
                                 size="sm"
-                                className={prFilter !== 'open' && (theme === 'night' ? 'hover:bg-primary/40' : theme === 'dark' ? 'hover:bg-blue-500/30' : theme === 'light' ? 'hover:bg-blue-100' : '') || ''}
+                                className={prFilter !== 'open' && (theme === 'night' ? 'hover:bg-primary/40' : theme === 'dark' ? 'hover:bg-blue-500/30' : theme === 'light' ? 'hover:bg-blue-100 hover:text-blue-700' : '') || ''}
                             >
                                 Open
                             </Button>
@@ -350,7 +351,7 @@ export default function RepoView({ user: _user }: RepoViewProps) {
                                 onClick={() => setPrFilter('closed')}
                                 variant={prFilter === 'closed' ? 'default' : 'outline'}
                                 size="sm"
-                                className={prFilter !== 'closed' && (theme === 'night' ? 'hover:bg-primary/40' : theme === 'dark' ? 'hover:bg-blue-500/30' : theme === 'light' ? 'hover:bg-blue-100' : '') || ''}
+                                className={prFilter !== 'closed' && (theme === 'night' ? 'hover:bg-primary/40' : theme === 'dark' ? 'hover:bg-blue-500/30' : theme === 'light' ? 'hover:bg-blue-100 hover:text-blue-700' : '') || ''}
                             >
                                 Closed
                             </Button>

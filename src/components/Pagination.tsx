@@ -14,7 +14,7 @@ interface PaginationProps {
 const getHoverClass = (theme: string) => {
     if (theme === 'night') return 'hover:bg-primary/40';
     if (theme === 'dark') return 'hover:bg-blue-500/30';
-    if (theme === 'light') return 'hover:bg-blue-100';
+    if (theme === 'light') return 'hover:bg-blue-100 hover:text-blue-700';
     return '';
 };
 

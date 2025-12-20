@@ -75,17 +75,45 @@ const DropdownMenuItem = React.forwardRef<
     React.ComponentPropsWithoutRef<typeof DropdownMenuPrimitive.Item> & {
         inset?: boolean
     }
->(({ className, inset, ...props }, ref) => (
-    <DropdownMenuPrimitive.Item
-        ref={ref}
-        className={cn(
-            "relative flex cursor-default select-none items-center rounded-sm px-2 py-1.5 text-sm outline-none transition-colors focus:bg-primary/40 focus:text-primary-foreground data-[disabled]:pointer-events-none data-[disabled]:opacity-50",
-            inset && "pl-8",
-            className
-        )}
-        {...props}
-    />
-))
+>(({ className, inset, onSelect, onClick, ...props }, ref) => {
+    const mouseDownRef = React.useRef(false);
+
+    return (
+        <DropdownMenuPrimitive.Item
+            ref={ref}
+            className={cn(
+                "relative flex cursor-default select-none items-center rounded-sm px-2 py-1.5 text-sm outline-none transition-colors focus:bg-primary/40 focus:text-primary-foreground data-[disabled]:pointer-events-none data-[disabled]:opacity-50",
+                inset && "pl-8",
+                className
+            )}
+            onMouseDown={() => {
+                mouseDownRef.current = true;
+            }}
+            onMouseLeave={() => {
+                mouseDownRef.current = false;
+            }}
+            onSelect={(e) => {
+                // Only allow selection if mouse was pressed down on this item
+                if (!mouseDownRef.current) {
+                    e.preventDefault();
+                    return;
+                }
+                mouseDownRef.current = false;
+                onSelect?.(e);
+            }}
+            onClick={(e) => {
+                // Only allow click if mouse was pressed down on this item
+                if (!mouseDownRef.current) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    return;
+                }
+                onClick?.(e);
+            }}
+            {...props}
+        />
+    );
+})
 DropdownMenuItem.displayName = DropdownMenuPrimitive.Item.displayName
 
 const DropdownMenuCheckboxItem = React.forwardRef<

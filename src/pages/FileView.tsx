@@ -161,7 +161,7 @@ export default function FileView() {
                                 <Button
                                     variant="ghost"
                                     size="icon"
-                                    className={theme === 'night' ? 'hover:bg-primary/40' : theme === 'dark' ? 'hover:bg-blue-500/30' : theme === 'light' ? 'hover:bg-blue-100' : ''}
+                                    className={theme === 'night' ? 'hover:bg-primary/40' : theme === 'dark' ? 'hover:bg-blue-500/30' : theme === 'light' ? 'hover:bg-blue-100 hover:text-blue-700' : ''}
                                     onClick={() => {
                                         if (isBookmarked) {
                                             removeBookmark.mutate({ userId, fileId: fileId! });
@@ -273,7 +273,7 @@ export default function FileView() {
                                     disabled={!canGoPrevious}
                                     variant="outline"
                                     size="sm"
-                                    className={`gap-2 ${theme === 'night' ? 'hover:bg-primary/40' : theme === 'dark' ? 'hover:bg-blue-500/30' : theme === 'light' ? 'hover:bg-blue-100' : ''}`}
+                                    className={`gap-2 ${theme === 'night' ? 'hover:bg-primary/40' : theme === 'dark' ? 'hover:bg-blue-500/30' : theme === 'light' ? 'hover:bg-blue-100 hover:text-blue-700' : ''}`}
                                 >
                                     <ChevronLeft className="h-4 w-4" />
                                     Previous Commit
@@ -283,7 +283,7 @@ export default function FileView() {
                                     disabled={!canGoNext}
                                     variant="outline"
                                     size="sm"
-                                    className={`gap-2 ${theme === 'night' ? 'hover:bg-primary/40' : theme === 'dark' ? 'hover:bg-blue-500/30' : theme === 'light' ? 'hover:bg-blue-100' : ''}`}
+                                    className={`gap-2 ${theme === 'night' ? 'hover:bg-primary/40' : theme === 'dark' ? 'hover:bg-blue-500/30' : theme === 'light' ? 'hover:bg-blue-100 hover:text-blue-700' : ''}`}
                                 >
                                     Next Commit
                                     <ChevronRight className="h-4 w-4" />

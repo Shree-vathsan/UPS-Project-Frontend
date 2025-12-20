@@ -67,7 +67,7 @@ export function BranchSelectorModal({
                                         onClose();
                                     }}
                                     variant={isDefault ? "default" : "outline"}
-                                    className={`w-full justify-start gap-2 ${!isDefault && (theme === 'night' ? 'hover:bg-primary/40' : theme === 'dark' ? 'hover:bg-blue-500/30' : theme === 'light' ? 'hover:bg-blue-100' : '')}`}
+                                    className={`w-full justify-start gap-2 ${!isDefault && (theme === 'night' ? 'hover:bg-primary/40' : theme === 'dark' ? 'hover:bg-blue-500/30' : theme === 'light' ? 'hover:bg-blue-100 hover:text-blue-700' : '')}`}
                                 >
                                     <GitBranch className="h-4 w-4" />
                                     <span>{branch}</span>

@@ -10,6 +10,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import { toast } from 'sonner';
 import { Skeleton } from '@/components/ui/skeleton';
 import Pagination from '../components/Pagination';
 import { useAllRepositories, useAnalyzedRepositories, useInvalidateRepositories } from '../hooks/useApiQueries';
@@ -128,26 +129,26 @@ export default function Dashboard({ user, token }: DashboardProps) {
             // Handle different response types
             if (result.alreadyHasAccess) {
                 // User already has access
-                alert(`Repository Access\n\nYou already have access to this repository!`);
+                toast.info('Repository Access', { description: 'You already have access to this repository!' });
                 setActiveTab('analyzed');
                 await loadAnalyzedRepositories();
             } else if (result.accessGranted) {
                 // Repository was analyzed by someone else, access granted
                 const message = result.message || `Repository was analyzed by${result.analyzedBy ? ' ' + result.analyzedBy : ' another user'}. Access granted!`;
-                alert(`Access Granted\n\n${message}\n\nYou can now view this repository in the "Analyzed Repository" tab.`);
+                toast.success('Access Granted', { description: `${message} You can now view this repository in the "Analyzed Repository" tab.` });
                 setActiveTab('analyzed');
                 await loadAnalyzedRepositories();
             } else if (result.newAnalysis) {
                 // New analysis started
-                alert(`Analysis Started\n\nAnalysis started for ${owner}/${name}!\n\nThis will take a few minutes. Check the "Analyzed Repository" tab to see the status.`);
+                toast.success('Analysis Started', { description: `Analysis started for ${owner}/${name}! This will take a few minutes. Check the "Analyzed Repository" tab to see the status.` });
                 await loadRepositories();
             } else {
                 // Fallback for any other response
-                alert(`Analysis Started\n\nAnalysis started for ${owner}/${name}!`);
+                toast.success('Analysis Started', { description: `Analysis started for ${owner}/${name}!` });
             }
         } catch (error: any) {
             console.error('Analysis failed:', error);
-            alert(`Failed to Analyze\n\nFailed to analyze ${owner}/${name}\n\n${error.message}`);
+            toast.error('Failed to Analyze', { description: `Failed to analyze ${owner}/${name}: ${error.message}` });
         } finally {
             setAnalyzing(prev => {
                 const newSet = new Set(prev);
@@ -166,22 +167,22 @@ export default function Dashboard({ user, token }: DashboardProps) {
             console.log('Repository status:', status);
 
             if (!status.analyzed) {
-                alert('Repository Not Analyzed\n\nThis repository has not been analyzed yet. Click "Analyze" first!');
+                toast.warning('Repository Not Analyzed', { description: 'This repository has not been analyzed yet. Click "Analyze" first!' });
                 return;
             }
 
             if (status.status === 'ready') {
                 navigate(`/repo/${status.repositoryId}`);
             } else if (status.status === 'analyzing') {
-                alert('Analysis in Progress\n\nAnalysis is still in progress. Please wait a few minutes and try again.');
+                toast.info('Analysis in Progress', { description: 'Analysis is still in progress. Please wait a few minutes and try again.' });
             } else if (status.status === 'pending') {
-                alert('Analysis Queued\n\nAnalysis is queued and will start soon.');
+                toast.info('Analysis Queued', { description: 'Analysis is queued and will start soon.' });
             } else {
-                alert(`Repository Status\n\nCurrent status: ${status.status}`);
+                toast.info('Repository Status', { description: `Current status: ${status.status}` });
             }
         } catch (error: any) {
             console.error('Failed to check status:', error);
-            alert(`Status Check Failed\n\n${error.message}`);
+            toast.error('Status Check Failed', { description: error.message });
         } finally {
             setCheckingStatus(prev => {
                 const newSet = new Set(prev);
@@ -207,13 +208,13 @@ export default function Dashboard({ user, token }: DashboardProps) {
             // Handle different response types
             if (result.alreadyHasAccess) {
                 // User already has access
-                alert('Repository Access\n\nYou already have access to this repository!\n\nNavigating to the "Analyzed Repository" tab.');
+                toast.info('Repository Access', { description: 'You already have access to this repository! Navigating to the "Analyzed Repository" tab.' });
                 setActiveTab('analyzed');
                 setRepoUrl('');
             } else if (result.accessGranted) {
                 // Repository was analyzed by someone else, access granted
                 const timeAgoText = result.analyzedBy ? ` by ${result.analyzedBy}` : '';
-                alert(`Access Granted\n\nRepository was already analyzed${timeAgoText}. Access granted!\n\nNavigating to the "Analyzed Repository" tab.`);
+                toast.success('Access Granted', { description: `Repository was already analyzed${timeAgoText}. Access granted! Navigating to the "Analyzed Repository" tab.` });
                 setActiveTab('analyzed');
                 setRepoUrl('');
             } else if (result.newAnalysis) {
@@ -227,10 +228,10 @@ export default function Dashboard({ user, token }: DashboardProps) {
             } else if (result.alreadyExists) {
                 // Legacy handling for old backend responses
                 if (result.status === 'ready') {
-                    alert('Repository Already Analyzed\n\nThis repository has already been analyzed. You can view it in the "Analyzed Repository" tab.');
+                    toast.info('Repository Already Analyzed', { description: 'This repository has already been analyzed. You can view it in the "Analyzed Repository" tab.' });
                     setActiveTab('analyzed');
                 } else {
-                    alert('Analysis in Progress\n\nThis repository is already being analyzed. Check the "Analyzed Repository" tab for status updates.');
+                    toast.info('Analysis in Progress', { description: 'This repository is already being analyzed. Check the "Analyzed Repository" tab for status updates.' });
                     setActiveTab('analyzed');
                 }
             } else {
@@ -465,7 +466,7 @@ export default function Dashboard({ user, token }: DashboardProps) {
                             <AlertDescription>
                                 {error}
                                 <div className="mt-4">
-                                    <Button onClick={loadRepositories} variant="outline" size="sm" className={theme === 'night' ? 'hover:bg-primary/40' : theme === 'dark' ? 'hover:bg-blue-500/30' : theme === 'light' ? 'hover:bg-blue-100' : ''}>
+                                    <Button onClick={loadRepositories} variant="outline" size="sm" className={theme === 'night' ? 'hover:bg-primary/40' : theme === 'dark' ? 'hover:bg-blue-500/30' : theme === 'light' ? 'hover:bg-blue-100 hover:text-blue-700' : ''}>
                                         <RefreshCw className="h-4 w-4 mr-2" />
                                         Try Again
                                     </Button>
@@ -503,7 +504,7 @@ export default function Dashboard({ user, token }: DashboardProps) {
                                             className="pl-9 pr-4 py-2 text-sm border border-border rounded-md bg-background text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring transition-all duration-200 hover:shadow-[0_0_10px_rgba(255,255,255,0.3)] w-[200px]"
                                         />
                                     </div>
-                                    <Button onClick={loadRepositories} variant="outline" size="sm" className={theme === 'night' ? 'hover:bg-primary/40' : theme === 'dark' ? 'hover:bg-blue-500/30' : theme === 'light' ? 'hover:bg-blue-100' : ''}>
+                                    <Button onClick={loadRepositories} variant="outline" size="sm" className={theme === 'night' ? 'hover:bg-primary/40' : theme === 'dark' ? 'hover:bg-blue-500/30' : theme === 'light' ? 'hover:bg-blue-100 hover:text-blue-700' : ''}>
                                         <RefreshCw className="h-4 w-4 mr-2" />
                                         Refresh
                                     </Button>
@@ -516,7 +517,7 @@ export default function Dashboard({ user, token }: DashboardProps) {
                                     onClick={() => setRepoFilter('all')}
                                     variant={repoFilter === 'all' ? 'default' : 'outline'}
                                     size="sm"
-                                    className={repoFilter !== 'all' && (theme === 'night' ? 'hover:bg-primary/40' : theme === 'dark' ? 'hover:bg-blue-500/30' : theme === 'light' ? 'hover:bg-blue-100' : '') || ''}
+                                    className={repoFilter !== 'all' && (theme === 'night' ? 'hover:bg-primary/40' : theme === 'dark' ? 'hover:bg-blue-500/30' : theme === 'light' ? 'hover:bg-blue-100 hover:text-blue-700' : '') || ''}
                                 >
                                     All ({repos.length})
                                 </Button>
@@ -524,7 +525,7 @@ export default function Dashboard({ user, token }: DashboardProps) {
                                     onClick={() => setRepoFilter('public')}
                                     variant={repoFilter === 'public' ? 'default' : 'outline'}
                                     size="sm"
-                                    className={repoFilter !== 'public' && (theme === 'night' ? 'hover:bg-primary/40' : theme === 'dark' ? 'hover:bg-blue-500/30' : theme === 'light' ? 'hover:bg-blue-100' : '') || ''}
+                                    className={repoFilter !== 'public' && (theme === 'night' ? 'hover:bg-primary/40' : theme === 'dark' ? 'hover:bg-blue-500/30' : theme === 'light' ? 'hover:bg-blue-100 hover:text-blue-700' : '') || ''}
                                 >
                                     Public ({repos.filter((r: any) => r.private === false).length})
                                 </Button>
@@ -532,7 +533,7 @@ export default function Dashboard({ user, token }: DashboardProps) {
                                     onClick={() => setRepoFilter('private')}
                                     variant={repoFilter === 'private' ? 'default' : 'outline'}
                                     size="sm"
-                                    className={repoFilter !== 'private' && (theme === 'night' ? 'hover:bg-primary/40' : theme === 'dark' ? 'hover:bg-blue-500/30' : theme === 'light' ? 'hover:bg-blue-100' : '') || ''}
+                                    className={repoFilter !== 'private' && (theme === 'night' ? 'hover:bg-primary/40' : theme === 'dark' ? 'hover:bg-blue-500/30' : theme === 'light' ? 'hover:bg-blue-100 hover:text-blue-700' : '') || ''}
                                 >
                                     Private ({repos.filter((r: any) => r.private === true).length})
                                 </Button>
@@ -540,7 +541,7 @@ export default function Dashboard({ user, token }: DashboardProps) {
                                     onClick={() => setRepoFilter('contributor')}
                                     variant={repoFilter === 'contributor' ? 'default' : 'outline'}
                                     size="sm"
-                                    className={repoFilter !== 'contributor' && (theme === 'night' ? 'hover:bg-primary/40' : theme === 'dark' ? 'hover:bg-blue-500/30' : theme === 'light' ? 'hover:bg-blue-100' : '') || ''}
+                                    className={repoFilter !== 'contributor' && (theme === 'night' ? 'hover:bg-primary/40' : theme === 'dark' ? 'hover:bg-blue-500/30' : theme === 'light' ? 'hover:bg-blue-100 hover:text-blue-700' : '') || ''}
                                 >
                                     Contributor ({repos.filter((r: any) => {
                                         const perms = r.permissions;
@@ -642,7 +643,7 @@ export default function Dashboard({ user, token }: DashboardProps) {
                                                                     View Analysis
                                                                 </Button>
                                                             ) : (
-                                                                <Button onClick={() => handleViewAnalysis(repo.login, repo.name)} variant="outline" size="sm" className={theme === 'night' ? 'hover:bg-primary/40' : theme === 'dark' ? 'hover:bg-blue-500/30' : theme === 'light' ? 'hover:bg-blue-100' : ''}>
+                                                                <Button onClick={() => handleViewAnalysis(repo.login, repo.name)} variant="outline" size="sm" className={theme === 'night' ? 'hover:bg-primary/40' : theme === 'dark' ? 'hover:bg-blue-500/30' : theme === 'light' ? 'hover:bg-blue-100 hover:text-blue-700' : ''}>
                                                                     Check Status
                                                                 </Button>
                                                             )}
@@ -708,7 +709,7 @@ export default function Dashboard({ user, token }: DashboardProps) {
                                     className="pl-9 pr-4 py-2 text-sm border border-border rounded-md bg-background text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring transition-all duration-200 hover:shadow-[0_0_10px_rgba(255,255,255,0.3)] w-[200px]"
                                 />
                             </div>
-                            <Button onClick={loadAnalyzedRepositories} variant="outline" size="sm" className={theme === 'night' ? 'hover:bg-primary/40' : theme === 'dark' ? 'hover:bg-blue-500/30' : theme === 'light' ? 'hover:bg-blue-100' : ''}>
+                            <Button onClick={loadAnalyzedRepositories} variant="outline" size="sm" className={theme === 'night' ? 'hover:bg-primary/40' : theme === 'dark' ? 'hover:bg-blue-500/30' : theme === 'light' ? 'hover:bg-blue-100 hover:text-blue-700' : ''}>
                                 <RefreshCw className="h-4 w-4 mr-2" />
                                 Refresh
                             </Button>
@@ -720,7 +721,7 @@ export default function Dashboard({ user, token }: DashboardProps) {
                             onClick={() => setAnalyzedFilter('all')}
                             variant={analyzedFilter === 'all' ? 'default' : 'outline'}
                             size="sm"
-                            className={analyzedFilter !== 'all' && (theme === 'night' ? 'hover:bg-primary/40' : theme === 'dark' ? 'hover:bg-blue-500/30' : theme === 'light' ? 'hover:bg-blue-100' : '') || ''}
+                            className={analyzedFilter !== 'all' && (theme === 'night' ? 'hover:bg-primary/40' : theme === 'dark' ? 'hover:bg-blue-500/30' : theme === 'light' ? 'hover:bg-blue-100 hover:text-blue-700' : '') || ''}
                         >
                             All
                         </Button>
@@ -728,7 +729,7 @@ export default function Dashboard({ user, token }: DashboardProps) {
                             onClick={() => setAnalyzedFilter('your')}
                             variant={analyzedFilter === 'your' ? 'default' : 'outline'}
                             size="sm"
-                            className={analyzedFilter !== 'your' && (theme === 'night' ? 'hover:bg-primary/40' : theme === 'dark' ? 'hover:bg-blue-500/30' : theme === 'light' ? 'hover:bg-blue-100' : '') || ''}
+                            className={analyzedFilter !== 'your' && (theme === 'night' ? 'hover:bg-primary/40' : theme === 'dark' ? 'hover:bg-blue-500/30' : theme === 'light' ? 'hover:bg-blue-100 hover:text-blue-700' : '') || ''}
                         >
                             Your
                         </Button>
@@ -736,7 +737,7 @@ export default function Dashboard({ user, token }: DashboardProps) {
                             onClick={() => setAnalyzedFilter('others')}
                             variant={analyzedFilter === 'others' ? 'default' : 'outline'}
                             size="sm"
-                            className={analyzedFilter !== 'others' && (theme === 'night' ? 'hover:bg-primary/40' : theme === 'dark' ? 'hover:bg-blue-500/30' : theme === 'light' ? 'hover:bg-blue-100' : '') || ''}
+                            className={analyzedFilter !== 'others' && (theme === 'night' ? 'hover:bg-primary/40' : theme === 'dark' ? 'hover:bg-blue-500/30' : theme === 'light' ? 'hover:bg-blue-100 hover:text-blue-700' : '') || ''}
                         >
                             Others
                         </Button>
@@ -822,9 +823,9 @@ export default function Dashboard({ user, token }: DashboardProps) {
                                                             if (repo.status === 'ready') {
                                                                 navigate(`/repo/${repo.id}`);
                                                             } else if (repo.status === 'analyzing') {
-                                                                alert('Analysis in Progress\n\nThis repository is still being analyzed. Please check back in a few minutes.');
+                                                                toast.info('Analysis in Progress', { description: 'This repository is still being analyzed. Please check back in a few minutes.' });
                                                             } else {
-                                                                alert(`Repository Status\n\nCurrent status: ${repo.status}`);
+                                                                toast.info('Repository Status', { description: `Current status: ${repo.status}` });
                                                             }
                                                         }}
                                                         disabled={repo.status !== 'ready'}
@@ -859,14 +860,14 @@ export default function Dashboard({ user, token }: DashboardProps) {
                             <Button
                                 onClick={() => setAddSubTab('url')}
                                 variant={addSubTab === 'url' ? 'default' : 'outline'}
-                                className={`flex-1 ${addSubTab !== 'url' && (theme === 'night' ? 'hover:bg-primary/40' : theme === 'dark' ? 'hover:bg-blue-500/30' : theme === 'light' ? 'hover:bg-blue-100' : '') || ''}`}
+                                className={`flex-1 ${addSubTab !== 'url' && (theme === 'night' ? 'hover:bg-primary/40' : theme === 'dark' ? 'hover:bg-blue-500/30' : theme === 'light' ? 'hover:bg-blue-100 hover:text-blue-700' : '') || ''}`}
                             >
                                 Add by URL
                             </Button>
                             <Button
                                 onClick={() => setAddSubTab('find')}
                                 variant={addSubTab === 'find' ? 'default' : 'outline'}
-                                className={`flex-1 ${addSubTab !== 'find' && (theme === 'night' ? 'hover:bg-primary/40' : theme === 'dark' ? 'hover:bg-blue-500/30' : theme === 'light' ? 'hover:bg-blue-100' : '') || ''}`}
+                                className={`flex-1 ${addSubTab !== 'find' && (theme === 'night' ? 'hover:bg-primary/40' : theme === 'dark' ? 'hover:bg-blue-500/30' : theme === 'light' ? 'hover:bg-blue-100 hover:text-blue-700' : '') || ''}`}
                             >
                                 <Search className="h-4 w-4 mr-2" />
                                 Find Repository

@@ -100,7 +100,7 @@ export function NotificationBell() {
                     // Don't stop propagation - let other dropdowns detect the click and close
                     setIsOpen(!isOpen);
                 }}
-                className={`relative text-muted-foreground hover:text-foreground ${theme === 'night' ? 'hover:bg-primary/40' : theme === 'dark' ? 'hover:bg-blue-500/30' : theme === 'light' ? 'hover:bg-blue-100' : 'hover:bg-muted'}`}
+                className={`relative text-muted-foreground hover:text-foreground ${theme === 'night' ? 'hover:bg-primary/40' : theme === 'dark' ? 'hover:bg-blue-500/30' : theme === 'light' ? 'hover:bg-blue-100 hover:text-blue-700' : 'hover:bg-muted'}`}
             >
                 <Bell className="h-5 w-5" />
                 {unreadCount > 0 && (
@@ -122,7 +122,7 @@ export function NotificationBell() {
                                 size="sm"
                                 onClick={handleMarkAllAsRead}
                                 disabled={markAllAsRead.isPending}
-                                className={`text-xs text-primary hover:text-primary/80 h-6 ${theme === 'night' ? 'hover:bg-primary/40' : theme === 'dark' ? 'hover:bg-blue-500/30' : theme === 'light' ? 'hover:bg-blue-100' : ''}`}
+                                className={`text-xs text-primary hover:text-primary/80 h-6 ${theme === 'night' ? 'hover:bg-primary/40' : theme === 'dark' ? 'hover:bg-blue-500/30' : theme === 'light' ? 'hover:bg-blue-100 hover:text-blue-700' : ''}`}
                             >
                                 <CheckCheck className="h-3 w-3 mr-1" />
                                 Mark all read

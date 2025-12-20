@@ -14,6 +14,7 @@ import ThemeSelector from './components/ThemeSelector.tsx';
 import SnowfallToggle from './components/SnowfallToggle.tsx';
 import NotificationBell from './components/NotificationBell.tsx';
 import { ThemeProvider, useTheme } from './components/theme-provider.tsx';
+import { Toaster } from './components/ui/sonner';
 import { api } from './utils/api';
 
 // Capture OAuth code IMMEDIATELY and persist in sessionStorage
@@ -160,11 +161,9 @@ function AppContent({ snowfallEnabled, toggleSnowfall }: AppContentProps) {
                                     onClick={handleLogout}
                                     className={`ml-2 px-2 py-1 text-xs font-medium rounded-md transition-all flex items-center gap-1 ${currentTheme === 'light'
                                         ? 'text-red-600 bg-red-50 border border-red-200 hover:bg-red-100 hover:border-red-300'
-                                        : currentTheme === 'dark'
+                                        : currentTheme === 'dark' || currentTheme === 'night'
                                             ? 'text-red-400 bg-red-950/30 border border-red-800/50 hover:bg-red-950/50 hover:border-red-700'
-                                            : currentTheme === 'night'
-                                                ? 'text-orange-400 bg-orange-950/20 border border-orange-800/40 hover:bg-orange-950/40 hover:border-orange-700'
-                                                : 'text-red-600 bg-red-50 border border-red-200 hover:bg-red-100 hover:border-red-300'
+                                            : 'text-red-600 bg-red-50 border border-red-200 hover:bg-red-100 hover:border-red-300'
                                         }`}
                                 >
                                     <LogOut className="h-3 w-3" />
@@ -246,6 +245,7 @@ function App() {
             <BrowserRouter>
                 <AppContent snowfallEnabled={snowfallEnabled} toggleSnowfall={toggleSnowfall} />
             </BrowserRouter>
+            <Toaster richColors position="top-center" />
         </ThemeProvider>
     );
 }

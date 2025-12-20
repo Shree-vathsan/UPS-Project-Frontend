@@ -737,6 +737,21 @@ export function useRecentFiles(userId: string | undefined) {
     });
 }
 
+export function useClearRecentFiles() {
+    const queryClient = useQueryClient();
+    return useMutation({
+        mutationFn: ({ userId }: { userId: string }) =>
+            api.clearRecentFiles(userId),
+        onSuccess: (_, { userId }) => {
+            // Immediately set the data to empty array for instant UI update
+            queryClient.setQueryData(queryKeys.recentFiles(userId), []);
+            // Also invalidate to ensure fresh data on next fetch
+            queryClient.invalidateQueries({ queryKey: queryKeys.recentFiles(userId) });
+            queryClient.invalidateQueries({ queryKey: queryKeys.dashboardData(userId) });
+        },
+    });
+}
+
 export function useBookmarks(userId: string | undefined) {
     return useQuery({
         queryKey: queryKeys.bookmarks(userId || ''),
