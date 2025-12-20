@@ -45,7 +45,7 @@ export default function BookmarksWidget({ userId }: BookmarksWidgetProps) {
     const [openDropdownId, setOpenDropdownId] = useState<string | null>(null);
     const [deleteFileId, setDeleteFileId] = useState<string | null>(null);
     const [deleteFileName, setDeleteFileName] = useState<string>('');
-    const { theme } = useTheme();
+    const { resolvedTheme } = useTheme();
 
     const handleFileClick = (file: BookmarkedFile) => {
         navigate(`/file/${file.fileId}`);
@@ -124,7 +124,7 @@ export default function BookmarksWidget({ userId }: BookmarksWidgetProps) {
                                         <Button
                                             variant="ghost"
                                             size="icon"
-                                            className={`h-6 w-6 transition-opacity flex-shrink-0 ${theme === 'night' ? 'hover:bg-primary/40' : theme === 'dark' ? 'hover:bg-blue-500/30' : theme === 'light' ? 'hover:bg-blue-100 hover:text-blue-700' : ''} ${isDropdownOpen ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'
+                                            className={`h-6 w-6 transition-opacity flex-shrink-0 ${resolvedTheme === 'night' ? 'hover:bg-primary/40' : resolvedTheme === 'dark' ? 'hover:bg-blue-500/30' : resolvedTheme === 'light' ? 'hover:bg-blue-100 hover:text-blue-700' : ''} ${isDropdownOpen ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'
                                                 }`}
                                             onClick={() => handleFileClick(file)}
                                         >
@@ -138,7 +138,7 @@ export default function BookmarksWidget({ userId }: BookmarksWidgetProps) {
                                                 <Button
                                                     variant="ghost"
                                                     size="icon"
-                                                    className={`h-6 w-6 transition-opacity flex-shrink-0 ${theme === 'night' ? 'hover:bg-primary/40' : theme === 'dark' ? 'hover:bg-blue-500/30' : theme === 'light' ? 'hover:bg-blue-100 hover:text-blue-700' : ''} ${isDropdownOpen ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'
+                                                    className={`h-6 w-6 transition-opacity flex-shrink-0 ${resolvedTheme === 'night' ? 'hover:bg-primary/40' : resolvedTheme === 'dark' ? 'hover:bg-blue-500/30' : resolvedTheme === 'light' ? 'hover:bg-blue-100 hover:text-blue-700' : ''} ${isDropdownOpen ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'
                                                         }`}
                                                     onClick={(e) => e.stopPropagation()}
                                                 >
@@ -147,7 +147,7 @@ export default function BookmarksWidget({ userId }: BookmarksWidgetProps) {
                                             </DropdownMenuTrigger>
                                             <DropdownMenuContent align="end">
                                                 <DropdownMenuItem
-                                                    className={`cursor-pointer ${theme === 'light'
+                                                    className={`cursor-pointer ${resolvedTheme === 'light'
                                                         ? 'text-red-600 focus:text-red-600 focus:bg-red-50'
                                                         : 'text-red-400 focus:text-red-400 focus:bg-red-950/50'
                                                         }`}
@@ -175,7 +175,7 @@ export default function BookmarksWidget({ userId }: BookmarksWidgetProps) {
                         </AlertDialogDescription>
                     </AlertDialogHeader>
                     <AlertDialogFooter>
-                        <AlertDialogCancel className={`${theme === 'night' ? 'hover:bg-primary/40' : theme === 'dark' ? 'hover:bg-blue-500/30' : theme === 'light' ? 'hover:bg-blue-100 hover:text-blue-700' : ''}`}>Cancel</AlertDialogCancel>
+                        <AlertDialogCancel className={`${resolvedTheme === 'night' ? 'hover:bg-primary/40' : resolvedTheme === 'dark' ? 'hover:bg-blue-500/30' : resolvedTheme === 'light' ? 'hover:bg-blue-100 hover:text-blue-700' : ''}`}>Cancel</AlertDialogCancel>
                         <AlertDialogAction
                             onClick={confirmRemove}
                             className="bg-red-600 hover:bg-red-700 text-white"

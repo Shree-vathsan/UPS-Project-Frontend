@@ -8,14 +8,14 @@ interface SnowfallToggleProps {
 }
 
 export default function SnowfallToggle({ isActive, onToggle }: SnowfallToggleProps) {
-    const { theme } = useTheme();
+    const { resolvedTheme } = useTheme();
 
     return (
         <Button
             variant="outline"
             size="icon"
             onClick={onToggle}
-            className={`relative ${theme === 'night' ? 'hover:bg-primary/40' : theme === 'dark' ? 'hover:bg-blue-500/30' : theme === 'light' ? 'hover:bg-blue-100 hover:text-blue-700' : ''}`}
+            className={`relative ${resolvedTheme === 'night' ? 'hover:bg-primary/40' : resolvedTheme === 'dark' ? 'hover:bg-blue-500/30' : resolvedTheme === 'light' ? 'hover:bg-blue-100 hover:text-blue-700' : ''}`}
             title={`Snowfall Effect - ${isActive ? 'On' : 'Off'}`}
         >
             <Snowflake

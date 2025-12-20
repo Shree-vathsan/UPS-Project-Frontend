@@ -27,7 +27,7 @@ type RepoFilterType = 'all' | 'public' | 'private' | 'contributor';
 
 export default function Dashboard({ user, token }: DashboardProps) {
     const navigate = useNavigate();
-    const { theme } = useTheme();
+    const { resolvedTheme } = useTheme();
 
     // Tab state
     const [activeTab, setActiveTab] = useState<TabType>('home');
@@ -375,9 +375,14 @@ export default function Dashboard({ user, token }: DashboardProps) {
                     </Button>
                 </div>
 
-                {/* Collapsible Quick Guide */}
-                {showQuickGuide && (
-                    <Card className="mt-4 max-w-4xl">
+                {/* Collapsible Quick Guide - with smooth transition */}
+                <div
+                    className={`grid transition-all duration-300 ${showQuickGuide
+                        ? 'grid-rows-[1fr] opacity-100 mt-4'
+                        : 'grid-rows-[0fr] opacity-0 mt-0'
+                        }`}
+                >
+                    <Card className="max-w-4xl overflow-hidden">
                         <CardContent className="pt-6">
                             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                                 <div className="flex items-center gap-3">
@@ -399,7 +404,7 @@ export default function Dashboard({ user, token }: DashboardProps) {
                             </div>
                         </CardContent>
                     </Card>
-                )}
+                </div>
             </div>
 
             <Tabs value={activeTab} onValueChange={(value) => setActiveTab(value as TabType)}>
@@ -466,7 +471,7 @@ export default function Dashboard({ user, token }: DashboardProps) {
                             <AlertDescription>
                                 {error}
                                 <div className="mt-4">
-                                    <Button onClick={loadRepositories} variant="outline" size="sm" className={theme === 'night' ? 'hover:bg-primary/40' : theme === 'dark' ? 'hover:bg-blue-500/30' : theme === 'light' ? 'hover:bg-blue-100 hover:text-blue-700' : ''}>
+                                    <Button onClick={loadRepositories} variant="outline" size="sm" className={resolvedTheme === 'night' ? 'hover:bg-primary/40' : resolvedTheme === 'dark' ? 'hover:bg-blue-500/30' : resolvedTheme === 'light' ? 'hover:bg-blue-100 hover:text-blue-700' : ''}>
                                         <RefreshCw className="h-4 w-4 mr-2" />
                                         Try Again
                                     </Button>
@@ -504,7 +509,7 @@ export default function Dashboard({ user, token }: DashboardProps) {
                                             className="pl-9 pr-4 py-2 text-sm border border-border rounded-md bg-background text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring transition-all duration-200 hover:shadow-[0_0_10px_rgba(255,255,255,0.3)] w-[200px]"
                                         />
                                     </div>
-                                    <Button onClick={loadRepositories} variant="outline" size="sm" className={theme === 'night' ? 'hover:bg-primary/40' : theme === 'dark' ? 'hover:bg-blue-500/30' : theme === 'light' ? 'hover:bg-blue-100 hover:text-blue-700' : ''}>
+                                    <Button onClick={loadRepositories} variant="outline" size="sm" className={resolvedTheme === 'night' ? 'hover:bg-primary/40' : resolvedTheme === 'dark' ? 'hover:bg-blue-500/30' : resolvedTheme === 'light' ? 'hover:bg-blue-100 hover:text-blue-700' : ''}>
                                         <RefreshCw className="h-4 w-4 mr-2" />
                                         Refresh
                                     </Button>
@@ -517,7 +522,7 @@ export default function Dashboard({ user, token }: DashboardProps) {
                                     onClick={() => setRepoFilter('all')}
                                     variant={repoFilter === 'all' ? 'default' : 'outline'}
                                     size="sm"
-                                    className={repoFilter !== 'all' && (theme === 'night' ? 'hover:bg-primary/40' : theme === 'dark' ? 'hover:bg-blue-500/30' : theme === 'light' ? 'hover:bg-blue-100 hover:text-blue-700' : '') || ''}
+                                    className={repoFilter !== 'all' && (resolvedTheme === 'night' ? 'hover:bg-primary/40' : resolvedTheme === 'dark' ? 'hover:bg-blue-500/30' : resolvedTheme === 'light' ? 'hover:bg-blue-100 hover:text-blue-700' : '') || ''}
                                 >
                                     All ({repos.length})
                                 </Button>
@@ -525,7 +530,7 @@ export default function Dashboard({ user, token }: DashboardProps) {
                                     onClick={() => setRepoFilter('public')}
                                     variant={repoFilter === 'public' ? 'default' : 'outline'}
                                     size="sm"
-                                    className={repoFilter !== 'public' && (theme === 'night' ? 'hover:bg-primary/40' : theme === 'dark' ? 'hover:bg-blue-500/30' : theme === 'light' ? 'hover:bg-blue-100 hover:text-blue-700' : '') || ''}
+                                    className={repoFilter !== 'public' && (resolvedTheme === 'night' ? 'hover:bg-primary/40' : resolvedTheme === 'dark' ? 'hover:bg-blue-500/30' : resolvedTheme === 'light' ? 'hover:bg-blue-100 hover:text-blue-700' : '') || ''}
                                 >
                                     Public ({repos.filter((r: any) => r.private === false).length})
                                 </Button>
@@ -533,7 +538,7 @@ export default function Dashboard({ user, token }: DashboardProps) {
                                     onClick={() => setRepoFilter('private')}
                                     variant={repoFilter === 'private' ? 'default' : 'outline'}
                                     size="sm"
-                                    className={repoFilter !== 'private' && (theme === 'night' ? 'hover:bg-primary/40' : theme === 'dark' ? 'hover:bg-blue-500/30' : theme === 'light' ? 'hover:bg-blue-100 hover:text-blue-700' : '') || ''}
+                                    className={repoFilter !== 'private' && (resolvedTheme === 'night' ? 'hover:bg-primary/40' : resolvedTheme === 'dark' ? 'hover:bg-blue-500/30' : resolvedTheme === 'light' ? 'hover:bg-blue-100 hover:text-blue-700' : '') || ''}
                                 >
                                     Private ({repos.filter((r: any) => r.private === true).length})
                                 </Button>
@@ -541,7 +546,7 @@ export default function Dashboard({ user, token }: DashboardProps) {
                                     onClick={() => setRepoFilter('contributor')}
                                     variant={repoFilter === 'contributor' ? 'default' : 'outline'}
                                     size="sm"
-                                    className={repoFilter !== 'contributor' && (theme === 'night' ? 'hover:bg-primary/40' : theme === 'dark' ? 'hover:bg-blue-500/30' : theme === 'light' ? 'hover:bg-blue-100 hover:text-blue-700' : '') || ''}
+                                    className={repoFilter !== 'contributor' && (resolvedTheme === 'night' ? 'hover:bg-primary/40' : resolvedTheme === 'dark' ? 'hover:bg-blue-500/30' : resolvedTheme === 'light' ? 'hover:bg-blue-100 hover:text-blue-700' : '') || ''}
                                 >
                                     Contributor ({repos.filter((r: any) => {
                                         const perms = r.permissions;
@@ -643,7 +648,7 @@ export default function Dashboard({ user, token }: DashboardProps) {
                                                                     View Analysis
                                                                 </Button>
                                                             ) : (
-                                                                <Button onClick={() => handleViewAnalysis(repo.login, repo.name)} variant="outline" size="sm" className={theme === 'night' ? 'hover:bg-primary/40' : theme === 'dark' ? 'hover:bg-blue-500/30' : theme === 'light' ? 'hover:bg-blue-100 hover:text-blue-700' : ''}>
+                                                                <Button onClick={() => handleViewAnalysis(repo.login, repo.name)} variant="outline" size="sm" className={resolvedTheme === 'night' ? 'hover:bg-primary/40' : resolvedTheme === 'dark' ? 'hover:bg-blue-500/30' : resolvedTheme === 'light' ? 'hover:bg-blue-100 hover:text-blue-700' : ''}>
                                                                     Check Status
                                                                 </Button>
                                                             )}
@@ -709,7 +714,7 @@ export default function Dashboard({ user, token }: DashboardProps) {
                                     className="pl-9 pr-4 py-2 text-sm border border-border rounded-md bg-background text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring transition-all duration-200 hover:shadow-[0_0_10px_rgba(255,255,255,0.3)] w-[200px]"
                                 />
                             </div>
-                            <Button onClick={loadAnalyzedRepositories} variant="outline" size="sm" className={theme === 'night' ? 'hover:bg-primary/40' : theme === 'dark' ? 'hover:bg-blue-500/30' : theme === 'light' ? 'hover:bg-blue-100 hover:text-blue-700' : ''}>
+                            <Button onClick={loadAnalyzedRepositories} variant="outline" size="sm" className={resolvedTheme === 'night' ? 'hover:bg-primary/40' : resolvedTheme === 'dark' ? 'hover:bg-blue-500/30' : resolvedTheme === 'light' ? 'hover:bg-blue-100 hover:text-blue-700' : ''}>
                                 <RefreshCw className="h-4 w-4 mr-2" />
                                 Refresh
                             </Button>
@@ -721,7 +726,7 @@ export default function Dashboard({ user, token }: DashboardProps) {
                             onClick={() => setAnalyzedFilter('all')}
                             variant={analyzedFilter === 'all' ? 'default' : 'outline'}
                             size="sm"
-                            className={analyzedFilter !== 'all' && (theme === 'night' ? 'hover:bg-primary/40' : theme === 'dark' ? 'hover:bg-blue-500/30' : theme === 'light' ? 'hover:bg-blue-100 hover:text-blue-700' : '') || ''}
+                            className={analyzedFilter !== 'all' && (resolvedTheme === 'night' ? 'hover:bg-primary/40' : resolvedTheme === 'dark' ? 'hover:bg-blue-500/30' : resolvedTheme === 'light' ? 'hover:bg-blue-100 hover:text-blue-700' : '') || ''}
                         >
                             All
                         </Button>
@@ -729,7 +734,7 @@ export default function Dashboard({ user, token }: DashboardProps) {
                             onClick={() => setAnalyzedFilter('your')}
                             variant={analyzedFilter === 'your' ? 'default' : 'outline'}
                             size="sm"
-                            className={analyzedFilter !== 'your' && (theme === 'night' ? 'hover:bg-primary/40' : theme === 'dark' ? 'hover:bg-blue-500/30' : theme === 'light' ? 'hover:bg-blue-100 hover:text-blue-700' : '') || ''}
+                            className={analyzedFilter !== 'your' && (resolvedTheme === 'night' ? 'hover:bg-primary/40' : resolvedTheme === 'dark' ? 'hover:bg-blue-500/30' : resolvedTheme === 'light' ? 'hover:bg-blue-100 hover:text-blue-700' : '') || ''}
                         >
                             Your
                         </Button>
@@ -737,7 +742,7 @@ export default function Dashboard({ user, token }: DashboardProps) {
                             onClick={() => setAnalyzedFilter('others')}
                             variant={analyzedFilter === 'others' ? 'default' : 'outline'}
                             size="sm"
-                            className={analyzedFilter !== 'others' && (theme === 'night' ? 'hover:bg-primary/40' : theme === 'dark' ? 'hover:bg-blue-500/30' : theme === 'light' ? 'hover:bg-blue-100 hover:text-blue-700' : '') || ''}
+                            className={analyzedFilter !== 'others' && (resolvedTheme === 'night' ? 'hover:bg-primary/40' : resolvedTheme === 'dark' ? 'hover:bg-blue-500/30' : resolvedTheme === 'light' ? 'hover:bg-blue-100 hover:text-blue-700' : '') || ''}
                         >
                             Others
                         </Button>
@@ -860,14 +865,14 @@ export default function Dashboard({ user, token }: DashboardProps) {
                             <Button
                                 onClick={() => setAddSubTab('url')}
                                 variant={addSubTab === 'url' ? 'default' : 'outline'}
-                                className={`flex-1 ${addSubTab !== 'url' && (theme === 'night' ? 'hover:bg-primary/40' : theme === 'dark' ? 'hover:bg-blue-500/30' : theme === 'light' ? 'hover:bg-blue-100 hover:text-blue-700' : '') || ''}`}
+                                className={`flex-1 ${addSubTab !== 'url' && (resolvedTheme === 'night' ? 'hover:bg-primary/40' : resolvedTheme === 'dark' ? 'hover:bg-blue-500/30' : resolvedTheme === 'light' ? 'hover:bg-blue-100 hover:text-blue-700' : '') || ''}`}
                             >
                                 Add by URL
                             </Button>
                             <Button
                                 onClick={() => setAddSubTab('find')}
                                 variant={addSubTab === 'find' ? 'default' : 'outline'}
-                                className={`flex-1 ${addSubTab !== 'find' && (theme === 'night' ? 'hover:bg-primary/40' : theme === 'dark' ? 'hover:bg-blue-500/30' : theme === 'light' ? 'hover:bg-blue-100 hover:text-blue-700' : '') || ''}`}
+                                className={`flex-1 ${addSubTab !== 'find' && (resolvedTheme === 'night' ? 'hover:bg-primary/40' : resolvedTheme === 'dark' ? 'hover:bg-blue-500/30' : resolvedTheme === 'light' ? 'hover:bg-blue-100 hover:text-blue-700' : '') || ''}`}
                             >
                                 <Search className="h-4 w-4 mr-2" />
                                 Find Repository

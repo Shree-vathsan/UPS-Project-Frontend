@@ -827,7 +827,12 @@ export function useRemoveBookmark() {
 export function usePendingReviews(userId: string | undefined, limit: number = 10) {
     return useQuery({
         queryKey: queryKeys.pendingReviews(userId || ''),
-        queryFn: () => api.getPendingReviews(userId!, limit),
+        queryFn: async () => {
+            console.log('[PendingReviews] Fetching for userId:', userId);
+            const result = await api.getPendingReviews(userId!, limit);
+            console.log('[PendingReviews] API Response:', result);
+            return result;
+        },
         enabled: !!userId,
         staleTime: 1000 * 60 * 3, // 3 minutes
     });

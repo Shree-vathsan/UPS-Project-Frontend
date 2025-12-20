@@ -40,7 +40,7 @@ interface AppContentProps {
 // Inner component that can use useNavigate (must be inside BrowserRouter)
 function AppContent({ snowfallEnabled, toggleSnowfall }: AppContentProps) {
     const navigate = useNavigate();
-    const { theme: currentTheme } = useTheme();
+    const { resolvedTheme } = useTheme();
     const [user, setUser] = useState<any>(null);
     const [token, setToken] = useState<string>('');
     // Initialize isAuthenticating to true if there's a captured OAuth code
@@ -159,9 +159,9 @@ function AppContent({ snowfallEnabled, toggleSnowfall }: AppContentProps) {
                                 </span>
                                 <button
                                     onClick={handleLogout}
-                                    className={`ml-2 px-2 py-1 text-xs font-medium rounded-md transition-all flex items-center gap-1 ${currentTheme === 'light'
+                                    className={`ml-2 px-2 py-1 text-xs font-medium rounded-md transition-all flex items-center gap-1 ${resolvedTheme === 'light'
                                         ? 'text-red-600 bg-red-50 border border-red-200 hover:bg-red-100 hover:border-red-300'
-                                        : currentTheme === 'dark' || currentTheme === 'night'
+                                        : resolvedTheme === 'dark' || resolvedTheme === 'night'
                                             ? 'text-red-400 bg-red-950/30 border border-red-800/50 hover:bg-red-950/50 hover:border-red-700'
                                             : 'text-red-600 bg-red-50 border border-red-200 hover:bg-red-100 hover:border-red-300'
                                         }`}
@@ -226,7 +226,7 @@ function App() {
     };
 
     return (
-        <ThemeProvider defaultTheme="black-beige">
+        <ThemeProvider defaultTheme="night">
             {snowfallEnabled && (
                 <Snowfall
                     snowflakeCount={200}

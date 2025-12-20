@@ -41,7 +41,7 @@ export default function RecentFilesWidget({ userId }: RecentFilesWidgetProps) {
     const navigate = useNavigate();
     const { data: recentFiles, isLoading } = useRecentFiles(userId);
     const clearRecentFiles = useClearRecentFiles();
-    const { theme } = useTheme();
+    const { resolvedTheme } = useTheme();
     const [showClearDialog, setShowClearDialog] = useState(false);
 
     const handleFileClick = (file: RecentFile) => {
@@ -105,14 +105,14 @@ export default function RecentFilesWidget({ userId }: RecentFilesWidgetProps) {
                                     <Button
                                         variant="ghost"
                                         size="icon"
-                                        className={`h-6 w-6 ${theme === 'night' ? 'hover:bg-primary/40' : theme === 'dark' ? 'hover:bg-blue-500/30' : theme === 'light' ? 'hover:bg-blue-100 hover:text-blue-700' : ''}`}
+                                        className={`h-6 w-6 ${resolvedTheme === 'night' ? 'hover:bg-primary/40' : resolvedTheme === 'dark' ? 'hover:bg-blue-500/30' : resolvedTheme === 'light' ? 'hover:bg-blue-100 hover:text-blue-700' : ''}`}
                                     >
                                         <MoreVertical className="h-4 w-4" />
                                     </Button>
                                 </DropdownMenuTrigger>
                                 <DropdownMenuContent align="end">
                                     <DropdownMenuItem
-                                        className={`cursor-pointer ${theme === 'light'
+                                        className={`cursor-pointer ${resolvedTheme === 'light'
                                             ? 'text-red-600 focus:text-red-600 focus:bg-red-50'
                                             : 'text-red-400 focus:text-red-400 focus:bg-red-950/50'
                                             }`}
@@ -151,7 +151,7 @@ export default function RecentFilesWidget({ userId }: RecentFilesWidgetProps) {
                                     <Button
                                         variant="ghost"
                                         size="icon"
-                                        className={`h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0 ${theme === 'night' ? 'hover:bg-primary/40' : theme === 'dark' ? 'hover:bg-blue-500/30' : theme === 'light' ? 'hover:bg-blue-100 hover:text-blue-700' : ''}`}
+                                        className={`h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0 ${resolvedTheme === 'night' ? 'hover:bg-primary/40' : resolvedTheme === 'dark' ? 'hover:bg-blue-500/30' : resolvedTheme === 'light' ? 'hover:bg-blue-100 hover:text-blue-700' : ''}`}
                                         onClick={() => handleFileClick(file)}
                                     >
                                         <ExternalLink className="h-3 w-3 text-muted-foreground" />
@@ -172,10 +172,10 @@ export default function RecentFilesWidget({ userId }: RecentFilesWidgetProps) {
                         </AlertDialogDescription>
                     </AlertDialogHeader>
                     <AlertDialogFooter>
-                        <AlertDialogCancel className={`${theme === 'night' ? 'hover:bg-primary/40' : theme === 'dark' ? 'hover:bg-blue-500/30' : theme === 'light' ? 'hover:bg-blue-100 hover:text-blue-700' : ''}`}>Cancel</AlertDialogCancel>
+                        <AlertDialogCancel className={`${resolvedTheme === 'night' ? 'hover:bg-primary/40' : resolvedTheme === 'dark' ? 'hover:bg-blue-500/30' : resolvedTheme === 'light' ? 'hover:bg-blue-100 hover:text-blue-700' : ''}`}>Cancel</AlertDialogCancel>
                         <AlertDialogAction
                             onClick={confirmClearAll}
-                            className={`${theme === 'light'
+                            className={`${resolvedTheme === 'light'
                                 ? 'bg-red-600 hover:bg-red-700 text-white'
                                 : 'bg-red-600 hover:bg-red-700 text-white'
                                 }`}

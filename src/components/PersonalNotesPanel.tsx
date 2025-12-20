@@ -234,106 +234,120 @@ function PersonalNotesSection({
             </CardHeader>
 
             <CardContent className="p-4 space-y-3">
-                {/* Search Input */}
-                {isSearching && (
-                    <div className="flex items-center gap-2 p-2 rounded-lg bg-muted/50 border">
-                        <Hash className="h-4 w-4 text-primary" />
-                        <Input
-                            type="text"
-                            placeholder="Search by line number (e.g., 3 shows L3, L30, L31...)"
-                            value={searchLineNumber}
-                            onChange={(e) => setSearchLineNumber(e.target.value)}
-                            className="flex-1 h-7 bg-transparent border-0 text-foreground text-sm focus:ring-0 placeholder:text-muted-foreground"
-                            autoFocus
-                        />
-                        {searchLineNumber && (
-                            <Button
-                                onClick={() => setSearchLineNumber('')}
-                                size="sm"
-                                variant="ghost"
-                                className="h-6 w-6 p-0 text-muted-foreground hover:text-foreground"
-                            >
-                                <X className="h-3 w-3" />
-                            </Button>
-                        )}
-                    </div>
-                )}
-
-                {/* Add Note Form */}
-                {isAdding && (
-                    <div className="p-3 rounded-lg bg-primary/5 border border-primary/20 space-y-3 animate-in slide-in-from-top-2 duration-200">
-                        {/* Line Number Field - First */}
-                        <div className="space-y-1">
-                            <div className="flex items-center gap-2">
-                                <div className="p-1.5 rounded-md bg-muted">
-                                    <Hash className="h-3.5 w-3.5 text-primary" />
-                                </div>
-                                <Input
-                                    type="number"
-                                    placeholder={totalLines ? `Line # (1-${totalLines})` : "Line # (required)"}
-                                    value={newLineNumber}
-                                    onChange={(e) => {
-                                        const value = e.target.value;
-                                        setNewLineNumber(value);
-                                        const lineNum = parseInt(value);
-                                        if (totalLines && totalLines > 0 && lineNum > totalLines) {
-                                            setLineNumberError(`Line number exceeds file length (max: ${totalLines})`);
-                                        } else if (lineNum < 1 && value) {
-                                            setLineNumberError('Line number must be at least 1');
-                                        } else {
-                                            setLineNumberError('');
-                                        }
-                                    }}
-                                    onKeyDown={(e) => {
-                                        if (e.key === 'Enter') {
-                                            e.preventDefault();
-                                            textareaRef.current?.focus();
-                                        }
-                                    }}
-                                    className={`flex-1 h-8 bg-background text-foreground text-sm rounded-lg ${lineNumberError ? 'border-destructive' : 'border'}`}
-                                    autoFocus
-                                />
-                            </div>
-                            {lineNumberError && (
-                                <p className="text-xs text-destructive ml-9">{lineNumberError}</p>
+                {/* Search Input - with smooth open/close animation */}
+                <div
+                    className={`grid transition-all duration-300 ${isSearching
+                        ? 'grid-rows-[1fr] opacity-100'
+                        : 'grid-rows-[0fr] opacity-0'
+                        }`}
+                >
+                    <div className="overflow-hidden">
+                        <div className="flex items-center gap-2 p-2 rounded-lg bg-muted/50 border">
+                            <Hash className="h-4 w-4 text-primary" />
+                            <Input
+                                type="text"
+                                placeholder="Search by line number (e.g., 3 shows L3, L30, L31...)"
+                                value={searchLineNumber}
+                                onChange={(e) => setSearchLineNumber(e.target.value)}
+                                className="flex-1 h-7 bg-transparent border-0 text-foreground text-sm focus:ring-0 placeholder:text-muted-foreground"
+                                autoFocus={isSearching}
+                            />
+                            {searchLineNumber && (
+                                <Button
+                                    onClick={() => setSearchLineNumber('')}
+                                    size="sm"
+                                    variant="ghost"
+                                    className="h-6 w-6 p-0 text-muted-foreground hover:text-foreground"
+                                >
+                                    <X className="h-3 w-3" />
+                                </Button>
                             )}
                         </div>
-                        {/* Notes Textarea - Second */}
-                        <Textarea
-                            ref={textareaRef}
-                            placeholder="Write your private note... (Enter to save, Shift+Enter for new line)"
-                            value={newContent}
-                            onChange={(e) => setNewContent(e.target.value)}
-                            onKeyDown={(e) => {
-                                if (e.key === 'Enter' && !e.shiftKey) {
-                                    e.preventDefault();
-                                    handleCreate();
-                                }
-                            }}
-                            className="min-h-[70px] bg-background border text-foreground placeholder:text-muted-foreground text-sm focus:border-primary focus:ring-primary/20 rounded-lg"
-                        />
-                        <div className="flex justify-end gap-2">
-                            <Button
-                                onClick={handleCancelAdd}
-                                size="sm"
-                                variant="ghost"
-                                className="h-7 px-3 text-muted-foreground hover:text-foreground"
-                            >
-                                <X className="h-3 w-3 mr-1" />
-                                Cancel
-                            </Button>
-                            <Button
-                                onClick={handleCreate}
-                                disabled={!newContent.trim() || createNote.isPending || !!lineNumberError || !newLineNumber.trim()}
-                                size="sm"
-                                className="h-7 px-4 bg-primary hover:bg-primary/90 text-primary-foreground shadow-sm transition-all duration-200"
-                            >
-                                <Check className="h-3 w-3 mr-1" />
-                                Save
-                            </Button>
+                    </div>
+                </div>
+
+                {/* Add Note Form - with smooth open/close animation */}
+                <div
+                    className={`grid transition-all duration-300 ${isAdding
+                        ? 'grid-rows-[1fr] opacity-100'
+                        : 'grid-rows-[0fr] opacity-0'
+                        }`}
+                >
+                    <div className="overflow-hidden">
+                        <div className="p-3 rounded-lg bg-primary/5 border border-primary/20 space-y-3">
+                            {/* Line Number Field - First */}
+                            <div className="space-y-1">
+                                <div className="flex items-center gap-2">
+                                    <div className="p-1.5 rounded-md bg-muted">
+                                        <Hash className="h-3.5 w-3.5 text-primary" />
+                                    </div>
+                                    <Input
+                                        type="number"
+                                        placeholder={totalLines ? `Line # (1-${totalLines})` : "Line # (required)"}
+                                        value={newLineNumber}
+                                        onChange={(e) => {
+                                            const value = e.target.value;
+                                            setNewLineNumber(value);
+                                            const lineNum = parseInt(value);
+                                            if (totalLines && totalLines > 0 && lineNum > totalLines) {
+                                                setLineNumberError(`Line number exceeds file length (max: ${totalLines})`);
+                                            } else if (lineNum < 1 && value) {
+                                                setLineNumberError('Line number must be at least 1');
+                                            } else {
+                                                setLineNumberError('');
+                                            }
+                                        }}
+                                        onKeyDown={(e) => {
+                                            if (e.key === 'Enter') {
+                                                e.preventDefault();
+                                                textareaRef.current?.focus();
+                                            }
+                                        }}
+                                        className={`flex-1 h-8 bg-background text-foreground text-sm rounded-lg ${lineNumberError ? 'border-destructive' : 'border'}`}
+                                        autoFocus={isAdding}
+                                    />
+                                </div>
+                                {lineNumberError && (
+                                    <p className="text-xs text-destructive ml-9">{lineNumberError}</p>
+                                )}
+                            </div>
+                            {/* Notes Textarea - Second */}
+                            <Textarea
+                                ref={textareaRef}
+                                placeholder="Write your private note... (Enter to save, Shift+Enter for new line)"
+                                value={newContent}
+                                onChange={(e) => setNewContent(e.target.value)}
+                                onKeyDown={(e) => {
+                                    if (e.key === 'Enter' && !e.shiftKey) {
+                                        e.preventDefault();
+                                        handleCreate();
+                                    }
+                                }}
+                                className="min-h-[70px] bg-background border text-foreground placeholder:text-muted-foreground text-sm focus:border-primary focus:ring-primary/20 rounded-lg"
+                            />
+                            <div className="flex justify-end gap-2">
+                                <Button
+                                    onClick={handleCancelAdd}
+                                    size="sm"
+                                    variant="ghost"
+                                    className="h-7 px-3 text-muted-foreground hover:text-foreground"
+                                >
+                                    <X className="h-3 w-3 mr-1" />
+                                    Cancel
+                                </Button>
+                                <Button
+                                    onClick={handleCreate}
+                                    disabled={!newContent.trim() || createNote.isPending || !!lineNumberError || !newLineNumber.trim()}
+                                    size="sm"
+                                    className="h-7 px-4 bg-primary hover:bg-primary/90 text-primary-foreground shadow-sm transition-all duration-200"
+                                >
+                                    <Check className="h-3 w-3 mr-1" />
+                                    Save
+                                </Button>
+                            </div>
                         </div>
                     </div>
-                )}
+                </div>
 
                 {/* Notes List */}
                 <div className="space-y-2 max-h-[300px] overflow-y-auto pr-1 scrollbar-thin">
@@ -618,106 +632,120 @@ function SharedNotesSection({
             </CardHeader>
 
             <CardContent className="p-4 space-y-3">
-                {/* Search Input */}
-                {isSearching && (
-                    <div className="flex items-center gap-2 p-2 rounded-lg bg-muted/50 border">
-                        <Hash className="h-4 w-4 text-accent" />
-                        <Input
-                            type="text"
-                            placeholder="Search by line number (e.g., 3 shows L3, L30, L31...)"
-                            value={searchLineNumber}
-                            onChange={(e) => setSearchLineNumber(e.target.value)}
-                            className="flex-1 h-7 bg-transparent border-0 text-foreground text-sm focus:ring-0 placeholder:text-muted-foreground"
-                            autoFocus
-                        />
-                        {searchLineNumber && (
-                            <Button
-                                onClick={() => setSearchLineNumber('')}
-                                size="sm"
-                                variant="ghost"
-                                className="h-6 w-6 p-0 text-muted-foreground hover:text-foreground"
-                            >
-                                <X className="h-3 w-3" />
-                            </Button>
-                        )}
-                    </div>
-                )}
-
-                {/* Add Shared Note Form */}
-                {isAdding && (
-                    <div className="p-3 rounded-lg bg-accent/5 border border-accent/20 space-y-3 animate-in slide-in-from-top-2 duration-200">
-                        {/* Line Number Field - First */}
-                        <div className="space-y-1">
-                            <div className="flex items-center gap-2">
-                                <div className="p-1.5 rounded-md bg-muted">
-                                    <Hash className="h-3.5 w-3.5 text-accent" />
-                                </div>
-                                <Input
-                                    type="number"
-                                    placeholder={totalLines ? `Line # (1-${totalLines})` : "Line # (required)"}
-                                    value={newLineNumber}
-                                    onChange={(e) => {
-                                        const value = e.target.value;
-                                        setNewLineNumber(value);
-                                        const lineNum = parseInt(value);
-                                        if (totalLines && totalLines > 0 && lineNum > totalLines) {
-                                            setLineNumberError(`Line number exceeds file length (max: ${totalLines})`);
-                                        } else if (lineNum < 1 && value) {
-                                            setLineNumberError('Line number must be at least 1');
-                                        } else {
-                                            setLineNumberError('');
-                                        }
-                                    }}
-                                    onKeyDown={(e) => {
-                                        if (e.key === 'Enter') {
-                                            e.preventDefault();
-                                            textareaRef.current?.focus();
-                                        }
-                                    }}
-                                    className={`flex-1 h-8 bg-background text-foreground text-sm rounded-lg ${lineNumberError ? 'border-destructive' : 'border'}`}
-                                    autoFocus
-                                />
-                            </div>
-                            {lineNumberError && (
-                                <p className="text-xs text-destructive ml-9">{lineNumberError}</p>
+                {/* Search Input - with smooth open/close animation */}
+                <div
+                    className={`grid transition-all duration-300 ${isSearching
+                        ? 'grid-rows-[1fr] opacity-100'
+                        : 'grid-rows-[0fr] opacity-0'
+                        }`}
+                >
+                    <div className="overflow-hidden">
+                        <div className="flex items-center gap-2 p-2 rounded-lg bg-muted/50 border">
+                            <Hash className="h-4 w-4 text-accent" />
+                            <Input
+                                type="text"
+                                placeholder="Search by line number (e.g., 3 shows L3, L30, L31...)"
+                                value={searchLineNumber}
+                                onChange={(e) => setSearchLineNumber(e.target.value)}
+                                className="flex-1 h-7 bg-transparent border-0 text-foreground text-sm focus:ring-0 placeholder:text-muted-foreground"
+                                autoFocus={isSearching}
+                            />
+                            {searchLineNumber && (
+                                <Button
+                                    onClick={() => setSearchLineNumber('')}
+                                    size="sm"
+                                    variant="ghost"
+                                    className="h-6 w-6 p-0 text-muted-foreground hover:text-foreground"
+                                >
+                                    <X className="h-3 w-3" />
+                                </Button>
                             )}
                         </div>
-                        {/* Notes Textarea - Second */}
-                        <Textarea
-                            ref={textareaRef}
-                            placeholder="Share a note with your team... (Enter to share, Shift+Enter for new line)"
-                            value={newContent}
-                            onChange={(e) => setNewContent(e.target.value)}
-                            onKeyDown={(e) => {
-                                if (e.key === 'Enter' && !e.shiftKey) {
-                                    e.preventDefault();
-                                    handleCreate();
-                                }
-                            }}
-                            className="min-h-[70px] bg-background border text-foreground placeholder:text-muted-foreground text-sm focus:border-accent focus:ring-accent/20 rounded-lg"
-                        />
-                        <div className="flex justify-end gap-2">
-                            <Button
-                                onClick={handleCancelAdd}
-                                size="sm"
-                                variant="ghost"
-                                className="h-7 px-3 text-muted-foreground hover:text-foreground"
-                            >
-                                <X className="h-3 w-3 mr-1" />
-                                Cancel
-                            </Button>
-                            <Button
-                                onClick={handleCreate}
-                                disabled={!newContent.trim() || createLineComment.isPending || !!lineNumberError || !newLineNumber.trim()}
-                                size="sm"
-                                className="h-7 px-4 bg-accent hover:bg-accent/90 text-accent-foreground shadow-sm transition-all duration-200"
-                            >
-                                <Check className="h-3 w-3 mr-1" />
-                                Share
-                            </Button>
+                    </div>
+                </div>
+
+                {/* Add Shared Note Form - with smooth open/close animation */}
+                <div
+                    className={`grid transition-all duration-300 ${isAdding
+                            ? 'grid-rows-[1fr] opacity-100'
+                            : 'grid-rows-[0fr] opacity-0'
+                        }`}
+                >
+                    <div className="overflow-hidden">
+                        <div className="p-3 rounded-lg bg-accent/5 border border-accent/20 space-y-3">
+                            {/* Line Number Field - First */}
+                            <div className="space-y-1">
+                                <div className="flex items-center gap-2">
+                                    <div className="p-1.5 rounded-md bg-muted">
+                                        <Hash className="h-3.5 w-3.5 text-accent" />
+                                    </div>
+                                    <Input
+                                        type="number"
+                                        placeholder={totalLines ? `Line # (1-${totalLines})` : "Line # (required)"}
+                                        value={newLineNumber}
+                                        onChange={(e) => {
+                                            const value = e.target.value;
+                                            setNewLineNumber(value);
+                                            const lineNum = parseInt(value);
+                                            if (totalLines && totalLines > 0 && lineNum > totalLines) {
+                                                setLineNumberError(`Line number exceeds file length (max: ${totalLines})`);
+                                            } else if (lineNum < 1 && value) {
+                                                setLineNumberError('Line number must be at least 1');
+                                            } else {
+                                                setLineNumberError('');
+                                            }
+                                        }}
+                                        onKeyDown={(e) => {
+                                            if (e.key === 'Enter') {
+                                                e.preventDefault();
+                                                textareaRef.current?.focus();
+                                            }
+                                        }}
+                                        className={`flex-1 h-8 bg-background text-foreground text-sm rounded-lg ${lineNumberError ? 'border-destructive' : 'border'}`}
+                                        autoFocus={isAdding}
+                                    />
+                                </div>
+                                {lineNumberError && (
+                                    <p className="text-xs text-destructive ml-9">{lineNumberError}</p>
+                                )}
+                            </div>
+                            {/* Notes Textarea - Second */}
+                            <Textarea
+                                ref={textareaRef}
+                                placeholder="Share a note with your team... (Enter to share, Shift+Enter for new line)"
+                                value={newContent}
+                                onChange={(e) => setNewContent(e.target.value)}
+                                onKeyDown={(e) => {
+                                    if (e.key === 'Enter' && !e.shiftKey) {
+                                        e.preventDefault();
+                                        handleCreate();
+                                    }
+                                }}
+                                className="min-h-[70px] bg-background border text-foreground placeholder:text-muted-foreground text-sm focus:border-accent focus:ring-accent/20 rounded-lg"
+                            />
+                            <div className="flex justify-end gap-2">
+                                <Button
+                                    onClick={handleCancelAdd}
+                                    size="sm"
+                                    variant="ghost"
+                                    className="h-7 px-3 text-muted-foreground hover:text-foreground"
+                                >
+                                    <X className="h-3 w-3 mr-1" />
+                                    Cancel
+                                </Button>
+                                <Button
+                                    onClick={handleCreate}
+                                    disabled={!newContent.trim() || createLineComment.isPending || !!lineNumberError || !newLineNumber.trim()}
+                                    size="sm"
+                                    className="h-7 px-4 bg-accent hover:bg-accent/90 text-accent-foreground shadow-sm transition-all duration-200"
+                                >
+                                    <Check className="h-3 w-3 mr-1" />
+                                    Share
+                                </Button>
+                            </div>
                         </div>
                     </div>
-                )}
+                </div>
 
                 {/* Shared Notes List */}
                 <div className="space-y-3 max-h-[300px] overflow-y-auto pr-1 scrollbar-thin">

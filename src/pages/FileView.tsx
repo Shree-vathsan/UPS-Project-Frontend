@@ -21,7 +21,7 @@ import { useFile, useFileAnalysis, useFileContent, useFileCommits, useTrackFileV
 export default function FileView() {
     const { fileId } = useParams<{ fileId: string }>();
     const [searchParams] = useSearchParams();
-    const { theme } = useTheme();
+    const { resolvedTheme } = useTheme();
 
     // Get tab from URL params (default to 'code')
     const tabParam = searchParams.get('tab') as 'code' | 'analysis' | 'notes' | null;
@@ -71,7 +71,7 @@ export default function FileView() {
     }, [userId, fileId]);
 
     // Determine if current theme is light (includes black-beige which has light background)
-    const isLightTheme = theme === 'light' || theme === 'light-pallete' || theme === 'black-beige';
+    const isLightTheme = resolvedTheme === 'light' || theme === 'light-pallete' || theme === 'black-beige';
 
     const getLanguageFromPath = (filePath: string): string => {
         const extension = filePath.split('.').pop()?.toLowerCase();
@@ -161,7 +161,7 @@ export default function FileView() {
                                 <Button
                                     variant="ghost"
                                     size="icon"
-                                    className={theme === 'night' ? 'hover:bg-primary/40' : theme === 'dark' ? 'hover:bg-blue-500/30' : theme === 'light' ? 'hover:bg-blue-100 hover:text-blue-700' : ''}
+                                    className={resolvedTheme === 'night' ? 'hover:bg-primary/40' : resolvedTheme === 'dark' ? 'hover:bg-blue-500/30' : resolvedTheme === 'light' ? 'hover:bg-blue-100 hover:text-blue-700' : ''}
                                     onClick={() => {
                                         if (isBookmarked) {
                                             removeBookmark.mutate({ userId, fileId: fileId! });
@@ -273,7 +273,7 @@ export default function FileView() {
                                     disabled={!canGoPrevious}
                                     variant="outline"
                                     size="sm"
-                                    className={`gap-2 ${theme === 'night' ? 'hover:bg-primary/40' : theme === 'dark' ? 'hover:bg-blue-500/30' : theme === 'light' ? 'hover:bg-blue-100 hover:text-blue-700' : ''}`}
+                                    className={`gap-2 ${resolvedTheme === 'night' ? 'hover:bg-primary/40' : resolvedTheme === 'dark' ? 'hover:bg-blue-500/30' : resolvedTheme === 'light' ? 'hover:bg-blue-100 hover:text-blue-700' : ''}`}
                                 >
                                     <ChevronLeft className="h-4 w-4" />
                                     Previous Commit
@@ -283,7 +283,7 @@ export default function FileView() {
                                     disabled={!canGoNext}
                                     variant="outline"
                                     size="sm"
-                                    className={`gap-2 ${theme === 'night' ? 'hover:bg-primary/40' : theme === 'dark' ? 'hover:bg-blue-500/30' : theme === 'light' ? 'hover:bg-blue-100 hover:text-blue-700' : ''}`}
+                                    className={`gap-2 ${resolvedTheme === 'night' ? 'hover:bg-primary/40' : resolvedTheme === 'dark' ? 'hover:bg-blue-500/30' : resolvedTheme === 'light' ? 'hover:bg-blue-100 hover:text-blue-700' : ''}`}
                                 >
                                     Next Commit
                                     <ChevronRight className="h-4 w-4" />

@@ -11,10 +11,10 @@ interface PaginationProps {
 }
 
 // Helper function for theme-based hover
-const getHoverClass = (theme: string) => {
-    if (theme === 'night') return 'hover:bg-primary/40';
-    if (theme === 'dark') return 'hover:bg-blue-500/30';
-    if (theme === 'light') return 'hover:bg-blue-100 hover:text-blue-700';
+const getHoverClass = (resolvedTheme: string) => {
+    if (resolvedTheme === 'night') return 'hover:bg-primary/40';
+    if (resolvedTheme === 'dark') return 'hover:bg-blue-500/30';
+    if (resolvedTheme === 'light') return 'hover:bg-blue-100 hover:text-blue-700';
     return '';
 };
 
@@ -29,7 +29,7 @@ export default function Pagination({
     // If totalPages is defined and <= 1, hide it strictly.
     // if (totalPages !== undefined && totalPages <= 1) return null;
 
-    const { theme } = useTheme();
+    const { resolvedTheme } = useTheme();
     const isNextDisabled = totalPages ? currentPage >= totalPages : !hasNextPage;
 
     return (
@@ -39,7 +39,7 @@ export default function Pagination({
                 disabled={currentPage === 1 || disabled}
                 variant="outline"
                 size="sm"
-                className={getHoverClass(theme)}
+                className={getHoverClass(resolvedTheme)}
             >
                 Previous
             </Button>
@@ -51,7 +51,7 @@ export default function Pagination({
                 disabled={isNextDisabled || disabled}
                 variant="outline"
                 size="sm"
-                className={getHoverClass(theme)}
+                className={getHoverClass(resolvedTheme)}
             >
                 Next
             </Button>
