@@ -113,8 +113,8 @@ export function NotificationBell() {
             {/* Dropdown - with smooth open/close animation */}
             <div
                 className={`absolute right-0 mt-2 w-80 z-50 grid transition-all duration-300 ${isOpen
-                        ? 'grid-rows-[1fr] opacity-100'
-                        : 'grid-rows-[0fr] opacity-0 pointer-events-none'
+                    ? 'grid-rows-[1fr] opacity-100'
+                    : 'grid-rows-[0fr] opacity-0 pointer-events-none'
                     }`}
             >
                 <div className="overflow-hidden">

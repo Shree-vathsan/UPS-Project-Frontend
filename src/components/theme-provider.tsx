@@ -35,10 +35,6 @@ export function ThemeProvider({
 }: ThemeProviderProps) {
     const [theme, setTheme] = useState<Theme>(() => {
         const saved = localStorage.getItem(storageKey);
-        // Handle legacy themes that no longer exist
-        if (saved === 'black-beige' || saved === 'light-pallete') {
-            return defaultTheme;
-        }
         return (saved as Theme) || defaultTheme;
     })
 

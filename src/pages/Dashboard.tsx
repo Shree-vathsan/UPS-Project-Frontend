@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Package, BarChart, Plus, Loader, RefreshCw, AlertTriangle, Search, Info, ChevronDown, ChevronUp, Home } from 'lucide-react';
+import { Package, BarChart, Plus, Loader, RefreshCw, AlertTriangle, Search, Info, ChevronDown, ChevronUp, Home, ExternalLink } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
 import { RecentFilesWidget, BookmarksWidget, TeamActivityWidget, QuickStatsWidget, PendingReviewsWidget } from '../components/widgets';
 import { api } from '../utils/api';
@@ -36,6 +36,7 @@ export default function Dashboard({ user, token }: DashboardProps) {
     const {
         data: reposData,
         isLoading: loading,
+        isFetching: isRefreshingRepos,
         error: reposError,
         refetch: refetchRepos
     } = useAllRepositories(token, user?.id);
@@ -109,13 +110,19 @@ export default function Dashboard({ user, token }: DashboardProps) {
     // Cache invalidation helper
     const { invalidateAll } = useInvalidateRepositories();
 
+    // State for minimum loading animation duration
+    const [isManualRefreshingAnalyzed, setIsManualRefreshingAnalyzed] = useState(false);
+
     // Wrapper function for backward compatibility
     const loadRepositories = () => {
         refetchRepos();
     };
 
-    const loadAnalyzedRepositories = () => {
-        refetchAnalyzed();
+    const loadAnalyzedRepositories = async () => {
+        setIsManualRefreshingAnalyzed(true);
+        const minDelay = new Promise(resolve => setTimeout(resolve, 1000)); // Minimum 1 second
+        await Promise.all([refetchAnalyzed(), minDelay]);
+        setIsManualRefreshingAnalyzed(false);
     };
 
     const handleAnalyze = async (owner: string, name: string) => {
@@ -471,9 +478,9 @@ export default function Dashboard({ user, token }: DashboardProps) {
                             <AlertDescription>
                                 {error}
                                 <div className="mt-4">
-                                    <Button onClick={loadRepositories} variant="outline" size="sm" className={resolvedTheme === 'night' ? 'hover:bg-primary/40' : resolvedTheme === 'dark' ? 'hover:bg-blue-500/30' : resolvedTheme === 'light' ? 'hover:bg-blue-100 hover:text-blue-700' : ''}>
-                                        <RefreshCw className="h-4 w-4 mr-2" />
-                                        Try Again
+                                    <Button onClick={loadRepositories} variant="outline" size="sm" disabled={isRefreshingRepos} className={resolvedTheme === 'night' ? 'hover:bg-primary/40' : resolvedTheme === 'dark' ? 'hover:bg-blue-500/30' : resolvedTheme === 'light' ? 'hover:bg-blue-100 hover:text-blue-700' : ''}>
+                                        <RefreshCw className={`h-4 w-4 mr-2 ${isRefreshingRepos ? 'animate-spin' : ''}`} />
+                                        {isRefreshingRepos ? 'Retrying...' : 'Try Again'}
                                     </Button>
                                 </div>
                             </AlertDescription>
@@ -509,9 +516,9 @@ export default function Dashboard({ user, token }: DashboardProps) {
                                             className="pl-9 pr-4 py-2 text-sm border border-border rounded-md bg-background text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring transition-all duration-200 hover:shadow-[0_0_10px_rgba(255,255,255,0.3)] w-[200px]"
                                         />
                                     </div>
-                                    <Button onClick={loadRepositories} variant="outline" size="sm" className={resolvedTheme === 'night' ? 'hover:bg-primary/40' : resolvedTheme === 'dark' ? 'hover:bg-blue-500/30' : resolvedTheme === 'light' ? 'hover:bg-blue-100 hover:text-blue-700' : ''}>
-                                        <RefreshCw className="h-4 w-4 mr-2" />
-                                        Refresh
+                                    <Button onClick={loadRepositories} variant="outline" size="sm" disabled={isRefreshingRepos} className={resolvedTheme === 'night' ? 'hover:bg-primary/40' : resolvedTheme === 'dark' ? 'hover:bg-blue-500/30' : resolvedTheme === 'light' ? 'hover:bg-blue-100 hover:text-blue-700' : ''}>
+                                        <RefreshCw className={`h-4 w-4 mr-2 ${isRefreshingRepos ? 'animate-spin' : ''}`} />
+                                        {isRefreshingRepos ? 'Refreshing...' : 'Refresh'}
                                     </Button>
                                 </div>
                             </div>
@@ -608,8 +615,18 @@ export default function Dashboard({ user, token }: DashboardProps) {
                                                 <CardHeader>
                                                     <div className="flex items-start justify-between">
                                                         <div className="space-y-1 flex-1">
-                                                            <CardTitle className="text-lg">
+                                                            <CardTitle className="text-lg flex items-center gap-2">
                                                                 {repo.login}/{repo.name}
+                                                                <a
+                                                                    href={`https://github.com/${repo.login}/${repo.name}`}
+                                                                    target="_blank"
+                                                                    rel="noopener noreferrer"
+                                                                    className="text-muted-foreground hover:text-primary transition-colors"
+                                                                    title="Open on GitHub"
+                                                                    onClick={(e) => e.stopPropagation()}
+                                                                >
+                                                                    <ExternalLink className="h-4 w-4" />
+                                                                </a>
                                                             </CardTitle>
                                                             <CardDescription>
                                                                 {repo.description || 'No description'}
@@ -714,9 +731,9 @@ export default function Dashboard({ user, token }: DashboardProps) {
                                     className="pl-9 pr-4 py-2 text-sm border border-border rounded-md bg-background text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring transition-all duration-200 hover:shadow-[0_0_10px_rgba(255,255,255,0.3)] w-[200px]"
                                 />
                             </div>
-                            <Button onClick={loadAnalyzedRepositories} variant="outline" size="sm" className={resolvedTheme === 'night' ? 'hover:bg-primary/40' : resolvedTheme === 'dark' ? 'hover:bg-blue-500/30' : resolvedTheme === 'light' ? 'hover:bg-blue-100 hover:text-blue-700' : ''}>
-                                <RefreshCw className="h-4 w-4 mr-2" />
-                                Refresh
+                            <Button onClick={loadAnalyzedRepositories} variant="outline" size="sm" disabled={isManualRefreshingAnalyzed} className={resolvedTheme === 'night' ? 'hover:bg-primary/40' : resolvedTheme === 'dark' ? 'hover:bg-blue-500/30' : resolvedTheme === 'light' ? 'hover:bg-blue-100 hover:text-blue-700' : ''}>
+                                <RefreshCw className={`h-4 w-4 mr-2 ${isManualRefreshingAnalyzed ? 'animate-spin' : ''}`} />
+                                {isManualRefreshingAnalyzed ? 'Refreshing...' : 'Refresh'}
                             </Button>
                         </div>
                     </div>
@@ -807,8 +824,18 @@ export default function Dashboard({ user, token }: DashboardProps) {
                                             <CardHeader>
                                                 <div className="flex items-start justify-between">
                                                     <div className="space-y-2 flex-1">
-                                                        <CardTitle className="text-lg">
+                                                        <CardTitle className="text-lg flex items-center gap-2">
                                                             {repo.ownerUsername}/{repo.name}
+                                                            <a
+                                                                href={`https://github.com/${repo.ownerUsername}/${repo.name}`}
+                                                                target="_blank"
+                                                                rel="noopener noreferrer"
+                                                                className="text-muted-foreground hover:text-primary transition-colors"
+                                                                title="Open on GitHub"
+                                                                onClick={(e) => e.stopPropagation()}
+                                                            >
+                                                                <ExternalLink className="h-4 w-4" />
+                                                            </a>
                                                         </CardTitle>
                                                         <div className="flex gap-2">
                                                             <Badge variant={repo.isMine ? 'success' : 'info'}>

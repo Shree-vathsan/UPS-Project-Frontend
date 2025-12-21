@@ -1,6 +1,6 @@
 import { BrowserRouter, Routes, Route, useNavigate, Link } from 'react-router-dom';
 import { useState, useEffect, useRef } from 'react';
-import { Code, LogOut } from 'lucide-react';
+import { Code, LogOut, Snowflake, Palette, User, Sun, Moon, Monitor, Check } from 'lucide-react';
 import Snowfall from 'react-snowfall';
 import Dashboard from './pages/Dashboard.tsx';
 import RepoView from './pages/RepoView.tsx';
@@ -10,11 +10,29 @@ import PullRequestView from './pages/PullRequestView.tsx';
 import FileTreeView from './pages/FileTreeView.tsx';
 import FileView from './pages/FileView.tsx';
 import Login from './pages/Login.tsx';
-import ThemeSelector from './components/ThemeSelector.tsx';
-import SnowfallToggle from './components/SnowfallToggle.tsx';
 import NotificationBell from './components/NotificationBell.tsx';
 import { ThemeProvider, useTheme } from './components/theme-provider.tsx';
 import { Toaster } from './components/ui/sonner';
+import { toast } from 'sonner';
+import {
+    AlertDialog,
+    AlertDialogAction,
+    AlertDialogCancel,
+    AlertDialogContent,
+    AlertDialogDescription,
+    AlertDialogFooter,
+    AlertDialogHeader,
+    AlertDialogTitle,
+    AlertDialogTrigger,
+} from './components/ui/alert-dialog';
+import {
+    DropdownMenu,
+    DropdownMenuContent,
+    DropdownMenuItem,
+    DropdownMenuLabel,
+    DropdownMenuSeparator,
+    DropdownMenuTrigger,
+} from './components/ui/dropdown-menu';
 import { api } from './utils/api';
 
 // Capture OAuth code IMMEDIATELY and persist in sessionStorage
@@ -40,7 +58,7 @@ interface AppContentProps {
 // Inner component that can use useNavigate (must be inside BrowserRouter)
 function AppContent({ snowfallEnabled, toggleSnowfall }: AppContentProps) {
     const navigate = useNavigate();
-    const { resolvedTheme } = useTheme();
+    const { resolvedTheme, theme, setTheme } = useTheme();
     const [user, setUser] = useState<any>(null);
     const [token, setToken] = useState<string>('');
     // Initialize isAuthenticating to true if there's a captured OAuth code
@@ -56,6 +74,9 @@ function AppContent({ snowfallEnabled, toggleSnowfall }: AppContentProps) {
             // Mark as processed IMMEDIATELY to prevent duplicate calls
             oauthProcessed.current = true;
             setIsAuthenticating(true);
+            let loginSuccessful = false;
+            let loginFailed = false;
+            let errorMessage = '';
 
             api.githubCallback(code)
                 .then(data => {
@@ -64,21 +85,36 @@ function AppContent({ snowfallEnabled, toggleSnowfall }: AppContentProps) {
                         setToken(data.accessToken);
                         localStorage.setItem('user', JSON.stringify(data.user));
                         localStorage.setItem('token', data.accessToken);
+                        loginSuccessful = true;
                     } else {
                         // Try to recover from localStorage
                         loadFromLocalStorage();
+                        loginFailed = true;
+                        errorMessage = 'Authentication failed. Please try again.';
                     }
                 })
                 .catch(err => {
                     console.error('OAuth callback error:', err);
                     // Try to recover from localStorage
                     loadFromLocalStorage();
+                    loginFailed = true;
+                    errorMessage = err?.message || 'Connection error. Please try again.';
                 })
                 .finally(() => {
                     // Clear the OAuth code from sessionStorage after processing
                     sessionStorage.removeItem('oauth_code');
                     setIsAuthenticating(false);
                     setIsInitialized(true);
+                    // Show success toast after authenticating animation is done
+                    if (loginSuccessful) {
+                        setTimeout(() => {
+                            toast.success('Welcome!', { description: 'You have been successfully logged in.' });
+                        }, 100);
+                    } else if (loginFailed) {
+                        setTimeout(() => {
+                            toast.error('Login Failed', { description: errorMessage });
+                        }, 100);
+                    }
                 });
         } else if (!code) {
             loadFromLocalStorage();
@@ -109,6 +145,7 @@ function AppContent({ snowfallEnabled, toggleSnowfall }: AppContentProps) {
         localStorage.removeItem('token');
         setUser(null);
         setToken('');
+        toast.success('Logged Out', { description: 'You have been successfully logged out.' });
         navigate('/login');
     };
 
@@ -124,62 +161,148 @@ function AppContent({ snowfallEnabled, toggleSnowfall }: AppContentProps) {
 
     return (
         <>
-            {/* Modern Header */}
-            <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-                <div className="container-custom flex h-16 items-center justify-between">
-                    {/* Logo - using Link for smooth navigation */}
-                    <Link
-                        to="/"
-                        className="flex items-center gap-2 transition-transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 rounded-md"
-                    >
-                        <Code className="h-6 w-6 text-primary" />
-                        <span className="font-heading text-xl font-bold text-foreground">
-                            ForeSite
-                        </span>
-                    </Link>
+            {/* Modern Header - Only show when logged in */}
+            {user && (
+                <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+                    <div className="container-custom flex h-16 items-center justify-between">
+                        {/* Logo - using Link for smooth navigation */}
+                        <Link
+                            to="/"
+                            className="flex items-center gap-2 transition-transform hover:scale-105 focus:outline-none rounded-md"
+                        >
+                            <Code className="h-6 w-6 text-primary" />
+                            <span className="font-heading text-xl font-bold text-foreground">
+                                ForeSite
+                            </span>
+                        </Link>
 
-                    {/* User Info + Snowfall Toggle + Theme Selector + Notifications */}
-                    <div className="flex items-center gap-4">
-                        <SnowfallToggle isActive={snowfallEnabled} onToggle={toggleSnowfall} />
-                        <ThemeSelector />
+                        {/* Notifications + Profile Dropdown */}
+                        <div className="flex items-center gap-3">
+                            {user && <NotificationBell />}
 
-                        {user && <NotificationBell />}
+                            {user ? (
+                                <DropdownMenu modal={false}>
+                                    <DropdownMenuTrigger asChild>
+                                        <button className="rounded-full focus:outline-none focus-visible:outline-none">
+                                            {user.avatarUrl ? (
+                                                <img
+                                                    src={user.avatarUrl}
+                                                    alt={user.username}
+                                                    className="w-9 h-9 rounded-full border-2 border-primary hover:border-primary/80 transition-all cursor-pointer"
+                                                />
+                                            ) : (
+                                                <div className="w-9 h-9 rounded-full border-2 border-primary bg-muted flex items-center justify-center cursor-pointer">
+                                                    <User className="h-5 w-5 text-muted-foreground" />
+                                                </div>
+                                            )}
+                                        </button>
+                                    </DropdownMenuTrigger>
+                                    <DropdownMenuContent align="end" className="w-56 z-50">
+                                        {/* Profile Info */}
+                                        <DropdownMenuLabel className="flex items-center gap-2">
+                                            {user.avatarUrl && (
+                                                <img
+                                                    src={user.avatarUrl}
+                                                    alt={user.username}
+                                                    className="w-8 h-8 rounded-full"
+                                                />
+                                            )}
+                                            <div className="flex flex-col">
+                                                <span className="font-medium">{user.username}</span>
+                                                <span className="text-xs text-muted-foreground">Signed in</span>
+                                            </div>
+                                        </DropdownMenuLabel>
+                                        <DropdownMenuSeparator />
 
-                        {user ? (
-                            <div className="flex items-center gap-0.5 px-3 py-2 bg-card border border-border rounded-full transition-all hover:shadow-md">
-                                {user.avatarUrl && (
-                                    <img
-                                        src={user.avatarUrl}
-                                        alt={user.username}
-                                        className="w-8 h-8 rounded-full border-2 border-primary"
-                                    />
-                                )}
-                                <span className="font-medium text-sm text-foreground">
-                                    {user.username}
-                                </span>
-                                <button
-                                    onClick={handleLogout}
-                                    className={`ml-2 px-2 py-1 text-xs font-medium rounded-md transition-all flex items-center gap-1 ${resolvedTheme === 'light'
-                                        ? 'text-red-600 bg-red-50 border border-red-200 hover:bg-red-100 hover:border-red-300'
-                                        : resolvedTheme === 'dark' || resolvedTheme === 'night'
-                                            ? 'text-red-400 bg-red-950/30 border border-red-800/50 hover:bg-red-950/50 hover:border-red-700'
-                                            : 'text-red-600 bg-red-50 border border-red-200 hover:bg-red-100 hover:border-red-300'
-                                        }`}
+                                        {/* Theme Options */}
+                                        <DropdownMenuLabel className="flex items-center gap-2 text-muted-foreground">
+                                            <Palette className="h-4 w-4" />
+                                            <span>Theme</span>
+                                        </DropdownMenuLabel>
+                                        <DropdownMenuItem onSelect={() => setTheme("light")} className={`cursor-pointer ${resolvedTheme === 'light' ? 'focus:text-blue-700' : ''}`}>
+                                            <Sun className="h-4 w-4 mr-2" />
+                                            <span>Light</span>
+                                            {theme === "light" && <Check className="h-4 w-4 ml-auto" />}
+                                        </DropdownMenuItem>
+                                        <DropdownMenuItem onSelect={() => setTheme("dark")} className={`cursor-pointer ${resolvedTheme === 'light' ? 'focus:text-blue-700' : ''}`}>
+                                            <Moon className="h-4 w-4 mr-2" />
+                                            <span>Dark</span>
+                                            {theme === "dark" && <Check className="h-4 w-4 ml-auto" />}
+                                        </DropdownMenuItem>
+                                        <DropdownMenuItem onSelect={() => setTheme("night")} className={`cursor-pointer ${resolvedTheme === 'light' ? 'focus:text-blue-700' : ''}`}>
+                                            <Moon className="h-4 w-4 mr-2 fill-current" />
+                                            <span>Night</span>
+                                            {theme === "night" && <Check className="h-4 w-4 ml-auto" />}
+                                        </DropdownMenuItem>
+                                        <DropdownMenuItem onSelect={() => setTheme("system")} className={`cursor-pointer ${resolvedTheme === 'light' ? 'focus:text-blue-700' : ''}`}>
+                                            <Monitor className="h-4 w-4 mr-2" />
+                                            <span>System</span>
+                                            {theme === "system" && <Check className="h-4 w-4 ml-auto" />}
+                                        </DropdownMenuItem>
+                                        <DropdownMenuSeparator />
+
+                                        {/* Snowfall Toggle */}
+                                        <DropdownMenuItem
+                                            onSelect={(e) => e.preventDefault()}
+                                            className="cursor-pointer"
+                                        >
+                                            <div className="flex items-center justify-between w-full" onClick={toggleSnowfall}>
+                                                <div className="flex items-center gap-2">
+                                                    <Snowflake className="h-4 w-4" />
+                                                    <span>Snowfall Effect</span>
+                                                </div>
+                                                <div className={`w-8 h-4 rounded-full transition-colors ${snowfallEnabled ? 'bg-primary' : 'bg-muted'}`}>
+                                                    <div className={`w-3 h-3 rounded-full bg-white shadow transform transition-transform mt-0.5 ${snowfallEnabled ? 'translate-x-4 ml-0.5' : 'translate-x-0.5'}`} />
+                                                </div>
+                                            </div>
+                                        </DropdownMenuItem>
+                                        <DropdownMenuSeparator />
+
+                                        {/* Logout */}
+                                        <AlertDialog>
+                                            <AlertDialogTrigger asChild>
+                                                <DropdownMenuItem
+                                                    onSelect={(e) => e.preventDefault()}
+                                                    className={`cursor-pointer ${resolvedTheme === 'light'
+                                                        ? 'text-red-600 focus:bg-red-100 focus:text-red-700'
+                                                        : 'text-red-400 focus:bg-red-900/40 focus:text-red-300'
+                                                        }`}
+                                                >
+                                                    <LogOut className="h-4 w-4 mr-2" />
+                                                    <span>Log out</span>
+                                                </DropdownMenuItem>
+                                            </AlertDialogTrigger>
+                                            <AlertDialogContent>
+                                                <AlertDialogHeader>
+                                                    <AlertDialogTitle>Confirm Logout</AlertDialogTitle>
+                                                    <AlertDialogDescription>
+                                                        Are you sure you want to log out?
+                                                    </AlertDialogDescription>
+                                                </AlertDialogHeader>
+                                                <AlertDialogFooter>
+                                                    <AlertDialogCancel className={resolvedTheme === 'night' ? 'hover:bg-primary/40' : resolvedTheme === 'dark' ? 'hover:bg-blue-500/30' : resolvedTheme === 'light' ? 'hover:bg-blue-100 hover:text-blue-700' : ''}>Cancel</AlertDialogCancel>
+                                                    <AlertDialogAction
+                                                        onClick={handleLogout}
+                                                        className="bg-red-600 text-white hover:bg-red-700"
+                                                    >
+                                                        Log Out
+                                                    </AlertDialogAction>
+                                                </AlertDialogFooter>
+                                            </AlertDialogContent>
+                                        </AlertDialog>
+                                    </DropdownMenuContent>
+                                </DropdownMenu>
+                            ) : (
+                                <Link
+                                    to="/login"
+                                    className="font-medium text-sm text-foreground hover:underline"
                                 >
-                                    <LogOut className="h-3 w-3" />
-                                    Logout
-                                </button>
-                            </div>
-                        ) : (
-                            <Link
-                                to="/login"
-                                className="font-medium text-sm text-foreground hover:underline"
-                            >
-                            </Link>
-                        )}
+                                </Link>
+                            )}
+                        </div>
                     </div>
-                </div>
-            </header>
+                </header>
+            )}
 
             {/* Routes with fade-in animation */}
             <main className="animate-fade-in">
@@ -194,14 +317,14 @@ function AppContent({ snowfallEnabled, toggleSnowfall }: AppContentProps) {
                                 return <LoadingScreen message="Loading..." />;
                             }
 
-                            return user ? <Dashboard user={user} token={token} /> : <Login />;
+                            return user ? <Dashboard user={user} token={token} /> : <Login snowfallEnabled={snowfallEnabled} toggleSnowfall={toggleSnowfall} />;
                         })()
                     } />
-                    <Route path="/login" element={<Login />} />
-                    <Route path="/repo/:repositoryId" element={user ? <RepoView user={user} /> : <Login />} />
+                    <Route path="/login" element={<Login snowfallEnabled={snowfallEnabled} toggleSnowfall={toggleSnowfall} />} />
+                    <Route path="/repo/:repositoryId" element={user ? <RepoView user={user} /> : <Login snowfallEnabled={snowfallEnabled} toggleSnowfall={toggleSnowfall} />} />
                     <Route path="/commit/:commitId" element={<CommitView />} />
                     <Route path="/pr/:prId" element={<PRView />} />
-                    <Route path="/pr/:owner/:repo/:prNumber" element={user ? <PullRequestView user={user} /> : <Login />} />
+                    <Route path="/pr/:owner/:repo/:prNumber" element={user ? <PullRequestView user={user} /> : <Login snowfallEnabled={snowfallEnabled} toggleSnowfall={toggleSnowfall} />} />
                     <Route path="/file/:fileId" element={<FileView />} />
                     <Route path="/filetree/:fileId" element={<FileTreeView />} />
                 </Routes>

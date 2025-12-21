@@ -73,7 +73,7 @@ export default function TeamInsights({ repositoryId, branchName }: TeamInsightsP
                     <div className="flex items-center gap-3">
                         <Users className="h-8 w-8 text-primary" />
                         <div>
-                            <div className="text-xs text-muted-foreground mb-1">Total Contributors</div>
+                            <div className="text-xs text-muted-foreground mb-1">Total Committed Contributors</div>
                             <div className="text-3xl font-bold text-primary">
                                 {metrics?.totalContributors || 0}
                             </div>
@@ -233,6 +233,13 @@ export default function TeamInsights({ repositoryId, branchName }: TeamInsightsP
                                 fontSize: '12px',
                                 color: 'hsl(var(--foreground))'
                             }}
+                            labelStyle={{
+                                color: 'hsl(var(--foreground))',
+                                fontWeight: 600
+                            }}
+                            itemStyle={{
+                                color: 'hsl(var(--foreground))'
+                            }}
                             cursor={{ strokeDasharray: '3 3' }}
                         />
                         <Scatter name="Contributors" data={contributors} fill="hsl(var(--primary))">
@@ -303,7 +310,7 @@ export default function TeamInsights({ repositoryId, branchName }: TeamInsightsP
                 <div className="flex items-center gap-3 mb-4">
                     <User className="h-6 w-6 text-primary" />
                     <h3 className="text-xl font-heading font-bold">Contributor Details</h3>
-                    <InfoTooltip text="Complete list of all contributors with their commit count, lines changed, and activity status. Green border indicates active in last 7 days." />
+                    <InfoTooltip text="Complete list of all committed contributors with their commit count, lines changed, and activity status. Green border indicates active in last 7 days." />
                 </div>
                 <div className="grid gap-2 mt-4">
                     {contributors.map((contributor, index) => (

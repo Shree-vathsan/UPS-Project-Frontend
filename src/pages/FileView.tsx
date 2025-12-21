@@ -70,8 +70,8 @@ export default function FileView() {
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [userId, fileId]);
 
-    // Determine if current theme is light (includes black-beige which has light background)
-    const isLightTheme = resolvedTheme === 'light' || theme === 'light-pallete' || theme === 'black-beige';
+    // Determine if current theme is light
+    const isLightTheme = resolvedTheme === 'light';
 
     const getLanguageFromPath = (filePath: string): string => {
         const extension = filePath.split('.').pop()?.toLowerCase();
