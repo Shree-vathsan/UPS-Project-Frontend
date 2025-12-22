@@ -168,6 +168,13 @@ export const api = {
         return handleResponse(res);
     },
 
+    async deleteRepository(repositoryId: string) {
+        const res = await fetch(`${API_BASE}/repositories/${repositoryId}`, {
+            method: 'DELETE'
+        });
+        return handleResponse(res);
+    },
+
     // ==========================================
     // NOTES SYSTEM
     // ==========================================
