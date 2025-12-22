@@ -1,6 +1,6 @@
 import { useNavigate } from 'react-router-dom';
 import { useState } from 'react';
-import { Bookmark, FileText, ExternalLink, MoreVertical, Trash2 } from 'lucide-react';
+import { Bookmark, FileText, ExternalLink, Trash2, MoreVertical } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -21,7 +21,7 @@ import {
     AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
 import { useTheme } from '@/components/theme-provider';
-import { useBookmarks, useRemoveBookmark } from '../../hooks/useApiQueries';
+import { useBookmarks, useRemoveBookmark, useClearBookmarks } from '../../hooks/useApiQueries';
 
 interface BookmarksWidgetProps {
     userId: string;
@@ -42,9 +42,10 @@ export default function BookmarksWidget({ userId }: BookmarksWidgetProps) {
     const navigate = useNavigate();
     const { data: bookmarks, isLoading } = useBookmarks(userId);
     const removeBookmark = useRemoveBookmark();
-    const [openDropdownId, setOpenDropdownId] = useState<string | null>(null);
+    const clearBookmarks = useClearBookmarks();
     const [deleteFileId, setDeleteFileId] = useState<string | null>(null);
     const [deleteFileName, setDeleteFileName] = useState<string>('');
+    const [showClearDialog, setShowClearDialog] = useState(false);
     const { resolvedTheme } = useTheme();
 
     const handleFileClick = (file: BookmarkedFile) => {
@@ -55,7 +56,6 @@ export default function BookmarksWidget({ userId }: BookmarksWidgetProps) {
         e.stopPropagation();
         setDeleteFileId(file.fileId);
         setDeleteFileName(file.fileName);
-        setOpenDropdownId(null);
     };
 
     const confirmRemove = () => {
@@ -64,6 +64,15 @@ export default function BookmarksWidget({ userId }: BookmarksWidgetProps) {
         }
         setDeleteFileId(null);
         setDeleteFileName('');
+    };
+
+    const handleClearAll = () => {
+        setShowClearDialog(true);
+    };
+
+    const confirmClearAll = () => {
+        clearBookmarks.mutate({ userId });
+        setShowClearDialog(false);
     };
 
     if (isLoading) {
@@ -92,10 +101,38 @@ export default function BookmarksWidget({ userId }: BookmarksWidgetProps) {
         <>
             <Card>
                 <CardHeader className="pb-3">
-                    <CardTitle className="flex items-center gap-2 text-sm font-medium">
-                        <Bookmark className="h-4 w-4 text-yellow-500" />
-                        Bookmarks
-                    </CardTitle>
+                    <div className="flex items-center justify-between">
+                        <CardTitle className="flex items-center gap-2 text-sm font-medium">
+                            <Bookmark className="h-4 w-4 text-yellow-500" />
+                            Bookmarks
+                        </CardTitle>
+                        {files.length > 0 && (
+                            <DropdownMenu modal={false}>
+                                <DropdownMenuTrigger asChild>
+                                    <Button
+                                        variant="ghost"
+                                        size="icon"
+                                        className={`h-6 w-6 ${resolvedTheme === 'night' ? 'hover:bg-primary/40' : resolvedTheme === 'dark' ? 'hover:bg-blue-500/30' : resolvedTheme === 'light' ? 'hover:bg-blue-100 hover:text-blue-700' : ''}`}
+                                    >
+                                        <MoreVertical className="h-4 w-4" />
+                                    </Button>
+                                </DropdownMenuTrigger>
+                                <DropdownMenuContent align="end">
+                                    <DropdownMenuItem
+                                        className={`cursor-pointer ${resolvedTheme === 'light'
+                                            ? 'text-red-600 focus:text-red-600 focus:bg-red-50'
+                                            : 'text-red-400 focus:text-red-400 focus:bg-red-950/50'
+                                            }`}
+                                        onClick={handleClearAll}
+                                        disabled={clearBookmarks.isPending}
+                                    >
+                                        <Trash2 className="h-4 w-4 mr-2" />
+                                        Clear all
+                                    </DropdownMenuItem>
+                                </DropdownMenuContent>
+                            </DropdownMenu>
+                        )}
+                    </div>
                 </CardHeader>
                 <CardContent className="pt-0">
                     {files.length === 0 ? (
@@ -105,12 +142,10 @@ export default function BookmarksWidget({ userId }: BookmarksWidgetProps) {
                     ) : (
                         <div className="space-y-1 h-64 overflow-y-auto pr-1">
                             {files.slice(0, 30).map((file) => {
-                                const isDropdownOpen = openDropdownId === file.fileId;
                                 return (
                                     <div
                                         key={file.fileId}
-                                        className={`flex items-center gap-3 p-2 rounded-md transition-colors group ${isDropdownOpen ? 'bg-muted' : 'hover:bg-muted'
-                                            }`}
+                                        className="flex items-center gap-3 p-2 rounded-md transition-colors group hover:bg-muted"
                                     >
                                         <FileText className="h-4 w-4 text-muted-foreground flex-shrink-0" />
                                         <div className="flex-1 min-w-0">
@@ -124,40 +159,19 @@ export default function BookmarksWidget({ userId }: BookmarksWidgetProps) {
                                         <Button
                                             variant="ghost"
                                             size="icon"
-                                            className={`h-6 w-6 transition-opacity flex-shrink-0 ${resolvedTheme === 'night' ? 'hover:bg-primary/40' : resolvedTheme === 'dark' ? 'hover:bg-blue-500/30' : resolvedTheme === 'light' ? 'hover:bg-blue-100 hover:text-blue-700' : ''} ${isDropdownOpen ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'
-                                                }`}
+                                            className={`h-6 w-6 transition-opacity flex-shrink-0 ${resolvedTheme === 'night' ? 'hover:bg-primary/40' : resolvedTheme === 'dark' ? 'hover:bg-blue-500/30' : resolvedTheme === 'light' ? 'hover:bg-blue-100 hover:text-blue-700' : ''} opacity-0 group-hover:opacity-100`}
                                             onClick={() => handleFileClick(file)}
                                         >
                                             <ExternalLink className="h-3 w-3 text-muted-foreground" />
                                         </Button>
-                                        <DropdownMenu
-                                            modal={false}
-                                            onOpenChange={(open) => setOpenDropdownId(open ? file.fileId : null)}
+                                        <Button
+                                            variant="ghost"
+                                            size="icon"
+                                            className={`h-6 w-6 transition-opacity flex-shrink-0 opacity-0 group-hover:opacity-100 ${resolvedTheme === 'light' ? 'hover:bg-red-50' : 'hover:bg-red-950/50'}`}
+                                            onClick={(e) => handleRemoveClick(e, file)}
                                         >
-                                            <DropdownMenuTrigger asChild>
-                                                <Button
-                                                    variant="ghost"
-                                                    size="icon"
-                                                    className={`h-6 w-6 transition-opacity flex-shrink-0 ${resolvedTheme === 'night' ? 'hover:bg-primary/40' : resolvedTheme === 'dark' ? 'hover:bg-blue-500/30' : resolvedTheme === 'light' ? 'hover:bg-blue-100 hover:text-blue-700' : ''} ${isDropdownOpen ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'
-                                                        }`}
-                                                    onClick={(e) => e.stopPropagation()}
-                                                >
-                                                    <MoreVertical className="h-3 w-3" />
-                                                </Button>
-                                            </DropdownMenuTrigger>
-                                            <DropdownMenuContent align="end">
-                                                <DropdownMenuItem
-                                                    className={`cursor-pointer ${resolvedTheme === 'light'
-                                                        ? 'text-red-600 focus:text-red-600 focus:bg-red-50'
-                                                        : 'text-red-400 focus:text-red-400 focus:bg-red-950/50'
-                                                        }`}
-                                                    onClick={(e) => handleRemoveClick(e, file)}
-                                                >
-                                                    <Trash2 className="h-4 w-4 mr-2" />
-                                                    Delete
-                                                </DropdownMenuItem>
-                                            </DropdownMenuContent>
-                                        </DropdownMenu>
+                                            <Trash2 className="h-3 w-3 text-red-500" />
+                                        </Button>
                                     </div>
                                 );
                             })}
@@ -166,6 +180,7 @@ export default function BookmarksWidget({ userId }: BookmarksWidgetProps) {
                 </CardContent>
             </Card>
 
+            {/* Delete Single Bookmark Dialog */}
             <AlertDialog open={!!deleteFileId} onOpenChange={(open) => !open && setDeleteFileId(null)}>
                 <AlertDialogContent className="sm:max-w-md">
                     <AlertDialogHeader>
@@ -181,6 +196,30 @@ export default function BookmarksWidget({ userId }: BookmarksWidgetProps) {
                             className="bg-red-600 hover:bg-red-700 text-white"
                         >
                             Remove
+                        </AlertDialogAction>
+                    </AlertDialogFooter>
+                </AlertDialogContent>
+            </AlertDialog>
+
+            {/* Clear All Bookmarks Dialog */}
+            <AlertDialog open={showClearDialog} onOpenChange={setShowClearDialog}>
+                <AlertDialogContent className="sm:max-w-md">
+                    <AlertDialogHeader>
+                        <AlertDialogTitle>Clear All Bookmarks</AlertDialogTitle>
+                        <AlertDialogDescription>
+                            Are you sure you want to clear all bookmarks? This action cannot be undone.
+                        </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                        <AlertDialogCancel className={`${resolvedTheme === 'night' ? 'hover:bg-primary/40' : resolvedTheme === 'dark' ? 'hover:bg-blue-500/30' : resolvedTheme === 'light' ? 'hover:bg-blue-100 hover:text-blue-700' : ''}`}>Cancel</AlertDialogCancel>
+                        <AlertDialogAction
+                            onClick={confirmClearAll}
+                            className={`${resolvedTheme === 'light'
+                                ? 'bg-red-600 hover:bg-red-700 text-white'
+                                : 'bg-red-600 hover:bg-red-700 text-white'
+                                }`}
+                        >
+                            Clear All
                         </AlertDialogAction>
                     </AlertDialogFooter>
                 </AlertDialogContent>

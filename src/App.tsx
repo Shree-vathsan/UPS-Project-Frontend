@@ -1,6 +1,6 @@
 import { BrowserRouter, Routes, Route, useNavigate, Link } from 'react-router-dom';
 import { useState, useEffect, useRef } from 'react';
-import { Code, LogOut, Snowflake, Palette, User, Sun, Moon, Monitor, Check } from 'lucide-react';
+import { Code, LogOut, Snowflake, User, Sun, Moon, Monitor, Check } from 'lucide-react';
 import Snowfall from 'react-snowfall';
 import Dashboard from './pages/Dashboard.tsx';
 import RepoView from './pages/RepoView.tsx';
@@ -215,9 +215,8 @@ function AppContent({ snowfallEnabled, toggleSnowfall }: AppContentProps) {
                                         <DropdownMenuSeparator />
 
                                         {/* Theme Options */}
-                                        <DropdownMenuLabel className="flex items-center gap-2 text-muted-foreground">
-                                            <Palette className="h-4 w-4" />
-                                            <span>Theme</span>
+                                        <DropdownMenuLabel className="text-xs text-muted-foreground px-2 py-1">
+                                            Theme
                                         </DropdownMenuLabel>
                                         <DropdownMenuItem onSelect={() => setTheme("light")} className={`cursor-pointer ${resolvedTheme === 'light' ? 'focus:text-blue-700' : ''}`}>
                                             <Sun className="h-4 w-4 mr-2" />

@@ -481,6 +481,13 @@ export const api = {
         return handleResponse(res);
     },
 
+    async clearBookmarks(userId: string) {
+        const res = await fetch(`${API_BASE}/dashboard/${userId}/bookmarks`, {
+            method: 'DELETE'
+        });
+        return handleResponse(res);
+    },
+
     async getTeamActivity(userId: string, limit: number = 20) {
         const res = await fetch(`${API_BASE}/dashboard/${userId}/team-activity?limit=${limit}`);
         return handleResponse(res);

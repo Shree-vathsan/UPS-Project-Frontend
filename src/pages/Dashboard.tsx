@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Package, BarChart, Plus, Loader, RefreshCw, AlertTriangle, Search, Info, ChevronDown, ChevronUp, Home, ExternalLink } from 'lucide-react';
+import { Package, BarChart, Plus, Loader, RefreshCw, AlertTriangle, Search, Info, ChevronDown, ChevronUp, Home, Github } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
 import { RecentFilesWidget, BookmarksWidget, TeamActivityWidget, QuickStatsWidget, PendingReviewsWidget } from '../components/widgets';
 import { api } from '../utils/api';
@@ -15,6 +15,17 @@ import { Skeleton } from '@/components/ui/skeleton';
 import Pagination from '../components/Pagination';
 import { useAllRepositories, useAnalyzedRepositories, useInvalidateRepositories } from '../hooks/useApiQueries';
 import { useTheme } from '@/components/theme-provider';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import {
+    AlertDialog,
+    AlertDialogAction,
+    AlertDialogCancel,
+    AlertDialogContent,
+    AlertDialogDescription,
+    AlertDialogFooter,
+    AlertDialogHeader,
+    AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 
 interface DashboardProps {
     user: any;
@@ -77,6 +88,9 @@ export default function Dashboard({ user, token }: DashboardProps) {
 
     // Quick guide visibility
     const [showQuickGuide, setShowQuickGuide] = useState(false);
+
+    // Analyze confirmation dialog state
+    const [analyzeConfirmRepo, setAnalyzeConfirmRepo] = useState<{ login: string; name: string } | null>(null);
 
     // Add repository tab state
     const [repoUrl, setRepoUrl] = useState('');
@@ -618,16 +632,24 @@ export default function Dashboard({ user, token }: DashboardProps) {
                                                         <div className="space-y-1 flex-1">
                                                             <CardTitle className="text-lg flex items-center gap-2">
                                                                 {repo.login}/{repo.name}
-                                                                <a
-                                                                    href={`https://github.com/${repo.login}/${repo.name}`}
-                                                                    target="_blank"
-                                                                    rel="noopener noreferrer"
-                                                                    className="text-muted-foreground hover:text-primary transition-colors"
-                                                                    title="Open on GitHub"
-                                                                    onClick={(e) => e.stopPropagation()}
-                                                                >
-                                                                    <ExternalLink className="h-4 w-4" />
-                                                                </a>
+                                                                <TooltipProvider delayDuration={200}>
+                                                                    <Tooltip>
+                                                                        <TooltipTrigger asChild>
+                                                                            <a
+                                                                                href={`https://github.com/${repo.login}/${repo.name}`}
+                                                                                target="_blank"
+                                                                                rel="noopener noreferrer"
+                                                                                className="text-muted-foreground hover:text-primary transition-colors"
+                                                                                onClick={(e) => e.stopPropagation()}
+                                                                            >
+                                                                                <Github className="h-4 w-4" />
+                                                                            </a>
+                                                                        </TooltipTrigger>
+                                                                        <TooltipContent side="bottom">
+                                                                            Open on GitHub
+                                                                        </TooltipContent>
+                                                                    </Tooltip>
+                                                                </TooltipProvider>
                                                             </CardTitle>
                                                             <CardDescription>
                                                                 {repo.description || 'No description'}
@@ -653,7 +675,7 @@ export default function Dashboard({ user, token }: DashboardProps) {
                                                                     Starting...
                                                                 </Button>
                                                             ) : !isAnalyzed ? (
-                                                                <Button onClick={() => handleAnalyze(repo.login, repo.name)} size="sm">
+                                                                <Button onClick={() => setAnalyzeConfirmRepo({ login: repo.login, name: repo.name })} size="sm">
                                                                     Analyze
                                                                 </Button>
                                                             ) : isCheckingStatus ? (
@@ -827,16 +849,24 @@ export default function Dashboard({ user, token }: DashboardProps) {
                                                     <div className="space-y-2 flex-1">
                                                         <CardTitle className="text-lg flex items-center gap-2">
                                                             {repo.ownerUsername}/{repo.name}
-                                                            <a
-                                                                href={`https://github.com/${repo.ownerUsername}/${repo.name}`}
-                                                                target="_blank"
-                                                                rel="noopener noreferrer"
-                                                                className="text-muted-foreground hover:text-primary transition-colors"
-                                                                title="Open on GitHub"
-                                                                onClick={(e) => e.stopPropagation()}
-                                                            >
-                                                                <ExternalLink className="h-4 w-4" />
-                                                            </a>
+                                                            <TooltipProvider delayDuration={200}>
+                                                                <Tooltip>
+                                                                    <TooltipTrigger asChild>
+                                                                        <a
+                                                                            href={`https://github.com/${repo.ownerUsername}/${repo.name}`}
+                                                                            target="_blank"
+                                                                            rel="noopener noreferrer"
+                                                                            className="text-muted-foreground hover:text-primary transition-colors"
+                                                                            onClick={(e) => e.stopPropagation()}
+                                                                        >
+                                                                            <Github className="h-4 w-4" />
+                                                                        </a>
+                                                                    </TooltipTrigger>
+                                                                    <TooltipContent side="bottom">
+                                                                        Open on GitHub
+                                                                    </TooltipContent>
+                                                                </Tooltip>
+                                                            </TooltipProvider>
                                                         </CardTitle>
                                                         <div className="flex gap-2">
                                                             <Badge variant={repo.isMine ? 'success' : 'info'}>
@@ -1230,6 +1260,35 @@ export default function Dashboard({ user, token }: DashboardProps) {
                     </div>
                 </TabsContent>
             </Tabs>
+
+            {/* Analyze Confirmation Dialog */}
+            <AlertDialog open={!!analyzeConfirmRepo} onOpenChange={(open) => !open && setAnalyzeConfirmRepo(null)}>
+                <AlertDialogContent className="sm:max-w-md">
+                    <AlertDialogHeader>
+                        <AlertDialogTitle>Start Repository Analysis</AlertDialogTitle>
+                        <AlertDialogDescription>
+                            Analysis may take some time depending on the repository size. This process will analyze the repository structure, code, and generate insights.
+                            <br /><br />
+                            Do you want to proceed with the analysis?
+                        </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                        <AlertDialogCancel className={`${resolvedTheme === 'night' ? 'hover:bg-primary/40' : resolvedTheme === 'dark' ? 'hover:bg-blue-500/30' : resolvedTheme === 'light' ? 'hover:bg-blue-100 hover:text-blue-700' : ''}`}>
+                            Cancel
+                        </AlertDialogCancel>
+                        <AlertDialogAction
+                            onClick={() => {
+                                if (analyzeConfirmRepo) {
+                                    handleAnalyze(analyzeConfirmRepo.login, analyzeConfirmRepo.name);
+                                    setAnalyzeConfirmRepo(null);
+                                }
+                            }}
+                        >
+                            Start Analysis
+                        </AlertDialogAction>
+                    </AlertDialogFooter>
+                </AlertDialogContent>
+            </AlertDialog>
         </div >
     );
 }

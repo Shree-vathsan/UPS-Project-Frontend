@@ -824,6 +824,21 @@ export function useRemoveBookmark() {
     });
 }
 
+export function useClearBookmarks() {
+    const queryClient = useQueryClient();
+    return useMutation({
+        mutationFn: ({ userId }: { userId: string }) =>
+            api.clearBookmarks(userId),
+        onSuccess: (_, { userId }) => {
+            // Immediately set the data to empty array for instant UI update
+            queryClient.setQueryData(queryKeys.bookmarks(userId), []);
+            // Also invalidate to ensure fresh data on next fetch
+            queryClient.invalidateQueries({ queryKey: queryKeys.bookmarks(userId) });
+            queryClient.invalidateQueries({ queryKey: queryKeys.dashboardData(userId) });
+        },
+    });
+}
+
 export function usePendingReviews(userId: string | undefined, limit: number = 10) {
     return useQuery({
         queryKey: queryKeys.pendingReviews(userId || ''),
