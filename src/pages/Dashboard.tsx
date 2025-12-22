@@ -179,6 +179,7 @@ export default function Dashboard({ user, token }: DashboardProps) {
             }
 
             if (status.status === 'ready') {
+                toast.info('Opening Repository', { description: 'Fetching latest code and opening repository...' });
                 navigate(`/repo/${status.repositoryId}`);
             } else if (status.status === 'analyzing') {
                 toast.info('Analysis in Progress', { description: 'Analysis is still in progress. Please wait a few minutes and try again.' });
