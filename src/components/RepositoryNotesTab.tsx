@@ -34,6 +34,7 @@ interface StickyNoteData {
     taggedBranches?: TaggedBranch[];
     createdByUserId: string;
     createdByUsername: string;
+    createdByAvatarUrl?: string;
     createdAt: string;
 }
 

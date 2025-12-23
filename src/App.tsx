@@ -1,4 +1,4 @@
-import { BrowserRouter, Routes, Route, useNavigate, Link } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, useNavigate, Link, useParams, Navigate } from 'react-router-dom';
 import { useState, useEffect, useRef } from 'react';
 import { Code, LogOut, Snowflake, User, Sun, Moon, Monitor, Check } from 'lucide-react';
 import Snowfall from 'react-snowfall';
@@ -54,7 +54,12 @@ interface AppContentProps {
     snowfallEnabled: boolean;
     toggleSnowfall: () => void;
 }
-
+function RepoRedirect() {
+    const { repositoryId } = useParams();
+    // Preserve query parameters (like ?tab=notes)
+    const query = window.location.search;
+    return <Navigate to={`/repo/${repositoryId}${query}`} replace />;
+}
 // Inner component that can use useNavigate (must be inside BrowserRouter)
 function AppContent({ snowfallEnabled, toggleSnowfall }: AppContentProps) {
     const navigate = useNavigate();
@@ -320,6 +325,7 @@ function AppContent({ snowfallEnabled, toggleSnowfall }: AppContentProps) {
                         })()
                     } />
                     <Route path="/login" element={<Login snowfallEnabled={snowfallEnabled} toggleSnowfall={toggleSnowfall} />} />
+                    <Route path="/repository/:repositoryId" element={<RepoRedirect />} />
                     <Route path="/repo/:repositoryId" element={user ? <RepoView user={user} /> : <Login snowfallEnabled={snowfallEnabled} toggleSnowfall={toggleSnowfall} />} />
                     <Route path="/commit/:commitId" element={<CommitView />} />
                     <Route path="/pr/:prId" element={<PRView />} />

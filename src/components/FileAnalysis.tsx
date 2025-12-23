@@ -6,8 +6,8 @@ import CircularProgress from './CircularProgress';
 import BarProgress from './BarProgress';
 import SectionHeader from './SectionHeader';
 import { Skeleton } from '@/components/ui/skeleton';
-import { FaCheck, FaCheckCircle } from "react-icons/fa";
-import { FaTimes, FaTimesCircle } from "react-icons/fa";
+import { FaCheck } from "react-icons/fa";
+import { FaTimes } from "react-icons/fa";
 import { useFileEnhancedAnalysis, useFileSummary, queryKeys } from '../hooks/useApiQueries';
 
 

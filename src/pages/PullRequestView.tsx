@@ -1,7 +1,6 @@
 import { useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { GitPullRequest, GitBranch, Clock, FileText, AlertTriangle, CheckCircle, ChevronDown, ChevronRight, Target, Users, MessageSquare } from 'lucide-react';
-import { api } from '../utils/api';
 import BackButton from '../components/BackButton';
 import Pagination from '../components/Pagination';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -300,8 +299,8 @@ export default function PullRequestView({ user: _user }: PullRequestViewProps) {
                                         {/* Smooth transition for file expansion */}
                                         <div
                                             className={`grid transition-all duration-300 ${expandedFiles.has(file.filename) && file.patch
-                                                    ? 'grid-rows-[1fr] opacity-100'
-                                                    : 'grid-rows-[0fr] opacity-0'
+                                                ? 'grid-rows-[1fr] opacity-100'
+                                                : 'grid-rows-[0fr] opacity-0'
                                                 }`}
                                         >
                                             <div className="overflow-hidden">
