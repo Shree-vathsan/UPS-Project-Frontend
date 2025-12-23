@@ -1,10 +1,11 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
-import { GitCommit, GitPullRequest, FolderTree, BarChart, RefreshCw, GitBranch, Clock, ArrowRight } from 'lucide-react';
+import { GitCommit, GitPullRequest, FolderTree, BarChart, RefreshCw, GitBranch, Clock, ArrowRight, StickyNote } from 'lucide-react';
 import FileTree from '../components/FileTree';
 import BackButton from '../components/BackButton';
 import RepositoryAnalytics from '../components/RepositoryAnalytics';
 import TeamInsights from '../components/TeamInsights';
+import { RepositoryNotesTab } from '../components/RepositoryNotesTab';
 import Pagination from '../components/Pagination';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -18,6 +19,8 @@ import {
     DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { useRepository, useBranches, useBranchCommits, usePullRequests, useBranchFiles } from '../hooks/useApiQueries';
+import { useTheme } from '@/components/theme-provider';
+import { API_BASE_URL } from '../config';
 
 interface RepoViewProps {
     user: any;
@@ -27,17 +30,18 @@ export default function RepoView({ user: _user }: RepoViewProps) {
     const navigate = useNavigate();
     const { repositoryId } = useParams<{ repositoryId: string }>();
     const [searchParams, setSearchParams] = useSearchParams();
+    const { resolvedTheme } = useTheme();
 
     // Get initial tab from URL or default to 'commits'
-    const getInitialTab = (): 'commits' | 'prs' | 'files' | 'analytics' => {
+    const getInitialTab = (): 'commits' | 'prs' | 'files' | 'analytics' | 'notes' => {
         const tabParam = searchParams.get('tab');
-        if (tabParam === 'prs' || tabParam === 'files' || tabParam === 'analytics' || tabParam === 'commits') {
+        if (tabParam === 'prs' || tabParam === 'files' || tabParam === 'analytics' || tabParam === 'commits' || tabParam === 'notes') {
             return tabParam;
         }
         return 'commits';
     };
 
-    const [activeTab, setActiveTab] = useState<'commits' | 'prs' | 'files' | 'analytics'>(getInitialTab());
+    const [activeTab, setActiveTab] = useState<'commits' | 'prs' | 'files' | 'analytics' | 'notes'>(getInitialTab());
 
     // Get initial branch from URL or default to 'main'
     const getInitialBranch = (): string => {
@@ -113,7 +117,7 @@ export default function RepoView({ user: _user }: RepoViewProps) {
         if (isRefreshing && repository) {
             interval = setInterval(async () => {
                 try {
-                    const res = await fetch(`http://localhost:5000/repositories/${repositoryId}`);
+                    const res = await fetch(`${API_BASE_URL}/repositories/${repositoryId}`);
                     const data = await res.json();
 
                     // Check if timestamp updated
@@ -136,7 +140,7 @@ export default function RepoView({ user: _user }: RepoViewProps) {
 
         setIsRefreshing(true);
         try {
-            await fetch(`http://localhost:5000/repositories/${repositoryId}/refresh`, {
+            await fetch(`${API_BASE_URL}/repositories/${repositoryId}/refresh`, {
                 method: 'POST'
             });
             // Don't set isRefreshing(false) here - wait for polling to detect the change
@@ -186,7 +190,7 @@ export default function RepoView({ user: _user }: RepoViewProps) {
                                 disabled={isRefreshing}
                                 variant="outline"
                                 size="sm"
-                                className="gap-2"
+                                className={`gap-2 ${resolvedTheme === 'night' ? 'hover:bg-primary/40' : resolvedTheme === 'dark' ? 'hover:bg-blue-500/30' : resolvedTheme === 'light' ? 'hover:bg-blue-100 hover:text-blue-700' : ''}`}
                             >
                                 <RefreshCw className={`h-4 w-4 ${isRefreshing ? 'animate-spin' : ''}`} />
                                 {isRefreshing ? 'Refreshing...' : 'Refresh'}
@@ -208,9 +212,9 @@ export default function RepoView({ user: _user }: RepoViewProps) {
 
                     {/* Branch Selector */}
                     {branches.length > 0 && (
-                        <DropdownMenu>
+                        <DropdownMenu modal={false}>
                             <DropdownMenuTrigger asChild>
-                                <Button variant="outline" className="gap-2">
+                                <Button variant="outline" className={`gap-2 ${resolvedTheme === 'night' ? 'hover:bg-primary/40' : resolvedTheme === 'dark' ? 'hover:bg-blue-500/30' : resolvedTheme === 'light' ? 'hover:bg-blue-100 hover:text-blue-700' : ''}`}>
                                     <GitBranch className="h-4 w-4" />
                                     {selectedBranch}
                                 </Button>
@@ -220,6 +224,7 @@ export default function RepoView({ user: _user }: RepoViewProps) {
                                     <DropdownMenuItem
                                         key={branch.id}
                                         onClick={() => setSelectedBranch(branch.name)}
+                                        className={resolvedTheme === 'light' ? 'focus:bg-blue-100 focus:text-blue-700' : ''}
                                     >
                                         {branch.name} {branch.isDefault && '(default)'}
                                         {branch.name === selectedBranch && <span className="ml-auto">✓</span>}
@@ -233,13 +238,13 @@ export default function RepoView({ user: _user }: RepoViewProps) {
 
             {/* Tabs */}
             <Tabs value={activeTab} onValueChange={(value) => {
-                const newTab = value as 'commits' | 'prs' | 'files' | 'analytics';
+                const newTab = value as 'commits' | 'prs' | 'files' | 'analytics' | 'notes';
                 setActiveTab(newTab);
                 const newParams = new URLSearchParams(searchParams);
                 newParams.set('tab', newTab);
                 setSearchParams(newParams);
             }}>
-                <TabsList className="grid w-full max-w-2xl grid-cols-4">
+                <TabsList className="grid w-full max-w-2xl grid-cols-5">
                     <TabsTrigger value="commits" className="gap-2">
                         <GitCommit className="h-4 w-4" />
                         <span className="hidden sm:inline">Commits</span>
@@ -256,6 +261,10 @@ export default function RepoView({ user: _user }: RepoViewProps) {
                     <TabsTrigger value="analytics" className="gap-2">
                         <BarChart className="h-4 w-4" />
                         <span className="hidden sm:inline">Analytics</span>
+                    </TabsTrigger>
+                    <TabsTrigger value="notes" className="gap-2">
+                        <StickyNote className="h-4 w-4" />
+                        <span className="hidden sm:inline">Notes</span>
                     </TabsTrigger>
                 </TabsList>
 
@@ -327,6 +336,7 @@ export default function RepoView({ user: _user }: RepoViewProps) {
                                 onClick={() => setPrFilter('all')}
                                 variant={prFilter === 'all' ? 'default' : 'outline'}
                                 size="sm"
+                                className={prFilter !== 'all' && (resolvedTheme === 'night' ? 'hover:bg-primary/40' : resolvedTheme === 'dark' ? 'hover:bg-blue-500/30' : resolvedTheme === 'light' ? 'hover:bg-blue-100 hover:text-blue-700' : '') || ''}
                             >
                                 All
                             </Button>
@@ -334,6 +344,7 @@ export default function RepoView({ user: _user }: RepoViewProps) {
                                 onClick={() => setPrFilter('open')}
                                 variant={prFilter === 'open' ? 'default' : 'outline'}
                                 size="sm"
+                                className={prFilter !== 'open' && (resolvedTheme === 'night' ? 'hover:bg-primary/40' : resolvedTheme === 'dark' ? 'hover:bg-blue-500/30' : resolvedTheme === 'light' ? 'hover:bg-blue-100 hover:text-blue-700' : '') || ''}
                             >
                                 Open
                             </Button>
@@ -341,6 +352,7 @@ export default function RepoView({ user: _user }: RepoViewProps) {
                                 onClick={() => setPrFilter('closed')}
                                 variant={prFilter === 'closed' ? 'default' : 'outline'}
                                 size="sm"
+                                className={prFilter !== 'closed' && (resolvedTheme === 'night' ? 'hover:bg-primary/40' : resolvedTheme === 'dark' ? 'hover:bg-blue-500/30' : resolvedTheme === 'light' ? 'hover:bg-blue-100 hover:text-blue-700' : '') || ''}
                             >
                                 Closed
                             </Button>
@@ -378,8 +390,11 @@ export default function RepoView({ user: _user }: RepoViewProps) {
                                                         <code className="text-xs text-muted-foreground">
                                                             #{pr.prNumber}
                                                         </code>
-                                                        <Badge variant={pr.state === 'open' ? 'success' : 'secondary'}>
-                                                            {pr.state === 'open' ? 'Open' : 'Merged'}
+                                                        <Badge variant={
+                                                            pr.state === 'open' ? 'success' :
+                                                                pr.merged ? 'merged' : 'destructive'
+                                                        }>
+                                                            {pr.state === 'open' ? 'Open' : pr.merged ? 'Merged' : 'Closed'}
                                                         </Badge>
                                                     </div>
                                                 </div>
@@ -441,6 +456,11 @@ export default function RepoView({ user: _user }: RepoViewProps) {
                         <h2 className="font-heading text-2xl font-semibold mb-6">Team Insights</h2>
                         <TeamInsights repositoryId={repositoryId!} branchName={selectedBranch} />
                     </div>
+                </TabsContent>
+
+                {/* Notes Tab */}
+                <TabsContent value="notes" className="mt-6">
+                    <RepositoryNotesTab repositoryId={repositoryId!} />
                 </TabsContent>
             </Tabs>
         </div>

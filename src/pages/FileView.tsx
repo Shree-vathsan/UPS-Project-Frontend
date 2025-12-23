@@ -1,8 +1,10 @@
 import { useState, useEffect } from 'react';
 import { useParams, useSearchParams } from 'react-router-dom';
-import { Code, BarChart, FileText, ChevronLeft, ChevronRight, Clock } from 'lucide-react';
+import { Code, BarChart, FileText, ChevronLeft, ChevronRight, Clock, MessageSquare, Bookmark } from 'lucide-react';
 import BackButton from '../components/BackButton';
 import FileAnalysis from '../components/FileAnalysis';
+import NotesTab from '../components/NotesTab';
+import PersonalNotesPanel from '../components/PersonalNotesPanel';
 import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
 import { vscDarkPlus, vs } from 'react-syntax-highlighter/dist/esm/styles/prism';
 import { useTheme } from '@/components/theme-provider';
@@ -12,13 +14,18 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { useFile, useFileAnalysis, useFileContent, useFileCommits } from '../hooks/useApiQueries';
+import Split from 'react-split';
+import '../split.css';
+import { useFile, useFileAnalysis, useFileContent, useFileCommits, useTrackFileView, useIsBookmarked, useAddBookmark, useRemoveBookmark } from '../hooks/useApiQueries';
 
 export default function FileView() {
     const { fileId } = useParams<{ fileId: string }>();
     const [searchParams] = useSearchParams();
-    const { theme } = useTheme();
-    const [activeTab, setActiveTab] = useState<'code' | 'analysis'>('code');
+    const { resolvedTheme } = useTheme();
+
+    // Get tab from URL params (default to 'code')
+    const tabParam = searchParams.get('tab') as 'code' | 'analysis' | 'notes' | null;
+    const [activeTab, setActiveTab] = useState<'code' | 'analysis' | 'notes'>(tabParam || 'code');
     const [currentCommitSha, setCurrentCommitSha] = useState<string | null>(null);
 
     // Get branch from URL params
@@ -31,8 +38,20 @@ export default function FileView() {
     const { data: contentData, isLoading: contentLoading } = useFileContent(fileId, currentCommitSha || undefined, branch);
 
     const content = contentData?.content || '';
+    const totalLinesCount = content ? content.split('\n').length : 0;
     const loading = fileLoading || contentLoading;
     const error = fileError?.message || '';
+
+    // Get user from localStorage
+    const storedUser = localStorage.getItem('user');
+    const userId = storedUser ? JSON.parse(storedUser).id : undefined;
+
+    // Dashboard tracking hooks
+    const trackFileView = useTrackFileView();
+    const { data: bookmarkData } = useIsBookmarked(userId, fileId);
+    const addBookmark = useAddBookmark();
+    const removeBookmark = useRemoveBookmark();
+    const isBookmarked = bookmarkData?.isBookmarked || false;
 
     // Set initial commit sha from content response or history
     useEffect(() => {
@@ -43,8 +62,16 @@ export default function FileView() {
         }
     }, [contentData, commitHistory, currentCommitSha]);
 
-    // Determine if current theme is light (includes black-beige which has light background)
-    const isLightTheme = theme === 'light' || theme === 'light-pallete' || theme === 'black-beige';
+    // Track file view when component mounts
+    useEffect(() => {
+        if (userId && fileId) {
+            trackFileView.mutate({ userId, fileId });
+        }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [userId, fileId]);
+
+    // Determine if current theme is light
+    const isLightTheme = resolvedTheme === 'light';
 
     const getLanguageFromPath = (filePath: string): string => {
         const extension = filePath.split('.').pop()?.toLowerCase();
@@ -126,9 +153,28 @@ export default function FileView() {
             <div className="mb-8">
                 <div className="flex items-start justify-between mb-3">
                     <div className="flex-1">
-                        <h1 className="font-heading text-3xl font-bold mb-2 font-mono">
-                            {file?.filePath || 'Unknown file'}
-                        </h1>
+                        <div className="flex items-center gap-3">
+                            <h1 className="font-heading text-3xl font-bold mb-2 font-mono">
+                                {file?.filePath || 'Unknown file'}
+                            </h1>
+                            {userId && (
+                                <Button
+                                    variant="ghost"
+                                    size="icon"
+                                    className={resolvedTheme === 'night' ? 'hover:bg-primary/40' : resolvedTheme === 'dark' ? 'hover:bg-blue-500/30' : resolvedTheme === 'light' ? 'hover:bg-blue-100 hover:text-blue-700' : ''}
+                                    onClick={() => {
+                                        if (isBookmarked) {
+                                            removeBookmark.mutate({ userId, fileId: fileId! });
+                                        } else {
+                                            addBookmark.mutate({ userId, fileId: fileId! });
+                                        }
+                                    }}
+                                    title={isBookmarked ? 'Remove bookmark' : 'Add bookmark'}
+                                >
+                                    <Bookmark className={`h-5 w-5 ${isBookmarked ? 'fill-yellow-500 text-yellow-500' : 'text-muted-foreground'}`} />
+                                </Button>
+                            )}
+                        </div>
                         {file?.totalLines && (
                             <p className="text-muted-foreground text-sm">
                                 {file.totalLines} lines
@@ -161,7 +207,7 @@ export default function FileView() {
 
             {/* Tabs */}
             <Tabs value={activeTab} onValueChange={(value) => setActiveTab(value as any)}>
-                <TabsList className="grid w-full max-w-md grid-cols-2">
+                <TabsList className="grid w-full max-w-lg grid-cols-3">
                     <TabsTrigger value="code" className="gap-2">
                         <Code className="h-4 w-4" />
                         Code View
@@ -170,74 +216,92 @@ export default function FileView() {
                         <BarChart className="h-4 w-4" />
                         File Analysis
                     </TabsTrigger>
+                    <TabsTrigger value="notes" className="gap-2">
+                        <MessageSquare className="h-4 w-4" />
+                        Notes
+                    </TabsTrigger>
                 </TabsList>
 
                 {/* Code View Tab */}
-                <TabsContent value="code" className="mt-6 space-y-4">
-                    <Card>
-                        <CardContent className="p-0">
-                            <SyntaxHighlighter
-                                language={getLanguageFromPath(file?.filePath || '')}
-                                style={isLightTheme ? vs : vscDarkPlus}
-                                showLineNumbers={true}
-                                wrapLines={true}
-                                customStyle={{
-                                    background: 'transparent',
-                                    margin: 0,
-                                    padding: '1rem',
-                                    fontSize: '13px',
-                                    lineHeight: '1.6',
-                                    fontFamily: 'ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, "Liberation Mono", monospace',
-                                }}
-                                codeTagProps={{
-                                    style: {
-                                        fontSize: '13px',
-                                        fontFamily: 'ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, "Liberation Mono", monospace',
-                                    }
-                                }}
-                                lineNumberStyle={{
-                                    minWidth: '3em',
-                                    paddingRight: '1em',
-                                    color: isLightTheme ? '#666' : '#6e7681',
-                                    userSelect: 'none',
-                                    fontSize: '13px',
-                                }}
-                            >
-                                {content}
-                            </SyntaxHighlighter>
-                        </CardContent>
-                    </Card>
+                <TabsContent value="code" className="mt-6">
+                    <Split
+                        className="flex"
+                        sizes={[60, 40]}
+                        minSize={[300, 200]}
+                        gutterSize={12}
+                        direction="horizontal"
+                    >
+                        <div className="space-y-4 pr-2 overflow-auto">
+                            <Card>
+                                <CardContent className="p-0">
+                                    <SyntaxHighlighter
+                                        language={getLanguageFromPath(file?.filePath || '')}
+                                        style={isLightTheme ? vs : vscDarkPlus}
+                                        showLineNumbers={true}
+                                        wrapLines={true}
+                                        customStyle={{
+                                            background: 'transparent',
+                                            margin: 0,
+                                            padding: '1rem',
+                                            fontSize: '13px',
+                                            lineHeight: '1.6',
+                                            fontFamily: 'ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, "Liberation Mono", monospace',
+                                        }}
+                                        codeTagProps={{
+                                            style: {
+                                                fontSize: '13px',
+                                                fontFamily: 'ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, "Liberation Mono", monospace',
+                                            }
+                                        }}
+                                        lineNumberStyle={{
+                                            minWidth: '3em',
+                                            paddingRight: '1em',
+                                            color: isLightTheme ? '#666' : '#6e7681',
+                                            userSelect: 'none',
+                                            fontSize: '13px',
+                                        }}
+                                    >
+                                        {content}
+                                    </SyntaxHighlighter>
+                                </CardContent>
+                            </Card>
 
-                    {/* Commit Navigation */}
-                    <div className="flex items-center gap-3">
-                        <Button
-                            onClick={handlePreviousCommit}
-                            disabled={!canGoPrevious}
-                            variant="outline"
-                            size="sm"
-                            className="gap-2"
-                        >
-                            <ChevronLeft className="h-4 w-4" />
-                            Previous Commit
-                        </Button>
-                        <Button
-                            onClick={handleNextCommit}
-                            disabled={!canGoNext}
-                            variant="outline"
-                            size="sm"
-                            className="gap-2"
-                        >
-                            Next Commit
-                            <ChevronRight className="h-4 w-4" />
-                        </Button>
-                        {commitHistory.length > 0 && (
-                            <Badge variant="secondary">
-                                {currentIndex !== -1
-                                    ? `Commit ${commitHistory.length - currentIndex} of ${commitHistory.length}`
-                                    : 'Latest Unindexed Commit'}
-                            </Badge>
-                        )}
-                    </div>
+                            {/* Commit Navigation */}
+                            <div className="flex items-center gap-3">
+                                <Button
+                                    onClick={handlePreviousCommit}
+                                    disabled={!canGoPrevious}
+                                    variant="outline"
+                                    size="sm"
+                                    className={`gap-2 ${resolvedTheme === 'night' ? 'hover:bg-primary/40' : resolvedTheme === 'dark' ? 'hover:bg-blue-500/30' : resolvedTheme === 'light' ? 'hover:bg-blue-100 hover:text-blue-700' : ''}`}
+                                >
+                                    <ChevronLeft className="h-4 w-4" />
+                                    Previous Commit
+                                </Button>
+                                <Button
+                                    onClick={handleNextCommit}
+                                    disabled={!canGoNext}
+                                    variant="outline"
+                                    size="sm"
+                                    className={`gap-2 ${resolvedTheme === 'night' ? 'hover:bg-primary/40' : resolvedTheme === 'dark' ? 'hover:bg-blue-500/30' : resolvedTheme === 'light' ? 'hover:bg-blue-100 hover:text-blue-700' : ''}`}
+                                >
+                                    Next Commit
+                                    <ChevronRight className="h-4 w-4" />
+                                </Button>
+                                {commitHistory.length > 0 && (
+                                    <Badge variant="secondary">
+                                        {currentIndex !== -1
+                                            ? `Commit ${commitHistory.length - currentIndex} of ${commitHistory.length}`
+                                            : 'Latest Unindexed Commit'}
+                                    </Badge>
+                                )}
+                            </div>
+                        </div>
+
+                        <div className="pl-2 overflow-auto">
+                            <PersonalNotesPanel fileId={fileId!} repositoryId={file?.repositoryId} totalLines={totalLinesCount} />
+                        </div>
+                    </Split>
                 </TabsContent>
 
                 {/* File Analysis Tab */}
@@ -255,6 +319,11 @@ export default function FileView() {
                             </CardContent>
                         </Card>
                     )}
+                </TabsContent>
+
+                {/* Notes Tab */}
+                <TabsContent value="notes" className="mt-6">
+                    <NotesTab fileId={fileId!} file={file} />
                 </TabsContent>
             </Tabs>
         </div>

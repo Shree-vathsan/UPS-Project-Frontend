@@ -6,6 +6,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import { API_BASE_URL } from '../config';
 
 export default function PRView() {
     const { prId } = useParams<{ prId: string }>();
@@ -20,7 +21,7 @@ export default function PRView() {
 
     const loadPR = async () => {
         try {
-            const response = await fetch(`http://localhost:5000/pullrequests/${prId}`);
+            const response = await fetch(`${API_BASE_URL}/pullrequests/${prId}`);
             const data = await response.json();
             setPr(data.pr);
             setFiles(data.files || []);
