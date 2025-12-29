@@ -409,7 +409,7 @@ export default function FileAnalysis({ file, analysis }: FileAnalysisProps) {
                     <div style={{ display: 'grid', gap: '12px' }}>
                         {analysis.ownership.map((owner: any, index: number) => {
                             const score = owner.semanticScore || 0;
-                            const percentage = (score * 100).toFixed(1);
+                            const percentageDecimal = (score * 100).toFixed(1); // For display with decimal
                             return (
                                 <div key={index} className="flex items-center gap-4 p-4 bg-card/30 rounded-lg border">
                                     {owner.avatarUrl && (
@@ -426,11 +426,11 @@ export default function FileAnalysis({ file, analysis }: FileAnalysisProps) {
                                         <div className="w-full h-2.5 bg-border rounded-full overflow-hidden mb-1.5">
                                             <div
                                                 className="h-full bg-gradient-to-r from-primary to-primary/80 rounded-full transition-all duration-500"
-                                                style={{ width: `${percentage}%` }}
+                                                style={{ width: `${percentageDecimal}%` }}
                                             />
                                         </div>
                                         <div className="text-xs text-muted-foreground">
-                                            Semantic contribution: {percentage}%
+                                            Semantic contribution: {percentageDecimal}%
                                         </div>
                                     </div>
                                     <div className="min-w-20 text-center">
@@ -439,7 +439,7 @@ export default function FileAnalysis({ file, analysis }: FileAnalysisProps) {
                                             style={{ background: `conic-gradient(hsl(var(--primary)) ${score * 360}deg, hsl(var(--border)) 0deg)` }}
                                         >
                                             <div className="w-14 h-14 rounded-full bg-background flex items-center justify-center text-base font-bold text-primary">
-                                                {percentage.split('.')[0]}%
+                                                {percentageDecimal}%
                                             </div>
                                         </div>
                                     </div>
