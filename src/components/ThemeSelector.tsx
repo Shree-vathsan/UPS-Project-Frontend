@@ -1,4 +1,4 @@
-import { Sun, Moon, Monitor, Gem, Waves, Palette, CloudMoon, Zap } from "lucide-react";
+import { Sun, Moon, Monitor, Gem, Waves, Palette, CloudMoon, Zap, Palmtree } from "lucide-react";
 import { useTheme } from "./theme-provider";
 import {
     DropdownMenu,
@@ -60,6 +60,11 @@ export default function ThemeSelector() {
                     <Zap className="mr-2 h-4 w-4" />
                     <span>Neon</span>
                     {theme === "neon" && <span className="ml-auto">✓</span>}
+                </DropdownMenuItem>
+                <DropdownMenuItem onSelect={() => setTheme("tropical")}>
+                    <Palmtree className="mr-2 h-4 w-4" />
+                    <span>Tropical</span>
+                    {theme === "tropical" && <span className="ml-auto">✓</span>}
                 </DropdownMenuItem>
                 <DropdownMenuItem onSelect={() => setTheme("system")}>
                     <Monitor className="mr-2 h-4 w-4" />

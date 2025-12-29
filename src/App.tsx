@@ -1,6 +1,6 @@
 import { BrowserRouter, Routes, Route, useNavigate, Link, useParams, Navigate } from 'react-router-dom';
 import { useState, useEffect, useRef } from 'react';
-import { Code, LogOut, Snowflake, User, Sun, Moon, Monitor, Check, Gem, Waves, Palette, CloudMoon, Zap } from 'lucide-react';
+import { Code, LogOut, Snowflake, User, Sun, Moon, Monitor, Check, Gem, Waves, Palette, CloudMoon, Zap, Palmtree } from 'lucide-react';
 import Snowfall from 'react-snowfall';
 import Dashboard from './pages/Dashboard.tsx';
 import RepoView from './pages/RepoView.tsx';
@@ -262,6 +262,11 @@ function AppContent({ snowfallEnabled, toggleSnowfall }: AppContentProps) {
                                             <Zap className="mr-2 h-4 w-4" />
                                             <span>Neon</span>
                                             {theme === "neon" && <Check className="h-4 w-4 ml-auto" />}
+                                        </DropdownMenuItem>
+                                        <DropdownMenuItem onSelect={() => setTheme("tropical")} className={`cursor-pointer ${resolvedTheme === 'light' ? 'focus:text-blue-700' : ''}`}>
+                                            <Palmtree className="mr-2 h-4 w-4" />
+                                            <span>Tropical</span>
+                                            {theme === "tropical" && <Check className="h-4 w-4 ml-auto" />}
                                         </DropdownMenuItem>
                                         <DropdownMenuItem onSelect={() => setTheme("system")} className={`cursor-pointer ${resolvedTheme === 'light' ? 'focus:text-blue-700' : ''}`}>
                                             <Monitor className="h-4 w-4 mr-2" />

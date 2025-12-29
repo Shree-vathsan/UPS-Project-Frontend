@@ -53,10 +53,10 @@
     /* Pure white */
     --foreground: 222 47 11;
     /* Deep slate #0F172A */
-    --card: 0 0 99;
-    /* Off white #FCFCFC */
+    --card: 214 40% 96%;
+    /* Soft blue tint #F0F4F8 */
     --card-foreground: 222 47 11;
-    --popover: 0 0 100;
+    --popover: 214 40% 96%;
     --popover-foreground: 222 47 11;
     --primary: 221 83 53;
     /* Modern blue #2563EB */
@@ -223,10 +223,10 @@
     /* #FBF3D5 (Pale Yellow) */
     --foreground: 163 22 26%;
     /* #9CAFAA darker for text */
-    --card: 0 0 98%;
-    /* Light off-white */
+    --card: 87 30% 92%;
+    /* Soft sage tint */
     --card-foreground: 163 22 26%;
-    --popover: 0 0 98%;
+    --popover: 87 30% 92%;
     --popover-foreground: 163 22 26%;
     --primary: 11 40 73%;
     /* #D6A99D (Pink) */
@@ -306,6 +306,38 @@
     --border: 118 100% 40%;
     --input: 118 100% 40%;
     --ring: 118 100% 40%;
+    --radius: 0.75rem;
+  }
+
+  .theme-tropical {
+    /* Tropical: #4ED7F1 (Cyan), #30C5D2 (Teal), #F0C000 (Golden Yellow) */
+    --background: 190 70% 97%;
+    /* Very pale cyan tint */
+    --foreground: 190 80% 15%;
+    /* Dark teal for text */
+    --card: 187 60% 94%;
+    /* Soft cyan tint for cards */
+    --card-foreground: 190 80% 15%;
+    --popover: 187 60% 94%;
+    --popover-foreground: 190 80% 15%;
+    --primary: 187 85% 63%;
+    /* #4ED7F1 (Cyan) */
+    --primary-foreground: 190 80% 15%;
+    --secondary: 46 100% 47%;
+    /* #F0C000 (Golden Yellow - clearly visible) */
+    --secondary-foreground: 0 0% 10%;
+    --muted: 190 50% 90%;
+    /* Soft cyan muted */
+    --muted-foreground: 190 40% 35%;
+    --accent: 183 70% 50%;
+    /* #30C5D2 (Stronger Teal) */
+    --accent-foreground: 0 0% 100%;
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 0 0% 100%;
+    --border: 183 60% 55%;
+    /* Teal border - more visible */
+    --input: 183 60% 55%;
+    --ring: 187 85% 63%;
     --radius: 0.75rem;
   }
 

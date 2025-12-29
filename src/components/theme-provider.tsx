@@ -1,7 +1,7 @@
 import { createContext, useContext, useEffect, useState } from "react"
 
-type Theme = "light" | "dark" | "night" | "neon" | "amethyst" | "oceanic" | "pastel" | "twilight" | "system"
-type ResolvedTheme = "light" | "dark" | "night" | "neon" | "amethyst" | "oceanic" | "pastel" | "twilight"
+type Theme = "light" | "dark" | "night" | "neon" | "amethyst" | "oceanic" | "pastel" | "twilight" | "tropical" | "system"
+type ResolvedTheme = "light" | "dark" | "night" | "neon" | "amethyst" | "oceanic" | "pastel" | "twilight" | "tropical"
 
 type ThemeProviderProps = {
     children: React.ReactNode
@@ -48,7 +48,7 @@ export function ThemeProvider({
     useEffect(() => {
         const root = window.document.documentElement
 
-        root.classList.remove("theme-light", "theme-dark", "theme-night", "theme-neon", "theme-amethyst", "theme-oceanic", "theme-pastel", "theme-twilight")
+        root.classList.remove("theme-light", "theme-dark", "theme-night", "theme-neon", "theme-amethyst", "theme-oceanic", "theme-pastel", "theme-twilight", "theme-tropical")
 
         if (theme === "system") {
             const systemTheme = getSystemTheme()
@@ -70,7 +70,7 @@ export function ThemeProvider({
             const newTheme = e.matches ? "dark" : "light"
             setResolvedTheme(newTheme)
             const root = window.document.documentElement
-            root.classList.remove("theme-light", "theme-dark", "theme-night", "theme-neon", "theme-amethyst", "theme-oceanic", "theme-pastel", "theme-twilight")
+            root.classList.remove("theme-light", "theme-dark", "theme-night", "theme-neon", "theme-amethyst", "theme-oceanic", "theme-pastel", "theme-twilight", "theme-tropical")
             root.classList.add(`theme-${newTheme}`)
         }
 
